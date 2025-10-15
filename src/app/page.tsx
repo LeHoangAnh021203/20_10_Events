@@ -1,103 +1,941 @@
+"use client";
+import type React from "react";
+import GreetingCard from "./components/greeting-card";
+import LanguageSwitcher from "./components/language-switcher";
+import { useEffect, useState } from "react";
 import Image from "next/image";
+import { useLanguage } from "@/contexts/LanguageContext";
 
-export default function Home() {
+interface FormData {
+  senderName: string;
+  senderPhone: string;
+  senderEmail: string;
+  receiverName: string;
+  receiverPhone: string;
+  receiverEmail: string;
+  message: string;
+}
+
+export default function LandingPage() {
+  const { t } = useLanguage();
+  const [notification, setNotification] = useState<{
+    title: string;
+    description?: string;
+    variant?: "destructive" | "success";
+  } | null>(null);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    if (!notification) return;
+    const id = setTimeout(() => setNotification(null), 3000);
+    return () => clearTimeout(id);
+  }, [notification]);
+
+  useEffect(() => {
+    const update = () => setIsMobile(window.innerWidth < 640);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
+
+  const [showGreetingCard, setShowGreetingCard] = useState(false);
+  const [submittedData, setSubmittedData] = useState<FormData | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [giftService, setGiftService] = useState<string>("");
+  const [formData, setFormData] = useState<FormData>({
+    senderName: "",
+    senderPhone: "",
+    senderEmail: "",
+    receiverName: "",
+    receiverPhone: "",
+    receiverEmail: "",
+    message: "",
+  });
+
+  // Helpers for word counting and limiting
+  const countWords = (text: string) => {
+    const t = text.trim();
+    if (!t) return 0;
+    return t.split(/\s+/).filter(Boolean).length;
+  };
+  const clampWords = (text: string, maxWords: number) => {
+    const t = text.trim();
+    if (!t) return "";
+    const parts = t.split(/\s+/);
+    if (parts.length <= maxWords) return text;
+    return parts.slice(0, maxWords).join(" ");
+  };
+
+  const handleInputChange = (field: keyof FormData, value: string) => {
+    setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    const sanitizedForm: FormData = {
+      senderName: formData.senderName.trim(),
+      senderPhone: formData.senderPhone.trim(),
+      senderEmail: formData.senderEmail.trim(),
+      receiverName: formData.receiverName.trim(),
+      receiverPhone: formData.receiverPhone.trim(),
+      receiverEmail: formData.receiverEmail.trim(),
+      message: formData.message.trim(),
+    };
+
+    // Validate required fields
+    const requiredFields: Array<keyof FormData> = [
+      "senderName",
+      "senderPhone",
+      "receiverName",
+      "receiverPhone",
+      "message",
+    ];
+    const missingFields = requiredFields.filter(
+      (field) => !sanitizedForm[field]
+    );
+
+    if (missingFields.length > 0) {
+      setNotification({
+        title: t.requiredFields,
+        description: t.requiredFieldsDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Message length validation (max 100 words)
+    if (countWords(sanitizedForm.message) > 100) {
+      setNotification({
+        title: t.messageTooLong,
+        description: t.messageTooLongDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const nameRegex = /^[\p{L}\p{M}][\p{L}\p{M}'’\-\s]{1,}$/u;
+    if (
+      !nameRegex.test(sanitizedForm.senderName) ||
+      !nameRegex.test(sanitizedForm.receiverName)
+    ) {
+      setNotification({
+        title: t.invalidName,
+        description: t.invalidNameDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const invalidEmail = [
+      sanitizedForm.senderEmail,
+      sanitizedForm.receiverEmail,
+    ]
+      .filter(Boolean)
+      .find((email) => !emailRegex.test(email));
+
+    if (invalidEmail) {
+      setNotification({
+        title: t.invalidEmail,
+        description: t.invalidEmailDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Phone validation (Vietnamese phone number format)
+    const phoneRegex = /^(0|\+84)[0-9]{9,10}$/;
+    if (
+      !phoneRegex.test(sanitizedForm.senderPhone) ||
+      !phoneRegex.test(sanitizedForm.receiverPhone)
+    ) {
+      setNotification({
+        title: t.invalidPhone,
+        description: t.invalidPhoneDesc,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    // Allow duplicate sender/receiver name and phone as long as format is valid
+
+    if (
+      sanitizedForm.senderEmail &&
+      sanitizedForm.receiverEmail &&
+      sanitizedForm.senderEmail.toLowerCase() ===
+        sanitizedForm.receiverEmail.toLowerCase()
+    ) {
+      setNotification({
+        title: t.duplicateInfo,
+        description: t.duplicateEmail,
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch("/api/submit-gsheet", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...sanitizedForm, giftService }),
+      });
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({ error: "" }));
+        throw new Error(error?.error || "Không thể lưu dữ liệu");
+      }
+
+      setNotification({
+        title: t.successTitle,
+        description: t.successDesc,
+        variant: "success",
+      });
+
+      setSubmittedData(sanitizedForm);
+      setShowGreetingCard(true);
+
+      setFormData({
+        senderName: "",
+        senderPhone: "",
+        senderEmail: "",
+        receiverName: "",
+        receiverPhone: "",
+        receiverEmail: "",
+        message: "",
+      });
+      setGiftService("");
+    } catch (error) {
+      console.error("Không thể lưu Google Sheet:", error);
+      setNotification({
+        title: t.errorTitle,
+        description: t.errorDesc,
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleBackToForm = () => {
+    setShowGreetingCard(false);
+    setSubmittedData(null);
+  };
+
+  if (showGreetingCard && submittedData) {
+    return <GreetingCard formData={submittedData} onBack={handleBackToForm} />;
+  }
+
   return (
-    <div className="font-sans grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="font-mono list-inside list-decimal text-sm/6 text-center sm:text-left">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] font-mono font-semibold px-1 py-0.5 rounded">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
+    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50">
+      <LanguageSwitcher />
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {/* Left side falling elements */}
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-12 w-16 h-16" : "left-24 w-24 h-24"
+          } animate-fall-down-left opacity-30`}
+        >
+          <Image
+            src="/20.10/Asset 5@4x.png"
+            alt="falling decoration"
+            width={64}
+            height={64}
+            className="w-full h-full object-contain"
+          />
+        </div>
 
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-16 w-20 h-20" : "left-18 w-32 h-32"
+          } animate-fall-down-left-delayed-1 opacity-25`}
+        >
+          <Image
+            src="/20.10/Asset 7@4x.png"
+            alt="falling decoration"
+            width={48}
+            height={48}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-12 w-20 h-20" : "left-24 w-32 h-32"
+          } animate-fall-down-left-delayed-2 opacity-20`}
+        >
+          <Image
+            src="/20.10/aaa@4x.png"
+            alt="falling decoration"
+            width={32}
+            height={32}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        {/* Right side falling elements */}
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-12 w-10 h-10" : "right-24 w-14 h-14"
+          } animate-fall-down-right opacity-35`}
+        >
+          <Image
+            src="/20.10/Asset 6@4x.png"
+            alt="falling decoration"
+            width={56}
+            height={56}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-16 w-12 h-12" : "right-18 w-18 h-18"
+          } animate-fall-down-right-delayed-1 opacity-30`}
+        >
+          <Image
+            src="/20.10/Asset 8@4x.png"
+            alt="falling decoration"
+            width={40}
+            height={40}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-20 w-20 h-20" : "right-21 w-36 h-36"
+          } animate-fall-down-right-delayed-2`}
+        >
+          <Image
+            src="/20.10/bbb@4x.png"
+            alt="falling decoration"
+            width={24}
+            height={24}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-8 w-12 h-12" : "right-12 w-18 h-18"
+          } animate-fall-down-right opacity-20`}
+        >
+          <Image
+            src="/20.10/ccc@4x.png"
+            alt="falling decoration"
+            width={32}
+            height={32}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        {/* Additional left side elements */}
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-4 w-12 h-12" : "left-8 w-16 h-16"
+          } animate-fall-down-left opacity-25`}
+        >
+          <Image
+            src="/20.10/Asset 6@4x.png"
+            alt="falling decoration"
+            width={64}
+            height={64}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-14 w-16 h-16" : "left-18 w-22 h-22"
+          } animate-fall-down-left-delayed-1 opacity-20`}
+        >
+          <Image
+            src="/20.10/Asset 8@4x.png"
+            alt="falling decoration"
+            width={48}
+            height={48}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-10 w-18 h-18" : "left-16 w-24 h-24"
+          } animate-fall-down-left-delayed-2 opacity-30`}
+        >
+          <Image
+            src="/20.10/bbb@4x.png"
+            alt="falling decoration"
+            width={56}
+            height={56}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-16 w-20 h-20" : "left-20 w-30 h-30"
+          } animate-fall-down-left opacity-15`}
+        >
+          <Image
+            src="/20.10/ccc@4x.png"
+            alt="falling decoration"
+            width={40}
+            height={40}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        {/* Additional right side elements */}
+        <div
+          className={`absolute -top-10 ${
+            isMobile ? "right-12 w-14 h-14" : "right-24 w-20 h-20"
+          } animate-fall-down-right opacity-30`}
+        >
+          <Image
+            src="/20.10/Asset 5@4x.png"
+            alt="falling decoration"
+            width={80}
+            height={80}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-14 w-18 h-18" : "right-18 w-26 h-26"
+          } animate-fall-down-right-delayed-1 opacity-25`}
+        >
+          <Image
+            src="/20.10/Asset 7@4x.png"
+            alt="falling decoration"
+            width={64}
+            height={64}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-20 w-10 h-10" : "right-26 w-12 h-12"
+          } animate-fall-down-right-delayed-2 opacity-20`}
+        >
+          <Image
+            src="/20.10/aaa@4x.png"
+            alt="falling decoration"
+            width={48}
+            height={48}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-16 w-16 h-16" : "right-20 w-24 h-24"
+          } animate-fall-down-right opacity-35`}
+        >
+          <Image
+            src="/20.10/bbb@4x.png"
+            alt="falling decoration"
+            width={56}
+            height={56}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        {/* Center elements for variety */}
+        <div
+          className={`absolute -top-20 left-1/2 ${
+            isMobile ? "w-12 h-12" : "w-18 h-18"
+          } animate-fall-down-left opacity-15 z-100`}
+        >
+          <Image
+            src="/20.10/ccc@4x.png"
+            alt="falling decoration"
+            width={32}
+            height={32}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 left-1/2 ${
+            isMobile ? "w-14 h-14" : "w-20 h-20"
+          } animate-fall-down-right-delayed-1 opacity-20 z-100`}
+        >
+          <Image
+            src="/20.10/Asset 5@4x.png"
+            alt="falling decoration"
+            width={40}
+            height={40}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        {/* More scattered elements */}
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-3 w-12 h-12" : "left-6 w-18 h-18"
+          } animate-fall-down-left-delayed-1 opacity-25 z-100`}
+        >
+          <Image
+            src="/20.10/Asset 6@4x.png"
+            alt="falling decoration"
+            width={72}
+            height={72}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "left-6 w-10 h-10" : "left-10 w-14 h-14"
+          } animate-fall-down-left opacity-20 z-100`}
+        >
+          <Image
+            src="/20.10/Asset 8@4x.png"
+            alt="falling decoration"
+            width={56}
+            height={56}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-12 w-12 h-12" : "right-16 w-16 h-16"
+          } animate-fall-down-right-delayed-2 opacity-30 z-100`}
+        >
+          <Image
+            src="/20.10/Asset 7@4x.png"
+            alt="falling decoration"
+            width={64}
+            height={64}
+            className="w-full h-full object-contain"
+          />
+        </div>
+
+        <div
+          className={`absolute -top-20 ${
+            isMobile ? "right-6 w-6 h-6" : "right-10 w-8 h-8"
+          } animate-fall-down-right opacity-25 z-100`}
+        >
+          <Image
+            src="/20.10/aaa@4x.png"
+            alt="falling decoration"
+            width={32}
+            height={32}
+            className="w-full h-full object-contain"
+          />
+        </div>
+      </div>
+      {/* Main Content */}
+      <main
+        className="container mx-auto px-4 py-8 max-w-4xl text-black"
+        style={{ fontFamily: "var(--font-poppins)" }}
+      >
+        <div className="shadow-lg border-0backdrop-blur-sm rounded-lg bg-[#feeedd]">
+          {/* Header */}
+          <header className="w-full">
             <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
+              src="/header.png"
+              alt="Foxie Club 20.10 Special - Món quà dành tặng cho bạn"
+              width={1920}
+              height={600}
+              priority
+              className="w-full h-auto object-cover rounded-lg"
             />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+          </header>
+          <div
+            className={`text-center pb-6 ${
+              isMobile ? "mt-[-80px] px-4" : "mt-[-130px]"
+            }`}
           >
-            Read our docs
-          </a>
+            <h1
+              className={`${
+                isMobile ? "text-[22px] mt-4" : "text-[59pt] mt-[-10] "
+              } font-bold text-[#eb3526] mb-2`}
+              style={{ fontFamily: "var(--font-poppins)", fontWeight: "500" }}
+            >
+              <strong>{t.title}</strong>
+            </h1>
+            <p
+              className={`text-gray-600 ${isMobile ? "text-base" : "text-lg"}`}
+            >
+              {t.subtitle}
+            </p>
+          </div>
+
+          <div className={`${isMobile ? "px-4" : "px-6"} pb-8`}>
+            <form
+              onSubmit={handleSubmit}
+              className={`${isMobile ? "space-y-6" : "space-y-8"}`}
+            >
+              {/* Sender Information */}
+              <div className="space-y-4">
+                <div
+                  className={`absolute left-1/2  -translate-x-1/2 -translate-y-1/2 transform ${
+                    isMobile
+                      ? "w-76 opacity-20 z-0 top-[80%]"
+                      : "w-34 sm:w-28 md:w-98 opacity-20 z-100 top-[140%]"
+                  } pointer-events-none`}
+                >
+                  <div className="animate-zoom-in-out">
+                    <Image
+                      src="/Asset 7@4x (1).png"
+                      alt="decorative fox"
+                      width={256}
+                      height={256}
+                      className="w-full h-auto drop-shadow-md rotate-[-8deg]"
+                      aria-hidden
+                    />
+                  </div>
+                </div>
+                <h3
+                  className={`${
+                    isMobile ? "text-lg" : "text-xl"
+                  } font-semibold text-red-600 border-b-2 border-red-200 pb-2`}
+                >
+                  {t.senderInfo}
+                </h3>
+                <div
+                  className={`grid grid-cols-1 ${
+                    isMobile ? "gap-3" : "md:grid-cols-2 gap-4"
+                  } text-black`}
+                >
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="senderName"
+                      className={`${
+                        isMobile ? "text-xs" : "text-sm"
+                      } font-medium`}
+                    >
+                      {t.fullName} *
+                    </label>
+                    <input
+                      id="senderName"
+                      value={formData.senderName}
+                      onChange={(e) =>
+                        handleInputChange("senderName", e.target.value)
+                      }
+                      placeholder={t.senderNamePlaceholder}
+                      className={`w-full rounded-md border ${
+                        isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                      } focus:outline-none focus:ring-2 ${
+                        formData.senderName
+                          ? "border-orange-400 bg-orange-50 focus:ring-orange-400"
+                          : "border-red-200 focus:ring-red-400"
+                      }`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="senderPhone"
+                      className={`${
+                        isMobile ? "text-xs" : "text-sm"
+                      } font-medium`}
+                    >
+                      {t.phone} *
+                    </label>
+                    <input
+                      id="senderPhone"
+                      value={formData.senderPhone}
+                      onChange={(e) =>
+                        handleInputChange("senderPhone", e.target.value)
+                      }
+                      placeholder={t.senderPhonePlaceholder}
+                      className={`w-full rounded-md border ${
+                        isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                      } focus:outline-none focus:ring-2 ${
+                        formData.senderPhone
+                          ? "border-orange-400 bg-orange-50 focus:ring-orange-400"
+                          : "border-red-200 focus:ring-red-400"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2 text-black">
+                  <label
+                    htmlFor="senderEmail"
+                    className={`${
+                      isMobile ? "text-xs" : "text-sm"
+                    } font-medium`}
+                  >
+                    {t.email}
+                  </label>
+                  <input
+                    id="senderEmail"
+                    type="email"
+                    value={formData.senderEmail}
+                    onChange={(e) =>
+                      handleInputChange("senderEmail", e.target.value)
+                    }
+                    placeholder={t.senderEmailPlaceholder}
+                    className={`w-full rounded-md border ${
+                      isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                    } focus:outline-none focus:ring-2 ${
+                      formData.senderEmail
+                        ? "border-orange-400 bg-orange-50 focus:ring-orange-400"
+                        : "border-red-200 focus:ring-red-400"
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Receiver Information */}
+              <div className="space-y-4">
+                <h3
+                  className={`${
+                    isMobile ? "text-lg" : "text-xl"
+                  } font-semibold text-red-600 border-b-2 border-red-200 pb-2`}
+                >
+                  {t.receiverInfo}
+                </h3>
+                <div
+                  className={`grid grid-cols-1 ${
+                    isMobile ? "gap-3" : "md:grid-cols-2 gap-4"
+                  }`}
+                >
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="receiverName"
+                      className={`${
+                        isMobile ? "text-xs" : "text-sm"
+                      } font-medium`}
+                    >
+                      {t.fullName} *
+                    </label>
+                    <input
+                      id="receiverName"
+                      value={formData.receiverName}
+                      onChange={(e) =>
+                        handleInputChange("receiverName", e.target.value)
+                      }
+                      placeholder={t.receiverNamePlaceholder}
+                      className={`w-full rounded-md border ${
+                        isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                      } focus:outline-none focus:ring-2 ${
+                        formData.receiverName
+                          ? "border-orange-400 bg-orange-50 focus:ring-orange-400"
+                          : "border-red-200 focus:ring-red-400"
+                      }`}
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <label
+                      htmlFor="receiverPhone"
+                      className={`${
+                        isMobile ? "text-xs" : "text-sm"
+                      } font-medium`}
+                    >
+                      {t.phone} *
+                    </label>
+                    <input
+                      id="receiverPhone"
+                      value={formData.receiverPhone}
+                      onChange={(e) =>
+                        handleInputChange("receiverPhone", e.target.value)
+                      }
+                      placeholder={t.receiverPhonePlaceholder}
+                      className={`w-full rounded-md border ${
+                        isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                      } focus:outline-none focus:ring-2 ${
+                        formData.receiverPhone
+                          ? "border-orange-400 bg-orange-50 focus:ring-orange-400"
+                          : "border-red-200 focus:ring-red-400"
+                      }`}
+                    />
+                  </div>
+                </div>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="receiverEmail"
+                    className={`${
+                      isMobile ? "text-xs" : "text-sm"
+                    } font-medium`}
+                  >
+                    {t.email}
+                  </label>
+                  <input
+                    id="receiverEmail"
+                    type="email"
+                    value={formData.receiverEmail}
+                    onChange={(e) =>
+                      handleInputChange("receiverEmail", e.target.value)
+                    }
+                    placeholder={t.receiverEmailPlaceholder}
+                    className={`w-full rounded-md border ${
+                      isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                    } focus:outline-none focus:ring-2 ${
+                      formData.receiverEmail
+                        ? "border-orange-400 bg-orange-50 focus:ring-orange-400"
+                        : "border-red-200 focus:ring-red-400"
+                    }`}
+                  />
+                </div>
+              </div>
+
+              {/* Gift Service Selection */}
+              <div className="space-y-4">
+                <h3
+                  className={`${
+                    isMobile ? "text-lg" : "text-xl"
+                  } font-semibold text-red-600 border-b-2 border-red-200 pb-2`}
+                >
+                  {t.giftServiceSection}
+                </h3>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="giftService"
+                    className={`${isMobile ? "text-xs" : "text-sm"} font-medium`}
+                  >
+                    {t.giftServiceLabel}
+                  </label>
+                  <select
+                    id="giftService"
+                    value={giftService}
+                    onChange={(e) => setGiftService(e.target.value)}
+                    className={`w-full rounded-md border ${
+                      isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                    } focus:outline-none focus:ring-2 border-orange-300 bg-white focus:ring-orange-400 text-black`}
+                  >
+                    <option value="">{t.giftServicePlaceholder}</option>
+                    <option value={t.giftServiceVoucher}>
+                      {t.giftServiceVoucher}
+                    </option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Message */}
+              <div className="space-y-4">
+                <h3
+                  className={`${
+                    isMobile ? "text-lg" : "text-xl"
+                  } font-semibold text-red-600 border-b-2 border-red-200 pb-2`}
+                >
+                  {t.messageLabel}
+                </h3>
+                <div className="space-y-2">
+                  <label
+                    htmlFor="message"
+                    className={`${
+                      isMobile ? "text-xs" : "text-sm"
+                    } font-medium`}
+                  >
+                    {t.message} * ({t.limitedText} {t.messageCounter})
+                  </label>
+                  <textarea
+                    id="message"
+                    value={formData.message}
+                    onChange={(e) => {
+                      const next = clampWords(e.target.value, 100);
+                      handleInputChange("message", next);
+                    }}
+                    placeholder={t.messagePlaceholder}
+                    className={`w-full ${
+                      isMobile ? "min-h-24" : "min-h-32"
+                    } rounded-md border ${
+                      isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
+                    } focus:outline-none focus:ring-2 resize-none ${
+                      formData.message
+                        ? "border-orange-400 bg-orange-50 focus:ring-orange-400"
+                        : "border-red-200 focus:ring-red-400"
+                    }`}
+                  />
+                  <div
+                    className={`text-right ${
+                      isMobile ? "text-xs" : "text-xs"
+                    } text-gray-500`}
+                  >
+                    {countWords(formData.message)}/100 {t.messageCounter}
+                  </div>
+                </div>
+              </div>
+
+              {/* Submit Button */}
+              <div className="flex justify-center items-center ">
+                <button
+                  type="submit"
+                  disabled={isSubmitting}
+                  className={`relative mb-12 flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-orange-300 hover:from-red-600 hover:to-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white ${
+                    isMobile ? "px-6 py-2 text-base" : "px-10 py-3 text-lg"
+                  } font-semibold rounded-full shadow-lg transform transition hover:scale-105`}
+                >
+                  <span>
+                    {isSubmitting ? t.submittingButton : t.submitButton}
+                  </span>
+                  <Image
+                    src="/CÁO5@4x-05.png"
+                    alt="Foxie icon"
+                    width={20}
+                    height={20}
+                    className={`${
+                      isMobile ? "h-8 w-8" : "h-12 w-12"
+                    } drop-shadow-xl animate-pulse`}
+                    aria-hidden
+                  />
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Footer */}
+          <footer className="w-full mt-[-130]">
+            <Image
+              src="/footer.png"
+              alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
+              width={1920}
+              height={400}
+              className="w-full h-auto object-cover"
+            />
+          </footer>
         </div>
       </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
+
+      <style jsx>{`
+        @keyframes zoomInOut {
+          0% {
+            transform: scale(1);
+          }
+          50% {
+            transform: scale(1.08);
+          }
+          100% {
+            transform: scale(1);
+          }
+        }
+        .animate-zoom-in-out {
+          animation: zoomInOut 3.5s ease-in-out infinite;
+        }
+      `}</style>
+
+      {notification && (
+        <div
+          className={`fixed ${
+            isMobile
+              ? "bottom-4 right-4 left-4 max-w-none"
+              : "bottom-6 right-6 max-w-sm"
+          } rounded-md border ${isMobile ? "p-3" : "p-4"} shadow-lg ${
+            notification.variant === "destructive"
+              ? "bg-red-50 border-red-200 text-red-700"
+              : "bg-green-50 border-green-200 text-green-700"
+          }`}
         >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+          <p className={`${isMobile ? "text-sm" : ""} font-semibold`}>
+            {notification.title}
+          </p>
+          {notification.description && (
+            <p className={`${isMobile ? "text-xs" : "text-sm"} mt-1`}>
+              {notification.description}
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }
