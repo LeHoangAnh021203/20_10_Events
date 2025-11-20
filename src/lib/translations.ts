@@ -29,7 +29,7 @@ export interface Translations {
   // Buttons
   submitButton: string;
   submittingButton: string;
-  backButton: string;
+  homeButton: string;
   saveCardButton: string;
   shareButton: string;
   
@@ -123,7 +123,7 @@ export const translations: Record<Language, Translations> = {
     // Buttons
     submitButton: "Gửi Lời Chúc",
     submittingButton: "Đang gửi...",
-    backButton: "Quay lại",
+    homeButton: "Về Trang Chú",
     saveCardButton: "📸 Lưu Thiệp",
     shareButton: "🔗 Chia sẻ",
     
@@ -223,7 +223,7 @@ export const translations: Record<Language, Translations> = {
     // Buttons
     submitButton: "Send Wishes",
     submittingButton: "Sending...",
-    backButton: "Back",
+    homeButton: "Back Home",
     saveCardButton: "📸 Save Card",
     shareButton: "🔗 Share",
     

@@ -5,6 +5,7 @@ import LanguageSwitcher from "./components/language-switcher";
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { useRouter, useSearchParams } from "next/navigation";
 
 interface FormData {
   senderName: string;
@@ -18,6 +19,8 @@ interface FormData {
 
 export default function LandingPage() {
   const { t } = useLanguage();
+  const router = useRouter();
+  const searchParams = useSearchParams();
   const [notification, setNotification] = useState<{
     title: string;
     description?: string;
@@ -40,8 +43,6 @@ export default function LandingPage() {
 
   const [showGreetingCard, setShowGreetingCard] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormData | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [giftService, setGiftService] = useState<string>("");
   const [formData, setFormData] = useState<FormData>({
     senderName: "",
     senderPhone: "",
@@ -66,13 +67,30 @@ export default function LandingPage() {
     return parts.slice(0, maxWords).join(" ");
   };
 
+  useEffect(() => {
+    if (showGreetingCard) return;
+    const shouldShow = searchParams.get("showGreetingCard") === "1";
+    if (!shouldShow) return;
+    if (typeof window === "undefined") return;
+
+    const stored = sessionStorage.getItem("formData");
+    if (stored) {
+      try {
+        const data: FormData = JSON.parse(stored);
+        setSubmittedData(data);
+        setShowGreetingCard(true);
+      } catch (error) {
+        console.error("Không thể khôi phục dữ liệu thiệp:", error);
+      }
+    }
+  }, [searchParams, showGreetingCard]);
+
   const handleInputChange = (field: keyof FormData, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
+  const handleSelectService = () => {
+    // Validate required fields before navigating
     const sanitizedForm: FormData = {
       senderName: formData.senderName.trim(),
       senderPhone: formData.senderPhone.trim(),
@@ -114,7 +132,7 @@ export default function LandingPage() {
       return;
     }
 
-    const nameRegex = /^[\p{L}\p{M}][\p{L}\p{M}'’\-\s]{1,}$/u;
+    const nameRegex = /^[\p{L}\p{M}][\p{L}\p{M}''\-\s]{1,}$/u;
     if (
       !nameRegex.test(sanitizedForm.senderName) ||
       !nameRegex.test(sanitizedForm.receiverName)
@@ -160,7 +178,6 @@ export default function LandingPage() {
     }
 
     // Allow duplicate sender/receiver name and phone as long as format is valid
-
     if (
       sanitizedForm.senderEmail &&
       sanitizedForm.receiverEmail &&
@@ -175,49 +192,13 @@ export default function LandingPage() {
       return;
     }
 
-    setIsSubmitting(true);
-
-    try {
-      const response = await fetch("/api/submit-gsheet", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...sanitizedForm, giftService }),
-      });
-
-      if (!response.ok) {
-        const error = await response.json().catch(() => ({ error: "" }));
-        throw new Error(error?.error || "Không thể lưu dữ liệu");
-      }
-
-      setNotification({
-        title: t.successTitle,
-        description: t.successDesc,
-        variant: "success",
-      });
-
-      setSubmittedData(sanitizedForm);
-      setShowGreetingCard(true);
-
-      setFormData({
-        senderName: "",
-        senderPhone: "",
-        senderEmail: "",
-        receiverName: "",
-        receiverPhone: "",
-        receiverEmail: "",
-        message: "",
-      });
-      setGiftService("");
-    } catch (error) {
-      console.error("Không thể lưu Google Sheet:", error);
-      setNotification({
-        title: t.errorTitle,
-        description: t.errorDesc,
-        variant: "destructive",
-      });
-    } finally {
-      setIsSubmitting(false);
+    // Store form data in sessionStorage to pass to voucher page
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("formData", JSON.stringify(sanitizedForm));
     }
+
+    // Navigate to voucher page
+    router.push("/voucher");
   };
 
   const handleBackToForm = () => {
@@ -571,8 +552,7 @@ export default function LandingPage() {
           </div>
 
           <div className={`${isMobile ? "px-4" : "px-6"} pb-8`}>
-            <form
-              onSubmit={handleSubmit}
+            <div
               className={`${isMobile ? "space-y-6" : "space-y-8"}`}
             >
               {/* Sender Information */}
@@ -779,38 +759,6 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Gift Service Selection */}
-              <div className="space-y-4">
-                <h3
-                  className={`${
-                    isMobile ? "text-lg" : "text-xl"
-                  } font-semibold text-red-600 border-b-2 border-red-200 pb-2`}
-                >
-                  {t.giftServiceSection}
-                </h3>
-                <div className="space-y-2">
-                  <label
-                    htmlFor="giftService"
-                    className={`${isMobile ? "text-xs" : "text-sm"} font-medium`}
-                  >
-                    {t.giftServiceLabel}
-                  </label>
-                  <select
-                    id="giftService"
-                    value={giftService}
-                    onChange={(e) => setGiftService(e.target.value)}
-                    className={`w-full rounded-md border ${
-                      isMobile ? "px-2 py-1.5 text-sm" : "px-3 py-2"
-                    } focus:outline-none focus:ring-2 border-orange-300 bg-white focus:ring-orange-400 text-black`}
-                  >
-                    <option value="">{t.giftServicePlaceholder}</option>
-                    <option value={t.giftServiceVoucher}>
-                      {t.giftServiceVoucher}
-                    </option>
-                  </select>
-                </div>
-              </div>
-
               {/* Message */}
               <div className="space-y-4">
                 <h3
@@ -857,17 +805,17 @@ export default function LandingPage() {
                 </div>
               </div>
 
-              {/* Submit Button */}
+              {/* Select Service Button */}
               <div className="flex justify-center items-center ">
                 <button
-                  type="submit"
-                  disabled={isSubmitting}
-                  className={`relative mb-12 flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-orange-300 hover:from-red-600 hover:to-orange-600 disabled:opacity-60 disabled:cursor-not-allowed text-white ${
+                  type="button"
+                  onClick={handleSelectService}
+                  className={`relative mb-12 flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-orange-300 hover:from-red-600 hover:to-orange-600 text-white ${
                     isMobile ? "px-6 py-2 text-base" : "px-10 py-3 text-lg"
                   } font-semibold rounded-full shadow-lg transform transition hover:scale-105`}
                 >
                   <span>
-                    {isSubmitting ? t.submittingButton : t.submitButton}
+                    {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
                   </span>
                   <Image
                     src="/CÁO5@4x-05.png"
@@ -881,7 +829,7 @@ export default function LandingPage() {
                   />
                 </button>
               </div>
-            </form>
+            </div>
           </div>
 
           {/* Footer */}

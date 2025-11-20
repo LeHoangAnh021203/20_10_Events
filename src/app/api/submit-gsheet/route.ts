@@ -31,21 +31,30 @@ export async function POST(request: Request) {
       )
     }
 
-    // Tạo payload dưới dạng array để đảm bảo đúng thứ tự và không bị ghi đè
+    // Tạo payload phù hợp với Apps Script mới (sheet "momo")
     const now = new Date()
     const vnDate = now.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" })
     const vnTime = now.toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false })
-    const vnDateTime = `${vnDate} ${vnTime}`
+
+    // Gộp thông tin người nhận + gói dịch vụ + lời chúc vào ghi chú
+    const notes = [
+      body.receiverName ? `Người nhận: ${body.receiverName}` : null,
+      body.receiverPhone ? `SĐT người nhận: ${body.receiverPhone}` : null,
+      body.receiverEmail ? `Email người nhận: ${body.receiverEmail}` : null,
+      body.giftService ? `Gói dịch vụ: ${body.giftService}` : null,
+      body.message ? `Lời chúc: ${body.message}` : null,
+    ]
+      .filter(Boolean)
+      .join(" | ")
 
     const payload = [
-      body.senderName,                    // Cột A: Tên người gửi
-      `'${body.senderPhone}`,           // Cột B: SĐT người gửi  
-      body.senderEmail || '',           // Cột C: Email người gửi
-      body.receiverName,                // Cột D: Tên người nhận
-      `'${body.receiverPhone}`,         // Cột E: SĐT người nhận
-      body.receiverEmail || '',         // Cột F: Email người nhận
-      body.message,                     // Cột G: Lời chúc
-      vnDateTime                        // Cột H: Thời gian (VN) dd/MM/yyyy HH:mm:ss
+      body.senderName,                        // Tên khách hàng
+      `'${body.senderPhone}`,                 // SĐT
+      body.senderEmail || "",                 // Email
+      notes || "",                            // Ghi chú
+      vnDate,                                 // Ngày
+      vnTime,                                 // Giờ
+      "momo",                                 // Tab đích trong Google Sheet
     ]
 
     const response = await fetch(webhookUrl, {

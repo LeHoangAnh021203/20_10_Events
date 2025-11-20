@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSwitcher from "./language-switcher";
 import { saveAs } from "file-saver";
+import { useRouter } from "next/navigation";
 
 interface FormData {
   senderName: string;
@@ -29,8 +30,9 @@ const voucherImages = [
   { alt: "Diamond", src: "/Asset%204@4x.png" },
 ];
 
-export default function GreetingCard({ formData, onBack }: GreetingCardProps) {
+export default function GreetingCard({ formData }: GreetingCardProps) {
   const { t } = useLanguage();
+  const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
 
@@ -459,10 +461,10 @@ export default function GreetingCard({ formData, onBack }: GreetingCardProps) {
         {/* Back Button */}
         <div className="mb-4 md:mb-6">
           <button
-            onClick={onBack}
+            onClick={() => router.push("/")}
             className="flex items-center gap-2 hover:bg-red-50 border border-red-200 bg-transparent px-4 py-2 rounded-md"
           >
-            ← {t.backButton}
+            ← {t.homeButton || "Về trang chủ"}
           </button>
         </div>
 

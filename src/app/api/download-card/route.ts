@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
     
     // Return the image with proper headers for download
     return new NextResponse(buffer, {
-      status: 200,
+      status: 200, 
       headers: {
         'Content-Type': 'image/png',
         'Content-Disposition': `attachment; filename="${fileName}"`,
