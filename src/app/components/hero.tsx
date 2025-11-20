@@ -134,7 +134,7 @@ export default function Hero() {
     };
 
     generateMoMoPayment();
-  }, [isExpanded, selectedVoucher]);
+  }, [isExpanded, selectedVoucher, formData]);
 
   return (
     <>

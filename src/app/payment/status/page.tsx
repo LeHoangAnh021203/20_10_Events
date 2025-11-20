@@ -1,7 +1,7 @@
 "use client";
 
-import { Suspense, useEffect, useState } from "react";
-import { useSearchParams, useRouter } from "next/navigation";
+import { Suspense, useCallback, useEffect, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
 interface OrderStatus {
@@ -14,27 +14,11 @@ interface OrderStatus {
 
 function PaymentStatusContent() {
   const searchParams = useSearchParams();
-  const router = useRouter();
   const orderId = searchParams.get("orderId");
   const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
-  useEffect(() => {
-    if (!orderId) {
-      setIsLoading(false);
-      return;
-    }
-
-    // Check status immediately
-    checkOrderStatus();
-
-    // Poll every 3 seconds for status update
-    const interval = setInterval(checkOrderStatus, 3000);
-
-    return () => clearInterval(interval);
-  }, [orderId]);
-
-  const checkOrderStatus = async () => {
+  const checkOrderStatus = useCallback(async () => {
     if (!orderId) return;
 
     try {
@@ -56,7 +40,22 @@ function PaymentStatusContent() {
       console.error("Error checking order status:", error);
       setIsLoading(false);
     }
-  };
+  }, [orderId]);
+
+  useEffect(() => {
+    if (!orderId) {
+      setIsLoading(false);
+      return;
+    }
+
+    checkOrderStatus();
+
+    const interval = setInterval(() => {
+      checkOrderStatus();
+    }, 3000);
+
+    return () => clearInterval(interval);
+  }, [orderId, checkOrderStatus]);
 
   const getStatusDisplay = () => {
     if (isLoading || !orderStatus) {

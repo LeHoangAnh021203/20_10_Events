@@ -2,7 +2,7 @@
 import type React from "react";
 import GreetingCard from "./components/greeting-card";
 import LanguageSwitcher from "./components/language-switcher";
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter, useSearchParams } from "next/navigation";
@@ -17,7 +17,7 @@ interface FormData {
   message: string;
 }
 
-export default function LandingPage() {
+function LandingPageContent() {
   const { t } = useLanguage();
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -885,5 +885,17 @@ export default function LandingPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function LandingPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50" />
+      }
+    >
+      <LandingPageContent />
+    </Suspense>
   );
 }
