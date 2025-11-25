@@ -43,6 +43,7 @@ function LandingPageContent() {
 
   const [showGreetingCard, setShowGreetingCard] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormData | null>(null);
+  const [selectedServiceName, setSelectedServiceName] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>({
     senderName: "",
     senderPhone: "",
@@ -79,6 +80,11 @@ function LandingPageContent() {
         const data: FormData = JSON.parse(stored);
         setSubmittedData(data);
         setShowGreetingCard(true);
+
+        const storedService = sessionStorage.getItem("paidServiceName");
+        if (storedService) {
+          setSelectedServiceName(storedService);
+        }
       } catch (error) {
         console.error("Không thể khôi phục dữ liệu thiệp:", error);
       }
@@ -207,7 +213,13 @@ function LandingPageContent() {
   };
 
   if (showGreetingCard && submittedData) {
-    return <GreetingCard formData={submittedData} onBack={handleBackToForm} />;
+    return (
+      <GreetingCard
+        formData={submittedData}
+        serviceName={selectedServiceName ?? undefined}
+        onBack={handleBackToForm}
+      />
+    );
   }
 
   return (

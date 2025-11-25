@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { OrderRecord, upsertOrder } from "@/lib/order-store";
+import { upsertOrder, getOrder } from "@/lib/order-store";
+import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
 
 export const runtime = "nodejs";
 
@@ -18,58 +19,6 @@ interface MoMoIPNBody {
   extraData: string;
   signature: string;
   responseTime: number;
-}
-
-async function sendOrderToGoogleSheets(
-  orderId: string,
-  record: OrderRecord | null,
-  amount: number,
-  transId?: string,
-  message?: string
-) {
-  try {
-    const webhookUrl = process.env.GOOGLE_SHEETS_WEB_APP_URL;
-    if (!webhookUrl) {
-      console.warn("GOOGLE_SHEETS_WEB_APP_URL chưa được cấu hình");
-      return;
-    }
-
-    const now = new Date();
-    const vnDate = now.toLocaleDateString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh" });
-    const vnTime = now.toLocaleTimeString("vi-VN", { timeZone: "Asia/Ho_Chi_Minh", hour12: false });
-    const vnDateTime = `${vnDate} ${vnTime}`;
-
-    const payload = {
-      orderId,
-      status: record?.status || "PAID",
-      amount,
-      transId: transId || record?.transId || "",
-      message: message || "",
-      serviceName: record?.serviceName || "",
-      senderName: record?.formData?.senderName || "",
-      senderPhone: record?.formData?.senderPhone || "",
-      senderEmail: record?.formData?.senderEmail || "",
-      receiverName: record?.formData?.receiverName || "",
-      receiverPhone: record?.formData?.receiverPhone || "",
-      receiverEmail: record?.formData?.receiverEmail || "",
-      note: record?.formData?.message || "",
-      updatedAt: vnDateTime,
-    };
-
-    const response = await fetch(webhookUrl, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    });
-
-    if (!response.ok) {
-      console.error("Google Sheets webhook error:", response.status);
-    } else {
-      console.log("Order saved to Google Sheets:", orderId);
-    }
-  } catch (error) {
-    console.error("Error sending order to Google Sheets:", error);
-  }
 }
 
 export async function POST(req: Request) {
@@ -147,13 +96,43 @@ export async function POST(req: Request) {
         message,
       });
 
+      // Lấy order hiện tại trước khi update để giữ lại thông tin đầy đủ
+      const existingOrder = await getOrder(orderId);
+      
       const updatedRecord = await upsertOrder(orderId, {
         status: "PAID",
         amount,
         transId,
+        // Giữ lại serviceName và formData từ order cũ
+        serviceName: existingOrder?.serviceName,
+        formData: existingOrder?.formData,
       });
 
-      await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
+      console.log("Updated order record:", {
+        orderId,
+        status: updatedRecord.status,
+        hasServiceName: !!updatedRecord.serviceName,
+        hasFormData: !!updatedRecord.formData,
+        sheetsSyncedAt: updatedRecord.sheetsSyncedAt,
+      });
+
+      // Chỉ sync lên Google Sheets nếu chưa sync hoặc chưa có timestamp
+      if (!updatedRecord.sheetsSyncedAt) {
+        console.log("🔄 Syncing order to Google Sheets (first time):", orderId);
+        const syncResult = await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
+        
+        // Nếu sync thành công, đánh dấu đã sync
+        if (syncResult.success) {
+          await upsertOrder(orderId, {
+            sheetsSyncedAt: new Date().toISOString(),
+          });
+          console.log("✅ Order synced to Google Sheets successfully:", orderId);
+        } else {
+          console.error("❌ Failed to sync order to Google Sheets:", orderId, syncResult.error);
+        }
+      } else {
+        console.log("⏭️ Order already synced to Google Sheets, skipping:", orderId);
+      }
 
       // Here you can add additional logic:
       // - Send confirmation email

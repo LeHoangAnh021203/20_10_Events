@@ -1,8 +1,9 @@
 "use client";
 
 import { Suspense, useCallback, useEffect, useState } from "react";
-import { useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
+import GreetingCard from "@/app/components/greeting-card";
 
 interface OrderStatus {
   orderId: string;
@@ -12,11 +13,25 @@ interface OrderStatus {
   message: string;
 }
 
+interface FormData {
+  senderName: string;
+  senderPhone: string;
+  senderEmail: string;
+  receiverName: string;
+  receiverPhone: string;
+  receiverEmail: string;
+  message: string;
+}
+
 function PaymentStatusContent() {
   const searchParams = useSearchParams();
+  const router = useRouter();
   const orderId = searchParams.get("orderId");
   const [orderStatus, setOrderStatus] = useState<OrderStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [showGreetingCard, setShowGreetingCard] = useState(false);
+  const [formData, setFormData] = useState<FormData | null>(null);
+  const [serviceName, setServiceName] = useState<string | null>(null);
 
   const checkOrderStatus = useCallback(async () => {
     if (!orderId) return;
@@ -56,6 +71,55 @@ function PaymentStatusContent() {
 
     return () => clearInterval(interval);
   }, [orderId, checkOrderStatus]);
+
+  // Load formData from sessionStorage or API when component mounts
+  useEffect(() => {
+    const loadFormData = async () => {
+      if (typeof window !== "undefined") {
+        // Ưu tiên 1: Lấy từ sessionStorage (nhanh nhất)
+        const stored = sessionStorage.getItem("formData");
+        if (stored) {
+          try {
+            const data: FormData = JSON.parse(stored);
+            setFormData(data);
+            console.log("✅ Loaded formData from sessionStorage");
+          } catch (e) {
+            console.error("Error parsing form data from sessionStorage:", e);
+          }
+        }
+        
+        const storedService = sessionStorage.getItem("paidServiceName");
+        if (storedService) {
+          setServiceName(storedService);
+        }
+
+        // Ưu tiên 2: Nếu không có trong sessionStorage và có orderId, lấy từ API
+        if (!stored && orderId) {
+          try {
+            console.log("🔄 Loading formData from API for orderId:", orderId);
+            const response = await fetch(`/api/payment/get-order?orderId=${orderId}`);
+            if (response.ok) {
+              const orderData = await response.json();
+              if (orderData.formData) {
+                setFormData(orderData.formData);
+                // Lưu vào sessionStorage để lần sau không cần gọi API
+                sessionStorage.setItem("formData", JSON.stringify(orderData.formData));
+                console.log("✅ Loaded formData from API and saved to sessionStorage");
+              }
+              if (orderData.serviceName) {
+                setServiceName(orderData.serviceName);
+                sessionStorage.setItem("paidServiceName", orderData.serviceName);
+              }
+            }
+          } catch (error) {
+            console.error("Error loading formData from API:", error);
+          }
+        }
+      }
+    };
+
+    loadFormData();
+  }, [orderId]);
 
   const getStatusDisplay = () => {
     if (isLoading || !orderStatus) {
@@ -114,7 +178,7 @@ function PaymentStatusContent() {
           </div>
         ),
         title: "Thanh toán thất bại",
-        description: orderStatus.message || "Giao dịch không thành công. Vui lòng thử lại hoặc liên hệ hỗ trợ.",
+        description: orderStatus.message || "Giao dịch không thành công. Vui lòng thử lại hoặc liên hệ 0889 866 666 để hỗ trợ.",
         color: "text-red-600",
       };
     }
@@ -132,6 +196,17 @@ function PaymentStatusContent() {
   };
 
   const statusDisplay = getStatusDisplay();
+
+  // Show greeting card if requested
+  if (showGreetingCard && formData) {
+    return (
+      <GreetingCard
+        formData={formData}
+        serviceName={serviceName ?? undefined}
+        onBack={() => setShowGreetingCard(false)}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50">
@@ -173,16 +248,79 @@ function PaymentStatusContent() {
               >
                 Tiếp tục chọn dịch vụ
               </Link>
-              <Link
-                href="/?showGreetingCard=1"
-                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center"
+              <button
+                onClick={() => {
+                  // Kiểm tra formData trong sessionStorage trước khi hiển thị greeting card
+                  if (typeof window !== "undefined") {
+                    const storedFormData = sessionStorage.getItem("formData");
+                    if (storedFormData) {
+                      try {
+                        const data: FormData = JSON.parse(storedFormData);
+                        setFormData(data);
+                        setShowGreetingCard(true);
+                      } catch (e) {
+                        console.error("Error parsing form data:", e);
+                        alert("Vui lòng điền thông tin thiệp chúc mừng trước.");
+                      }
+                    } else {
+                      alert("Vui lòng điền thông tin thiệp chúc mừng trước.");
+                    }
+                  }
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-2"
               >
+                <svg
+                  className="w-5 h-5"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8"
+                  />
+                </svg>
                 Gửi thiệp chúc mừng
+              </button>
+            </div>
+          )}
+
+          {orderStatus?.status === "FAILED" && (
+            <div className="grid gap-4 sm:grid-cols-2">
+               <button
+                onClick={() => {
+                  // Get the last selected voucher from sessionStorage
+                  const lastVoucher = sessionStorage.getItem("lastSelectedVoucher");
+                  if (lastVoucher) {
+                    try {
+                      const voucher = JSON.parse(lastVoucher);
+                      // Navigate back to voucher page with auto-open payment popup
+                      router.push(`/voucher?openPayment=true&voucherId=${voucher.id}`);
+                    } catch (e) {
+                      console.error("Error parsing last voucher:", e);
+                      router.push("/voucher");
+                    }
+                  } else {
+                    // Fallback to voucher page
+                    router.push("/voucher");
+                  }
+                }}
+                className="px-6 py-3 bg-gradient-to-r from-red-500 to-orange-300 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center"
+              >
+                Quay lại trang thanh toán
+              </button>
+              <Link
+                href="/voucher"
+                className="px-6 py-3 bg-white border-2 border-orange-300 text-orange-600 font-semibold rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center"
+              >
+                Tiếp tục mua sắm
               </Link>
             </div>
           )}
 
-          {(orderStatus?.status === "FAILED" || orderStatus?.status === "PENDING") && (
+          {orderStatus?.status === "PENDING" && (
             <div className="grid gap-4 sm:grid-cols-2">
               <button
                 onClick={checkOrderStatus}
@@ -199,27 +337,12 @@ function PaymentStatusContent() {
             </div>
           )}
 
-          <div className="grid gap-4 sm:grid-cols-2">
-            <Link
-              href="/"
-              className="px-6 py-3 bg-white border-2 border-red-200 text-red-500 font-semibold rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center"
-            >
-              Về trang chủ
-            </Link>
-            {orderStatus?.status === "PAID" && (
-              <Link
-                href="/?showGreetingCard=1"
-                className="px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center"
-              >
-                Gửi thiệp chúc mừng
-              </Link>
-            )}
-          </div>
+        
 
           <p className="text-xs text-gray-500">
             {orderStatus?.status === "PENDING"
               ? "Hệ thống đang tự động kiểm tra trạng thái. Nếu đã thanh toán, trạng thái sẽ cập nhật trong 1-2 phút."
-              : "Nếu cần hỗ trợ, vui lòng liên hệ hotline hoặc chat với Foxie."}
+              : "Nếu cần hỗ trợ, vui lòng liên hệ hotline 0889 866 666 "}
           </p>
         </div>
       </div>

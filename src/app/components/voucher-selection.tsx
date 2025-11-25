@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { X, Check, Gift, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
-import MoMoPaymentButton from "./momo-payment-button";
 
 export interface VoucherOption {
   id: string;
@@ -21,17 +20,25 @@ interface VoucherSelectionProps {
   onVoucherSelect?: (voucher: VoucherOption | null) => void;
 }
 
-export default function VoucherSelection({ isMobile = false, onVoucherSelect }: VoucherSelectionProps) {
-  const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(null);
-  const [detailVoucher, setDetailVoucher] = useState<VoucherOption | null>(null);
+export default function VoucherSelection({
+  isMobile = false,
+  onVoucherSelect,
+}: VoucherSelectionProps) {
+  const [selectedVoucherId, setSelectedVoucherId] = useState<string | null>(
+    null
+  );
+  const [detailVoucher, setDetailVoucher] = useState<VoucherOption | null>(
+    null
+  );
 
   const voucherOptions: VoucherOption[] = [
     {
       id: "service-basic",
       name: "Dịch vụ Cộng thêm",
-      price: 299000,
+      price: 0,
       type: "service",
-      description: "Voucher dịch vụ chăm sóc da chuyên nghiệp lên đến",
+      description:
+        "Voucher dịch vụ chăm sóc da chuyên nghiệp 269.000đ - 299.000đ",
       services: [
         "Tẩy tế bào chết",
         "Đắp mặt nạ dưỡng ẩm",
@@ -86,6 +93,9 @@ export default function VoucherSelection({ isMobile = false, onVoucherSelect }: 
   ];
 
   const formatPrice = (price: number) => {
+    if (price === 0) {
+      return "Miễn phí";
+    }
     return new Intl.NumberFormat("vi-VN", {
       style: "currency",
       currency: "VND",
@@ -298,22 +308,14 @@ export default function VoucherSelection({ isMobile = false, onVoucherSelect }: 
                 </div>
 
                 {/* Payment Button */}
-                <div className="mt-8 pt-6 border-t border-gray-200">
-                  <div className="text-center mb-4">
+                <div className="">
+                  <div className="text-center ">
                     <p className="text-sm text-gray-600 mb-2">
-                      Thanh toán để nhận voucher
+                      {detailVoucher.price === 0
+                        ? "Bấm tiếp tục để nhận voucher"
+                        : "Thanh toán để nhận voucher"}
                     </p>
                   </div>
-                  <MoMoPaymentButton
-                    orderId={`ORDER_${Date.now()}_${Math.random()
-                      .toString(36)
-                      .substr(2, 9)}`}
-                    amount={detailVoucher.price}
-                    className="w-full"
-                    onError={(error) => {
-                      alert(`Lỗi thanh toán: ${error.message}`);
-                    }}
-                  />
                 </div>
               </div>
             </motion.div>
@@ -323,4 +325,3 @@ export default function VoucherSelection({ isMobile = false, onVoucherSelect }: 
     </>
   );
 }
-

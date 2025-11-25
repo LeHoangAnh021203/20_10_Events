@@ -18,6 +18,7 @@ export interface OrderRecord {
   formData?: OrderFormData | null;
   transId?: string;
   updatedAt?: string;
+  sheetsSyncedAt?: string; // Timestamp khi đã sync lên Google Sheets
 }
 
 const dataDir = join(process.cwd(), "data");

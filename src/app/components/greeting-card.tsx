@@ -19,6 +19,7 @@ interface FormData {
 
 interface GreetingCardProps {
   formData: FormData;
+  serviceName?: string | null;
   onBack: () => void;
 }
 
@@ -30,11 +31,26 @@ const voucherImages = [
   { alt: "Diamond", src: "/Asset%204@4x.png" },
 ];
 
-export default function GreetingCard({ formData }: GreetingCardProps) {
+export default function GreetingCard({ formData, serviceName }: GreetingCardProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [paidServiceName, setPaidServiceName] = useState<string | null>(
+    serviceName ?? null
+  );
+  const [ignoreApiService, setIgnoreApiService] = useState(false);
+  useEffect(() => {
+    if (serviceName) {
+      setPaidServiceName(serviceName);
+    }
+  }, [serviceName]);
+  const normalizeText = (value: string) =>
+    value
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .trim();
 
   useEffect(() => {
     const update = () => setIsMobile(window.innerWidth < 640);
@@ -42,6 +58,129 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
+
+  // Fetch paid service information
+  useEffect(() => {
+    // First, try to get from sessionStorage (fastest, available immediately)
+    const getServiceFromStorage = () => {
+      if (typeof window !== "undefined") {
+        try {
+          // Try multiple keys for better compatibility
+          const lastVoucher = sessionStorage.getItem("lastSelectedVoucher");
+          const savedServiceName = sessionStorage.getItem("paidServiceName");
+          
+          if (lastVoucher) {
+            const voucher = JSON.parse(lastVoucher);
+            const price = typeof voucher.price === "number" ? voucher.price : null;
+            if (voucher && voucher.name) {
+              console.log("Got service from sessionStorage (lastSelectedVoucher):", voucher.name, "price:", price);
+              setPaidServiceName(voucher.name);
+              sessionStorage.setItem("paidServiceName", voucher.name);
+              setIgnoreApiService(price === 0);
+              return { name: voucher.name, isFree: price === 0 };
+            }
+          }
+          
+          if (savedServiceName) {
+            console.log("Got service from sessionStorage (paidServiceName):", savedServiceName);
+            setPaidServiceName(savedServiceName);
+            setIgnoreApiService(false);
+            return { name: savedServiceName, isFree: false };
+          }
+        } catch (e) {
+          console.error("Error reading voucher from sessionStorage:", e);
+        }
+      }
+      return null;
+    };
+
+    // Set from sessionStorage first (immediate)
+    const storageService = getServiceFromStorage();
+
+    // Then fetch from API to get the most up-to-date info (may take longer)
+    // CHỈ gọi API nếu:
+    // 1. Có số điện thoại
+    // 2. KHÔNG có service trong sessionStorage HOẶC service trong sessionStorage KHÔNG phải miễn phí
+    const fetchPaidService = async () => {
+      if (!formData.senderPhone) return;
+      
+      // Nếu đã có service từ sessionStorage và là voucher miễn phí, KHÔNG gọi API
+      if (storageService && storageService.isFree) {
+        console.log("⏭️ Skipping API call - free voucher selected from sessionStorage:", storageService.name);
+        return;
+      }
+      
+      // Nếu đã có service từ sessionStorage (không phải miễn phí), vẫn giữ nguyên và không override
+      if (storageService && !storageService.isFree) {
+        console.log("✅ Service from sessionStorage exists, keeping it:", storageService.name);
+        // Vẫn có thể gọi API để log, nhưng không override
+      }
+      
+      try {
+        const response = await fetch(`/api/get-paid-service?senderPhone=${encodeURIComponent(formData.senderPhone)}`);
+        if (response.ok) {
+          const data = await response.json();
+          console.log("Fetched paid service from API:", data); // Debug log
+          
+          // CHỈ override nếu:
+          // 1. API trả về serviceName
+          // 2. KHÔNG có service trong sessionStorage HOẶC service trong sessionStorage không phải miễn phí
+          // 3. KHÔNG ignore API (không phải voucher miễn phí đang được chọn)
+          if (data.serviceName && !ignoreApiService) {
+            // Nếu có storageService (dù miễn phí hay không), giữ nguyên storageService
+            // Vì voucher đang được chọn quan trọng hơn đơn hàng đã thanh toán trước đó
+            if (storageService) {
+              console.log("✅ Keeping service from sessionStorage (selected voucher), ignoring API result:", storageService.name);
+              return;
+            }
+            
+            // Chỉ dùng API result nếu không có service trong sessionStorage
+            setPaidServiceName(data.serviceName);
+            console.log("Updated paidServiceName from API to:", data.serviceName); // Debug log
+
+            if (typeof window !== "undefined") {
+              try {
+                const lastVoucher = sessionStorage.getItem("lastSelectedVoucher");
+                if (lastVoucher) {
+                  const voucher = JSON.parse(lastVoucher);
+                  // CHỈ update nếu voucher không phải miễn phí
+                  if (voucher.price !== 0) {
+                    voucher.name = data.serviceName;
+                    sessionStorage.setItem("lastSelectedVoucher", JSON.stringify(voucher));
+                  }
+                }
+              } catch (e) {
+                console.error("Error updating sessionStorage:", e);
+              }
+            }
+          } else if (data.serviceName && ignoreApiService) {
+            console.log("⏭️ Ignoring API result because free voucher is selected");
+          }
+        } else {
+          const errorText = await response.text();
+          console.error("Failed to fetch paid service:", response.status, errorText);
+          // If API fails but we have storage service, keep using it
+          if (!storageService) {
+            console.warn("No service found in sessionStorage and API failed");
+          }
+        }
+      } catch (error) {
+        console.error("Error fetching paid service:", error);
+        // If API fails but we have storage service, keep using it
+        if (!storageService && !ignoreApiService) {
+          console.warn("No service found in sessionStorage and API error");
+        }
+      }
+    };
+
+    // Fetch from API (this may override sessionStorage value if different)
+    // CHỈ gọi nếu không có service trong sessionStorage HOẶC service không phải miễn phí
+    if (!storageService || !storageService.isFree) {
+      fetchPaidService();
+    } else {
+      console.log("⏭️ Skipping API call - free voucher selected from sessionStorage");
+    }
+  }, [formData.senderPhone, ignoreApiService]);
 
   // Responsive character-per-line settings
   const maxCharsMessage = isMobile ? 37 : 70;
@@ -89,17 +228,151 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
     return wrappedLines;
   };
 
-  const highlightPhrase =
-    "voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VND";
+  // Dynamically set highlight phrase based on paid service
+  const getHighlightPhrase = () => {
+    if (paidServiceName) {
+      console.log("getHighlightPhrase - paidServiceName:", paidServiceName); // Debug log
+      
+      // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
+      const normalizedName = normalizeText(paidServiceName);
+      console.log("getHighlightPhrase - normalizedName:", normalizedName); // Debug log
+      
+      // Check for specific service names (check more specific ones first)
+      if (normalizedName.includes("500.000") || normalizedName.includes("500000")) {
+        console.log("Matched: Cash Voucher 500.000VNĐ");
+        return "voucher Cash Voucher 500.000VNĐ";
+      } else if (normalizedName.includes("200.000") || normalizedName.includes("200000")) {
+        console.log("Matched: Cash Voucher 200.000VNĐ");
+        return "voucher Cash Voucher 200.000VNĐ";
+      } else if (
+        normalizedName.includes("dịch vụ cộng thêm") ||
+        normalizedName.includes("cong them") ||
+        normalizedName === "dịch vụ cộng thêm" ||
+        normalizedName.includes("service-basic") ||
+        normalizedName.startsWith("dịch vụ")
+      ) {
+        console.log("Matched: Dịch vụ Cộng thêm");
+        return "voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ";
+      } else {
+        console.log("No match, using original service name:", paidServiceName);
+        return `voucher ${paidServiceName}`;
+      }
+    }
+    console.log("No paidServiceName, using default fallback");
+    return "voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ"; // Default fallback
+  };
+
+  const highlightPhrase = getHighlightPhrase();
+
+  // Generate dynamic body content based on paid service
+  const getDynamicBodyContent = () => {
+    const baseText = "Luôn rạng rỡ, yêu bản thân và tận hưởng từng phút giây được nâng niu bởi Nhà Cáo. Gửi tặng bạn ngàn lời yêu thương thông qua ";
+    const endText = " để làn da luôn được chăm sóc đúng cách dẫu ngày thường hay ngày lễ!";
+    
+    if (paidServiceName) {
+      // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
+      const normalizedName = normalizeText(paidServiceName);
+      console.log("getDynamicBodyContent - normalizedName:", normalizedName);
+      
+      // Check for specific service names (check more specific ones first)
+      if (normalizedName.includes("500.000") || normalizedName.includes("500000")) {
+        return baseText + "voucher Cash Voucher 500.000VNĐ" + endText;
+      } else if (normalizedName.includes("200.000") || normalizedName.includes("200000")) {
+        return baseText + "voucher Cash Voucher 200.000VNĐ" + endText;
+      } else if (
+        normalizedName.includes("dịch vụ cộng thêm") ||
+        normalizedName.includes("cong them") ||
+        normalizedName === "dịch vụ cộng thêm" ||
+        normalizedName.includes("service-basic") ||
+        normalizedName.startsWith("dịch vụ")
+      ) {
+        console.log("getDynamicBodyContent - Matched Dịch vụ Cộng thêm");
+        return baseText + "voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ" + endText;
+      } else {
+        console.log("getDynamicBodyContent - No match, using:", paidServiceName);
+        return baseText + `voucher ${paidServiceName}` + endText;
+      }
+    }
+    console.log("getDynamicBodyContent - No paidServiceName, using default");
+    return t.body; // Default fallback to original translation
+  };
+
+  const dynamicBodyContent = getDynamicBodyContent();
 
   const highlightWords = new Set(
     highlightPhrase.toLowerCase().split(/\s+/).filter(Boolean)
   );
   const normalizeToken = (token: string) =>
-    token.toLowerCase().replace(/[.,!?:;"'“”()\[\]{}]/g, "");
+    token.toLowerCase().replace(/[.,!?:;"'""()\[\]{}]/g, "");
   const isPriceToken = (token: string) => {
     const compact = token.toLowerCase().replace(/[^a-z0-9]/g, "");
-    return /\d/.test(compact) && compact.endsWith("vnd");
+    // Check for VNĐ, vnd, or price patterns like 299000, 200000, 500000
+    return (
+      (/\d/.test(compact) && (compact.endsWith("vnd") || compact.includes("vnd"))) ||
+      /^(299000|200000|500000|299|200|500)/.test(compact)
+    );
+  };
+  
+  // Check if token contains price (like "299.000VNĐ")
+  const containsPrice = (token: string) => {
+    const normalized = token.toLowerCase();
+    return (
+      normalized.includes("299.000") ||
+      normalized.includes("299000") ||
+      normalized.includes("200.000") ||
+      normalized.includes("200000") ||
+      normalized.includes("500.000") ||
+      normalized.includes("500000")
+    );
+  };
+  
+  // Function to check if a text segment contains the full voucher phrase
+  const containsVoucherPhrase = (text: string) => {
+    const normalizedText = normalizeText(text).replace(/[.,!?:;"'""()\[\]{}]/g, "");
+    
+    if (paidServiceName) {
+      // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
+      const normalizedName = normalizeText(paidServiceName);
+      
+      // Check for specific service names (check more specific ones first)
+      if (normalizedName.includes("500.000") || normalizedName.includes("500000")) {
+        return (
+          normalizedText.includes("cash voucher 500000") ||
+          normalizedText.includes("voucher cash voucher 500000") ||
+          normalizedText.includes("cash voucher 500.000")
+        );
+      } else if (normalizedName.includes("200.000") || normalizedName.includes("200000")) {
+        return (
+          normalizedText.includes("cash voucher 200000") ||
+          normalizedText.includes("voucher cash voucher 200000") ||
+          normalizedText.includes("cash voucher 200.000")
+        );
+      } else if (
+        normalizedName.includes("dịch vụ cộng thêm") ||
+        normalizedName.includes("cong them") ||
+        normalizedName === "dịch vụ cộng thêm" ||
+        normalizedName.includes("service-basic") ||
+        normalizedName.startsWith("dịch vụ")
+      ) {
+        console.log("containsVoucherPhrase - Matched Dịch vụ Cộng thêm for text:", text);
+        return (
+          normalizedText.includes("voucher dịch vụ cộng thêm") ||
+          normalizedText.includes("dịch vụ cộng thêm") ||
+          normalizedText.includes("299000vnd") ||
+          normalizedText.includes("299.000vnd") ||
+          normalizedText.includes("voucher dịch vụ cộng thêm trị giá lên đến 299000vnd") ||
+          normalizedText.includes("voucher dịch vụ cộng thêm trị giá")
+        );
+      }
+    }
+    
+    // Default fallback
+    return (
+      normalizedText.includes("voucher dịch vụ cộng thêm") ||
+      normalizedText.includes("dịch vụ cộng thêm") ||
+      normalizedText.includes("299000vnd") ||
+      normalizedText.includes("299.000vnd")
+    );
   };
 
   // Wrap text but keep original indices so we can style substrings across lines
@@ -221,7 +494,64 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
       /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     const fileName = `foxie-card-${Date.now()}.png`;
 
-    // Strategy 1: Try FileSaver.js approach first (best for most browsers)
+    // Strategy 1: Ưu tiên backend download API (giống logic QR code - đảm bảo chất lượng tốt nhất)
+    // Backend API xử lý tốt hơn trên mobile và đảm bảo fonts/images được render đúng
+    try {
+      console.log("🔄 Sending card to backend API for download...");
+      const response = await fetch("/api/download-card", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ imageData: dataUrl }),
+      });
+
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = URL.createObjectURL(blob);
+        
+        // Try native share API first on mobile (giống QR code)
+        if (isMobile && typeof navigator !== "undefined" && navigator.share) {
+          try {
+            const file = new File([blob], fileName, { type: "image/png" });
+            if (navigator.canShare?.({ files: [file] })) {
+              await navigator.share({
+                files: [file],
+                title: "Foxie Card - Face Wash Fox",
+                text: "Thiệp chúc mừng từ Face Wash Fox",
+              });
+              URL.revokeObjectURL(url);
+              return;
+            }
+          } catch (shareError) {
+            console.warn("Không thể chia sẻ trực tiếp:", shareError);
+          }
+        }
+        
+        // Download via link
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = fileName;
+        link.style.display = "none";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+        URL.revokeObjectURL(url);
+
+        setTimeout(() => {
+          alert(
+            "Ảnh đã được tải xuống! Kiểm tra thư mục Downloads hoặc Gallery của bạn."
+          );
+        }, 500);
+        return;
+      } else {
+        console.warn("Backend API returned error:", response.status);
+      }
+    } catch (error) {
+      console.log("Backend download failed, trying fallback:", error);
+    }
+
+    // Strategy 2: Fallback - Try FileSaver.js approach (client-side)
     try {
       const response = await fetch(dataUrl);
       const blob = await response.blob();
@@ -238,39 +568,6 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
       return;
     } catch (error) {
       console.log("FileSaver approach failed:", error);
-    }
-
-    // Strategy 1.5: Try backend download API (most reliable for mobile)
-    try {
-      const response = await fetch("/api/download-card", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ imageData: dataUrl }),
-      });
-
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = fileName;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-
-        setTimeout(() => {
-          alert(
-            "Ảnh đã được tải xuống! Kiểm tra thư mục Downloads hoặc Gallery của bạn."
-          );
-        }, 500);
-        return;
-      }
-    } catch (error) {
-      console.log("Backend download failed:", error);
     }
 
     // Strategy 2: iOS Safari specific fallback
@@ -412,6 +709,50 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
 
   const handleShare = async () => {
     try {
+      // Export card to dataURL first
+      const dataUrl = await exportCardAsPng();
+      
+      // Try backend API first (giống QR code logic)
+      try {
+        const response = await fetch("/api/download-card", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ imageData: dataUrl }),
+        });
+
+        if (response.ok) {
+          const blob = await response.blob();
+          
+          // Try native share API
+          if (navigator.share) {
+            const file = new File([blob], `foxie-card-${Date.now()}.png`, {
+              type: "image/png",
+            });
+            const shareData = {
+              title: t.shareTitle,
+              text: `${t.shareText} ${formData.senderName} gửi đến ${formData.receiverName}: ${formData.message}`,
+              files: [file],
+            };
+
+            if (navigator.canShare?.(shareData)) {
+              await navigator.share(shareData);
+              return;
+            }
+          }
+          
+          // Fallback to download if share not available
+          const url = URL.createObjectURL(blob);
+          triggerDownload(url);
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+          return;
+        }
+      } catch (apiError) {
+        console.warn("Backend API failed, using client-side:", apiError);
+      }
+
+      // Fallback to client-side blob
       const blob = await exportCardAsBlob();
 
       if (blob && navigator.share) {
@@ -430,13 +771,12 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
         }
       }
 
-      // Fallback to download
+      // Final fallback to download
       if (blob) {
         const url = URL.createObjectURL(blob);
         triggerDownload(url);
         setTimeout(() => URL.revokeObjectURL(url), 1500);
       } else {
-        const dataUrl = await exportCardAsPng();
         triggerDownload(dataUrl);
       }
 
@@ -461,10 +801,10 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
         {/* Back Button */}
         <div className="mb-4 md:mb-6">
           <button
-            onClick={() => router.push("/")}
+            onClick={() => router.push("/voucher")}
             className="flex items-center gap-2 hover:bg-red-50 border border-red-200 bg-transparent px-4 py-2 rounded-md"
           >
-            ← {t.homeButton || "Về trang chủ"}
+            ← Tiếp tục mua sắm
           </button>
         </div>
 
@@ -818,7 +1158,7 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
                         </span>
                       </div>
                     ))}
-                    {wrapTextWithIndices(t.body, maxCharsBody).map(
+                    {wrapTextWithIndices(dynamicBodyContent, maxCharsBody).map(
                       (seg, lineIndex) => {
                         const tokens = seg.text.split(/(\s+)/); // keep spaces
                         return (
@@ -841,22 +1181,30 @@ export default function GreetingCard({ formData }: GreetingCardProps) {
                                   lineIndex === 0 ? "1rem" : undefined,
                               }}
                             >
-                              {tokens.map((tk, i) => {
-                                if (/^\s+$/.test(tk))
+                              {/* Check if this line contains the voucher phrase */}
+                              {containsVoucherPhrase(seg.text) ? (
+                                <span className="text-[#eb3526] font-bold">
+                                  {seg.text}
+                                </span>
+                              ) : (
+                                tokens.map((tk, i) => {
+                                  if (/^\s+$/.test(tk))
+                                    return <span key={i}>{tk}</span>;
+                                  const norm = normalizeToken(tk);
+                                  if (
+                                    highlightWords.has(norm) ||
+                                    isPriceToken(tk) ||
+                                    containsPrice(tk)
+                                  ) {
+                                    return (
+                                      <strong key={i} className="text-[#eb3526]">
+                                        {tk}
+                                      </strong>
+                                    );
+                                  }
                                   return <span key={i}>{tk}</span>;
-                                const norm = normalizeToken(tk);
-                                if (
-                                  highlightWords.has(norm) ||
-                                  isPriceToken(tk)
-                                ) {
-                                  return (
-                                    <strong key={i} className="text-[#eb3526]">
-                                      {tk}
-                                    </strong>
-                                  );
-                                }
-                                return <span key={i}>{tk}</span>;
-                              })}
+                                })
+                              )}
                             </span>
                           </div>
                         );
