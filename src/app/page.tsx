@@ -4,6 +4,7 @@ import GreetingCard from "./components/greeting-card";
 import LanguageSwitcher from "./components/language-switcher";
 import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter, useSearchParams } from "next/navigation";
 
@@ -845,7 +846,29 @@ function LandingPageContent() {
           </div>
 
           {/* Footer */}
-          <footer className="w-full mt-[-130]">
+          <footer className="w-full">
+            <div className="bg-white/80 backdrop-blur-sm px-4 py-8 sm:px-6 mb-[-10] md:mb-[-150]">
+              <div className="grid gap-3 text-center text-sm text-gray-700 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                {[
+                  { href: "/dieu-khoan-giao-dich", label: "Điều khoản giao dịch" },
+                  { href: "/chinh-sach-thanh-toan", label: "Chính sách thanh toán" },
+                  { href: "/chinh-sach-doi-tra-hoan-tien", label: "Chính sách đổi trả – hoàn tiền" },
+                  { href: "/chinh-sach-giao-nhan", label: "Chính sách giao nhận" },
+                  { href: "/chinh-sach-bao-mat-thong-tin", label: "Chính sách bảo mật thông tin" },
+                  { href: "/chinh-sach-bao-mat-thanh-toan", label: "Chính sách bảo mật thanh toán" },
+                  { href: "/lien-he", label: "Liên hệ" },
+                ].map((link) => (
+                  <div key={link.href} className="flex items-center justify-center">
+                    <Link
+                      href={link.href}
+                      className="inline-flex w-full max-w-[260px] items-center justify-center rounded-full border border-orange-200 px-4 py-2 font-semibold text-orange-600 hover:bg-orange-50"
+                    >
+                      {link.label}
+                    </Link>
+                  </div>
+                ))}
+              </div>
+            </div>
             <Image
               src="/footer.png"
               alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"

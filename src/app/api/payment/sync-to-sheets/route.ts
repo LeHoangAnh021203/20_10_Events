@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { getOrder, upsertOrder } from "@/lib/order-store";
-import crypto from "crypto";
+import { getOrder, upsertOrder, type OrderRecord } from "@/lib/order-store";
 
 export const runtime = "nodejs";
 
 async function sendOrderToGoogleSheets(
   orderId: string,
-  record: any,
+  record: OrderRecord | null,
   amount: number,
   transId?: string,
   message?: string

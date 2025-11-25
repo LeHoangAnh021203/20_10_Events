@@ -3,6 +3,15 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 
+interface RefundApiResponse {
+  success?: boolean;
+  message?: string;
+  error?: string;
+  refundTransId?: string;
+  amount?: number;
+  [key: string]: unknown;
+}
+
 export default function RefundPage() {
   const router = useRouter();
   const [orderId, setOrderId] = useState("");
@@ -13,7 +22,7 @@ export default function RefundPage() {
   const [result, setResult] = useState<{
     success: boolean;
     message: string;
-    data?: any;
+    data?: RefundApiResponse;
   } | null>(null);
 
   const handleRefund = async (e: React.FormEvent) => {
@@ -33,7 +42,7 @@ export default function RefundPage() {
         }),
       });
 
-      const data = await response.json();
+      const data: RefundApiResponse = await response.json();
 
       if (response.ok && data.success) {
         setResult({

@@ -11,6 +11,8 @@ interface OrderStatus {
   updatedAt: string;
 }
 
+type MoMoMeta = Record<string, unknown>;
+
 interface MoMoQueryResponse {
   partnerCode: string;
   requestId: string;
@@ -20,11 +22,11 @@ interface MoMoQueryResponse {
   transId: number;
   payType: string;
   resultCode: number;
-  refundTrans: any[];
+  refundTrans: MoMoMeta[];
   message: string;
   responseTime: number;
   paymentOption?: string;
-  promotionInfo?: any[];
+  promotionInfo?: MoMoMeta[];
 }
 
 async function queryMoMoStatus(orderId: string): Promise<MoMoQueryResponse | null> {
