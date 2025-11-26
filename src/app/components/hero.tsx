@@ -965,7 +965,7 @@ export default function Hero() {
                                   type="button"
                                   onClick={() => {
                                     setPaymentProvider("momo");
-                                    setPaymentMethod(null);
+                                    setPaymentMethod("momo-wallet");
                                     setMomoQrValue(null);
                                     setMomoDeeplinkUrl(null);
                                     setCurrentOrderId(null);
@@ -995,43 +995,6 @@ export default function Hero() {
                                 </button>
                               </div>
                             </div>
-
-                            {paymentProvider === "momo" && (
-                              <div className="space-y-2">
-                                <p className="text-sm text-white/80 font-semibold">
-                                  Bước 2: Chọn hình thức thanh toán MoMo
-                                </p>
-                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                  <button
-                                    type="button"
-                                    onClick={() => {
-                                      setPaymentMethod("momo-wallet");
-                                      setIsPaymentReady(false);
-                                      setMomoQrValue(null);
-                                      setMomoDeeplinkUrl(null);
-                                      setCurrentOrderId(null);
-                                    }}
-                                    className={`flex items-center gap-3 rounded-xl border px-4 py-3 text-left transition ${
-                                      paymentMethod === "momo-wallet"
-                                        ? "border-[#a50064] bg-white text-[#a50064]"
-                                        : "border-white/20 bg-white/5 text-white"
-                                    }`}
-                                  >
-                                    <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center">
-                                      <Gift className="w-5 h-5 text-[#a50064]" />
-                                    </div>
-                                    <div>
-                                      <p className="font-semibold text-base">
-                                        Ví MoMo
-                                      </p>
-                                      <p className="text-xs opacity-80">
-                                        Quét QR bằng app Ví MoMo
-                                      </p>
-                                    </div>
-                                  </button>
-                                </div>
-                              </div>
-                            )}
                           </div>
 
                           {/* QR Code from MoMo */}
