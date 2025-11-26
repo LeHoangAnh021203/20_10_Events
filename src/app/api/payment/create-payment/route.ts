@@ -73,6 +73,15 @@ export async function POST(req: Request) {
     const momoApiUrl = process.env.MOMO_API_URL || 
       "https://test-payment.momo.vn/v2/gateway/api/create";
 
+    // Log để debug (không log secret key)
+    console.log("🔍 MoMo Payment Config:", {
+      partnerCode: partnerCode ? `${partnerCode.substring(0, 4)}...` : "MISSING",
+      accessKey: accessKey ? `${accessKey.substring(0, 4)}...` : "MISSING",
+      secretKey: secretKey ? "SET" : "MISSING",
+      momoApiUrl: momoApiUrl,
+      baseUrl: baseUrl,
+    });
+
     const res = await fetch(momoApiUrl, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
