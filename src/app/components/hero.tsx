@@ -1045,7 +1045,7 @@ export default function Hero() {
                                       : "bg-white text-[#0041C1] hover:bg-white/90"
                                   }`}
                                 >
-                                  {isPaymentReady ? "" : "Thanh toán"}
+                                  {isPaymentReady ? "Đang thực hiện..." : "Thanh toán"}
                                 </button>
                                 {!isPaymentReady && (
                                   <p className="text-xs text-white/70 text-center"></p>
