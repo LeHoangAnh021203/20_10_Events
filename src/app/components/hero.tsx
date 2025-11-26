@@ -951,14 +951,14 @@ export default function Hero() {
                       {/* Payment QR Code and Account Info */}
                       <div className="mt-6 p-4 rounded-lg bg-white/10 backdrop-blur-sm border border-white/20">
                         <h3 className="text-lg sm:text-xl font-semibold text-white mb-3 text-center">
-                          Mã QR thanh toán
+                          Phương thức thanh toán
                         </h3>
                         <div className="flex flex-col items-center gap-4">
                           {/* Payment method selection */}
                           <div className="w-full space-y-4">
                             <div className="space-y-2">
                               <p className="text-sm text-white/80 font-semibold">
-                                Bước 1: Chọn phương thức thanh toán
+                                Bước 1: Chọn nguồn tiền
                               </p>
                               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <button
@@ -989,7 +989,7 @@ export default function Hero() {
                                       MoMo
                                     </p>
                                     <p className="text-xs opacity-80">
-                                      Cổng thanh toán MoMo
+                                      Áp dụng toàn bộ ngân hàng và ví điện tử
                                     </p>
                                   </div>
                                 </button>
@@ -998,6 +998,13 @@ export default function Hero() {
                           </div>
 
                           {/* QR Code from MoMo */}
+                          {paymentMethod === "momo-wallet" && (
+                            <div className="w-full text-left">
+                              <p className="text-sm text-white/80 font-semibold">
+                                Bước 2: Nhấn nút &quot;Thanh toán&quot; để tiếp tục
+                              </p>
+                            </div>
+                          )}
                           {paymentMethod === "momo-wallet" ? (
                             isPaymentReady ? (
                               momoQrValue && qrLogoDataUrl ? (
@@ -1016,14 +1023,11 @@ export default function Hero() {
                                 </div>
                               )
                             ) : (
-                              <div className="p-4 rounded-xl border border-dashed border-white/40 text-center text-white/80 text-sm w-full">
-                                Nhấn &quot;Thanh toán&quot; để tạo mã QR và bắt đầu thanh toán.
-                              </div>
+                              ""
                             )
                           ) : (
                             <div className="p-4 rounded-xl border border-dashed border-white/40 text-center text-white/80 text-sm w-full">
-                              Vui lòng hoàn tất bước chọn &quot;MoMo&quot; → &quot;Ví
-                              MoMo&quot; để hiển thị mã QR thanh toán.
+                              Vui lòng chọn nguồn tiền để tiếp tục.
                             </div>
                           )}
 
@@ -1050,8 +1054,7 @@ export default function Hero() {
                                 </button>
                                 {!isPaymentReady && (
                                   <p className="text-xs text-white/70 text-center">
-                                    Nhấn nút &quot;Thanh toán&quot; sau khi chọn
-                                    phương thức để tạo mã QR.
+                                  
                                   </p>
                                 )}
                               </div>
