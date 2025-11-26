@@ -1001,24 +1001,21 @@ export default function Hero() {
                           {paymentMethod === "momo-wallet" && (
                             <div className="w-full text-left">
                               <p className="text-sm text-white/80 font-semibold">
-                                Bước 2: Nhấn nút &quot;Thanh toán&quot; để tiếp tục
+                                Bước 2: Nhấn nút &quot;Thanh toán&quot; để tiếp
+                                tục
                               </p>
                             </div>
                           )}
                           {paymentMethod === "momo-wallet" ? (
                             isPaymentReady ? (
                               momoQrValue && qrLogoDataUrl ? (
-                                <div className="">
-                                 
-                                </div>
+                                <div className=""></div>
                               ) : (
                                 <div className="">
                                   {qrLogoDataUrl ? (
                                     <div className="" />
                                   ) : (
-                                    <p className="">
-                                     
-                                    </p>
+                                    <p className=""></p>
                                   )}
                                 </div>
                               )
@@ -1048,14 +1045,10 @@ export default function Hero() {
                                       : "bg-white text-[#0041C1] hover:bg-white/90"
                                   }`}
                                 >
-                                  {isPaymentReady
-                                    ? ""
-                                    : "Thanh toán"}
+                                  {isPaymentReady ? "" : "Thanh toán"}
                                 </button>
                                 {!isPaymentReady && (
-                                  <p className="text-xs text-white/70 text-center">
-                                  
-                                  </p>
+                                  <p className="text-xs text-white/70 text-center"></p>
                                 )}
                               </div>
                             )}
@@ -1065,25 +1058,7 @@ export default function Hero() {
                             <div className="p-3 rounded-lg bg-white/5 border border-white/10">
                               <div className="flex flex-col gap-2">
                                 <div className="flex items-center justify-between">
-                                  <span className="text-white/70">
-                                    Hình thức thanh toán
-                                  </span>
-                                  <div className="flex items-center gap-2 text-white font-semibold">
-                                    {paymentMethod === "momo-wallet" && (
-                                      <Image
-                                        src={momoLogoCircle}
-                                        alt="MoMo logo"
-                                        width={24}
-                                        height={24}
-                                        className="w-6 h-6 rounded-lg"
-                                      />
-                                    )}
-                                    <span>
-                                      {paymentMethod === "momo-wallet"
-                                        ? "Ví MoMo"
-                                        : "Chưa chọn"}
-                                    </span>
-                                  </div>
+                                  <div className="flex items-center gap-2 text-white font-semibold"></div>
                                 </div>
                                 {currentOrderId && (
                                   <div className="flex items-center justify-between">
