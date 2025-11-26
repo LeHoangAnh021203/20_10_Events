@@ -986,7 +986,7 @@ export default function Hero() {
                                   />
                                   <div>
                                     <p className="font-semibold text-base">
-                                      MoMo
+                                     Ví MoMo
                                     </p>
                                     <p className="text-xs opacity-80">
                                       Áp dụng toàn bộ ngân hàng và ví điện tử
