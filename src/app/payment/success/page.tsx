@@ -103,6 +103,18 @@ function PaymentResult() {
       const transId = searchParams.get("transId") || undefined;
       const message = searchParams.get("message") || undefined;
 
+      const clearStorage = () => {
+        if (typeof window === "undefined") return;
+        ["formData", "paidServiceName", "pendingOrderPayload"].forEach((key) => {
+          try {
+            sessionStorage.removeItem(key);
+          } catch {}
+          try {
+            localStorage.removeItem(key);
+          } catch {}
+        });
+      };
+
       try {
         if (latestFormData) {
           console.log("🔄 Syncing order with session formData:", resolvedOrderId);
@@ -123,6 +135,7 @@ function PaymentResult() {
           if (response.ok) {
             console.log("✅ Order synced via session data");
             setHasSynced(true);
+            clearStorage();
             return;
           }
 
@@ -140,6 +153,7 @@ function PaymentResult() {
         if (fallbackResponse.ok) {
           console.log("✅ Order synced via check-status fallback");
           setHasSynced(true);
+          clearStorage();
         } else {
           console.error(
             "❌ Fallback check-status failed:",
@@ -158,8 +172,19 @@ function PaymentResult() {
   useEffect(() => {
     const loadFormData = async () => {
       if (typeof window !== "undefined") {
+        const readStorage = (key: string) => {
+          try {
+            const sessionValue = sessionStorage.getItem(key);
+            if (sessionValue) return sessionValue;
+          } catch {}
+          try {
+            return localStorage.getItem(key);
+          } catch {}
+          return null;
+        };
+
         // Ưu tiên 1: Lấy từ sessionStorage (nhanh nhất)
-        const stored = sessionStorage.getItem("formData");
+        const stored = readStorage("formData");
         if (stored) {
           try {
             const data: FormData = JSON.parse(stored);
@@ -170,7 +195,7 @@ function PaymentResult() {
           }
         }
         
-        const storedService = sessionStorage.getItem("paidServiceName");
+        const storedService = readStorage("paidServiceName");
         if (storedService) {
           setServiceName(storedService);
         }
@@ -178,7 +203,7 @@ function PaymentResult() {
         // Ưu tiên 2: Nếu không có trong sessionStorage và có orderId, lấy từ API
         let orderId = searchParams.get("orderId");
         if (!orderId) {
-          orderId = sessionStorage.getItem("currentOrderId");
+          orderId = readStorage("currentOrderId");
         }
         
         if (!stored && resolvedOrderId) {

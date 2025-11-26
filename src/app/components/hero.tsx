@@ -315,6 +315,16 @@ export default function Hero() {
     }
   }, [searchParams]);
 
+  const persistData = (key: string, value: string) => {
+    if (typeof window === "undefined") return;
+    try {
+      sessionStorage.setItem(key, value);
+    } catch {}
+    try {
+      localStorage.setItem(key, value);
+    } catch {}
+  };
+
   useEffect(() => {
     // Generate MoMo payment URL when voucher is selected and form is expanded
     // Skip if voucher is free (price = 0)
@@ -346,18 +356,24 @@ export default function Hero() {
             if (formData) {
               try {
                 // Lưu formData vào sessionStorage TRƯỚC khi tạo payment để đảm bảo có data khi redirect về
-                if (typeof window !== "undefined") {
-                  sessionStorage.setItem("formData", JSON.stringify(formData));
-                  sessionStorage.setItem(
-                    "paidServiceName",
-                    selectedVoucher.name
-                  );
-                  sessionStorage.setItem("currentOrderId", orderId);
-                  console.log(
-                    "✅ Saved formData to sessionStorage before payment:",
-                    orderId
-                  );
-                }
+                const serializedFormData = JSON.stringify(formData);
+                persistData("formData", serializedFormData);
+                persistData("paidServiceName", selectedVoucher.name);
+                persistData("currentOrderId", orderId);
+                persistData(
+                  "pendingOrderPayload",
+                  JSON.stringify({
+                    orderId,
+                    amount: selectedVoucher.price,
+                    serviceName: selectedVoucher.name,
+                    formData,
+                    createdAt: Date.now(),
+                  })
+                );
+                console.log(
+                  "✅ Saved formData to storage before payment:",
+                  orderId
+                );
 
                 await fetch("/api/payment/save-order", {
                   method: "POST",
