@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono, Kalam, Pinyon_Script, Bonheur_Royale } from "next/font/google";
+import { Geist, Geist_Mono, Kalam, Pinyon_Script } from "next/font/google";
 import localFont from "next/font/local";
 import Script from "next/script";
 import "./globals.css";
@@ -27,10 +27,16 @@ const pinyonScript = Pinyon_Script({
   weight: ["400"],
 });
 
-const bonheurRoyale = Bonheur_Royale({
+const bonheurRoyale = localFont({
   variable: "--font-bonheur-royale",
-  subsets: ["latin"],
-  weight: ["400"],
+  display: "swap",
+  src: [
+    {
+      path: "../../public/fonts/BonheurRoyale-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
+  ],
 });
 
 const poppins = localFont({
