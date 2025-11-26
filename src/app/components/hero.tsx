@@ -960,7 +960,7 @@ export default function Hero() {
                               <p className="text-sm text-white/80 font-semibold">
                                 Bước 1: Chọn nguồn tiền
                               </p>
-                              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                              <div className="grid grid-cols sm:grid-cols-1 gap-3">
                                 <button
                                   type="button"
                                   onClick={() => {
@@ -1049,7 +1049,7 @@ export default function Hero() {
                                   }`}
                                 >
                                   {isPaymentReady
-                                    ? "Đang tạo mã QR..."
+                                    ? ""
                                     : "Thanh toán"}
                                 </button>
                                 {!isPaymentReady && (
