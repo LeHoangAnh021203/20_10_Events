@@ -1026,7 +1026,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                       <span
                         className="text-[20px] md:text[20px] text-gray-600 "
                         style={{
-                          fontFamily: "Bonheur Royale, cursive",
+                          fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                           fontWeight: "600",
                         }}
                       >
@@ -1046,7 +1046,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                         isMobile ? "text-[20px] pl-3" : "text-[24px] pl-4"
                       } text-gray-800 leading-relaxed border-b border-gray-300 pb-0.5 gap-1`}
                       style={{
-                        fontFamily: "Bonheur Royale, cursive",
+                        fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                         fontWeight: "800",
                       }}
                     >
@@ -1079,7 +1079,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                                   : "text-[24px] pl-4"
                               } text-gray-800 leading-relaxed w-full`}
                               style={{
-                                fontFamily: "Bonheur Royale, cursive",
+                                fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                                 fontWeight: "400",
                                 textIndent:
                                   lineIndex === 0 ? "1rem" : undefined,
@@ -1149,7 +1149,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                             isMobile ? "text-[20px] pl-3" : "text-[24px] pl-4"
                           } text-gray-800 leading-relaxed w-full`}
                           style={{
-                            fontFamily: "Bonheur Royale, cursive",
+                            fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                             fontWeight: "400",
                             textIndent: lineIndex === 0 ? "1rem" : undefined,
                           }}
@@ -1175,7 +1175,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                                   : "text-[24px] pl-4"
                               } text-gray-800 leading-relaxed w-full`}
                               style={{
-                                fontFamily: "Bonheur Royale, cursive",
+                                fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                                 fontWeight: "400",
                                 textIndent:
                                   lineIndex === 0 ? "1rem" : undefined,
@@ -1229,7 +1229,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                           <span
                             className="text-base md:text-[24px] text-orange-500 text-center leading-relaxed whitespace-pre-wrap break-words"
                             style={{
-                              fontFamily: "Bonheur Royale, cursive",
+                              fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                               fontWeight: "600",
                             }}
                           >
@@ -1243,7 +1243,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                       <span
                         className="text-[20px] md:text-[20px] text-gray-800 text-center items-center justify-center leading-relaxed pl-3 md:pl-4 w-40 "
                         style={{
-                          fontFamily: "Bonheur Royale, cursive",
+                          fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                           fontWeight: "400",
                         }}
                       >

@@ -30,14 +30,35 @@ export async function POST(req: Request) {
       );
     }
 
-    const record = await upsertOrder(orderId, {
-      status: "FREE",
-      amount: 0,
-      serviceName,
-      formData,
-    });
+    // Try to save to local file system (may fail on Vercel, that's OK)
+    let record: Awaited<ReturnType<typeof upsertOrder>> | null = null;
+    try {
+      record = await upsertOrder(orderId, {
+        status: "FREE",
+        amount: 0,
+        serviceName,
+        formData,
+      });
+    } catch (fileError) {
+      // On Vercel, file system writes may fail - that's OK, we'll still send to Google Sheets
+      console.warn("⚠️ Could not save to local file system (expected on Vercel):", fileError);
+      // Create a record object for Google Sheets even if file write failed
+      record = {
+        status: "FREE",
+        amount: 0,
+        serviceName,
+        formData,
+        updatedAt: new Date().toISOString(),
+      };
+    }
 
-    await sendOrderToGoogleSheets(orderId, record, 0, undefined, "FREE ORDER");
+    // Always try to send to Google Sheets (this is the important part)
+    const sheetsResult = await sendOrderToGoogleSheets(orderId, record, 0, undefined, "FREE ORDER");
+    
+    if (!sheetsResult.success) {
+      console.warn("⚠️ Google Sheets sync failed:", sheetsResult.error);
+      // Still return success if we at least tried - the order is still valid
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

@@ -15,6 +15,12 @@ html, body {
   font-weight: 400;
   font-style: normal;
 }
+
+.bonheur-royale {
+  font-family: var(--font-bonheur-royale), "Bonheur Royale", cursive;
+  font-weight: 400;
+  font-style: normal;
+}
 @import "tailwindcss";
 
 :root {
