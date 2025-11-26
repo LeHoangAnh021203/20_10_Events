@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { readOrders, upsertOrder, getOrder } from "@/lib/order-store";
+import { readOrders, upsertOrder, getOrder, OrderRecord } from "@/lib/order-store";
 import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
 import crypto from "crypto";
 
@@ -193,7 +193,7 @@ export async function GET(req: Request) {
               console.log("🔄 Syncing paid order to Google Sheets (without local file):", orderId);
               await sendOrderToGoogleSheets(
                 orderId,
-                recordForSheets as any,
+                recordForSheets as OrderRecord,
                 momoData.amount,
                 momoData.transId?.toString(),
                 momoData.message
