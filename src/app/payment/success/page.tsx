@@ -23,6 +23,7 @@ function PaymentResult() {
   const [showGreetingCard, setShowGreetingCard] = useState(false);
   const [formData, setFormData] = useState<FormData | null>(null);
   const [serviceName, setServiceName] = useState<string | null>(null);
+  const [resolvedOrderId, setResolvedOrderId] = useState<string | null>(null);
 
   useEffect(() => {
     const resultCode = searchParams.get("resultCode");
@@ -38,63 +39,120 @@ function PaymentResult() {
         console.log("📦 Retrieved orderId from sessionStorage:", orderId);
       }
     }
-
-    // Tự động sync data khi có orderId và thanh toán thành công
-    const syncOrderData = async () => {
-      if (orderId && resultCode === "0" && !hasSynced) {
-        try {
-          console.log("🔄 Auto-syncing order data to Google Sheets:", orderId);
-          // Gọi API check-status để trigger sync (API này sẽ tự động sync nếu chưa sync)
-          const response = await fetch(`/api/payment/check-status?orderId=${orderId}`);
-          if (response.ok) {
-            const data = await response.json();
-            console.log("✅ Order status checked and synced:", data);
-            setHasSynced(true);
-          } else {
-            console.error("❌ Failed to check order status:", response.status);
-            // Retry sau 2 giây nếu lần đầu thất bại
-            setTimeout(async () => {
-              try {
-                const retryResponse = await fetch(`/api/payment/check-status?orderId=${orderId}`);
-                if (retryResponse.ok) {
-                  const retryData = await retryResponse.json();
-                  console.log("✅ Order synced on retry:", retryData);
-                  setHasSynced(true);
-                }
-              } catch (retryError) {
-                console.error("❌ Retry sync failed:", retryError);
-              }
-            }, 2000);
-          }
-        } catch (error) {
-          console.error("❌ Error syncing order data:", error);
-          // Retry sau 2 giây
-          setTimeout(async () => {
-            try {
-              const retryResponse = await fetch(`/api/payment/check-status?orderId=${orderId}`);
-              if (retryResponse.ok) {
-                const retryData = await retryResponse.json();
-                console.log("✅ Order synced on retry:", retryData);
-                setHasSynced(true);
-              }
-            } catch (retryError) {
-              console.error("❌ Retry sync failed:", retryError);
-            }
-          }, 2000);
-        }
-      }
-    };
+    setResolvedOrderId(orderId ?? null);
 
     if (resultCode === "0") {
       setStatus("success");
       console.log("Thanh toán thành công:", { orderId, message });
-      // Sync data ngay khi thanh toán thành công
-      syncOrderData();
     } else {
       setStatus("failed");
       console.log("Thanh toán thất bại:", { orderId, resultCode, message });
     }
-  }, [searchParams, hasSynced]);
+  }, [searchParams]);
+
+  useEffect(() => {
+    const syncWithSessionData = async () => {
+      if (status !== "success" || !resolvedOrderId || hasSynced) return;
+
+      let latestFormData = formData;
+      let latestServiceName = serviceName;
+
+      if (typeof window !== "undefined") {
+        if (!latestFormData) {
+          const stored = sessionStorage.getItem("formData");
+          if (stored) {
+            try {
+              latestFormData = JSON.parse(stored);
+            } catch (error) {
+              console.error("Không thể parse formData từ sessionStorage:", error);
+            }
+          }
+        }
+
+        if (!latestServiceName) {
+          const storedService = sessionStorage.getItem("paidServiceName");
+          if (storedService) {
+            latestServiceName = storedService;
+          }
+        }
+      }
+
+      const lastVoucherRaw =
+        typeof window !== "undefined"
+          ? sessionStorage.getItem("lastSelectedVoucher")
+          : null;
+      let voucherPrice: number | undefined;
+      if (lastVoucherRaw) {
+        try {
+          const voucher = JSON.parse(lastVoucherRaw);
+          if (typeof voucher.price === "number") {
+            voucherPrice = voucher.price;
+          }
+          if (!latestServiceName && voucher.name) {
+            latestServiceName = voucher.name;
+          }
+        } catch (error) {
+          console.warn("Không thể parse voucher cuối:", error);
+        }
+      }
+
+      const amountParam = Number(searchParams.get("amount"));
+      const amount = !Number.isNaN(amountParam)
+        ? amountParam
+        : voucherPrice ?? 0;
+      const transId = searchParams.get("transId") || undefined;
+      const message = searchParams.get("message") || undefined;
+
+      try {
+        if (latestFormData) {
+          console.log("🔄 Syncing order with session formData:", resolvedOrderId);
+          const response = await fetch("/api/payment/sync-client", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({
+              orderId: resolvedOrderId,
+              amount,
+              serviceName: latestServiceName ?? undefined,
+              formData: latestFormData,
+              transId,
+              message,
+              status: "PAID",
+            }),
+          });
+
+          if (response.ok) {
+            console.log("✅ Order synced via session data");
+            setHasSynced(true);
+            return;
+          }
+
+          const errorText = await response.text();
+          console.error("❌ Failed to sync via session data:", errorText);
+        }
+
+        console.log(
+          "ℹ️ Falling back to check-status sync for order:",
+          resolvedOrderId
+        );
+        const fallbackResponse = await fetch(
+          `/api/payment/check-status?orderId=${resolvedOrderId}`
+        );
+        if (fallbackResponse.ok) {
+          console.log("✅ Order synced via check-status fallback");
+          setHasSynced(true);
+        } else {
+          console.error(
+            "❌ Fallback check-status failed:",
+            fallbackResponse.status
+          );
+        }
+      } catch (error) {
+        console.error("❌ Error syncing order data:", error);
+      }
+    };
+
+    syncWithSessionData();
+  }, [status, resolvedOrderId, formData, serviceName, hasSynced, searchParams]);
 
   // Load formData from sessionStorage or API when component mounts
   useEffect(() => {
@@ -123,10 +181,10 @@ function PaymentResult() {
           orderId = sessionStorage.getItem("currentOrderId");
         }
         
-        if (!stored && orderId) {
+        if (!stored && resolvedOrderId) {
           try {
-            console.log("🔄 Loading formData from API for orderId:", orderId);
-            const response = await fetch(`/api/payment/get-order?orderId=${orderId}`);
+            console.log("🔄 Loading formData from API for orderId:", resolvedOrderId);
+            const response = await fetch(`/api/payment/get-order?orderId=${resolvedOrderId}`);
             if (response.ok) {
               const orderData = await response.json();
               if (orderData.formData) {
@@ -148,7 +206,7 @@ function PaymentResult() {
     };
 
     loadFormData();
-  }, [searchParams]);
+  }, [searchParams, resolvedOrderId]);
 
   // Show greeting card if requested
   if (showGreetingCard && formData) {
@@ -200,9 +258,9 @@ function PaymentResult() {
                 <p className="text-gray-600 mb-4">
                   Cảm ơn bạn đã thanh toán. Đơn hàng của bạn đã được xử lý.
                 </p>
-                {searchParams.get("orderId") && (
+                {resolvedOrderId && (
                   <p className="text-sm text-gray-500">
-                    Mã đơn hàng: {searchParams.get("orderId")}
+                    Mã đơn hàng: {resolvedOrderId}
                   </p>
                 )}
               </div>
@@ -297,9 +355,9 @@ function PaymentResult() {
                 <p className="text-gray-600 mb-4">
                   {searchParams.get("message") || "Đã xảy ra lỗi trong quá trình thanh toán."}
                 </p>
-                {searchParams.get("orderId") && (
+                {resolvedOrderId && (
                   <p className="text-sm text-gray-500">
-                    Mã đơn hàng: {searchParams.get("orderId")}
+                    Mã đơn hàng: {resolvedOrderId}
                   </p>
                 )}
               </div>
