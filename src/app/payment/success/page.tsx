@@ -277,7 +277,7 @@ function PaymentResult() {
     };
 
     syncWithSessionData();
-  }, [status, resolvedOrderId, formData, serviceName, hasSynced]);
+  }, [status, resolvedOrderId, formData, serviceName, hasSynced, searchParams]);
 
   // Load formData from sessionStorage or API when component mounts
   useEffect(() => {
