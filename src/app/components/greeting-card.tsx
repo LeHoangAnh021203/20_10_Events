@@ -522,9 +522,11 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
       /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     const fileName = `foxie-card-${Date.now()}.png`;
 
-    // Strategy 1: Ưu tiên backend download API (giống logic QR code - đảm bảo chất lượng tốt nhất)
-    // Backend API xử lý tốt hơn trên mobile và đảm bảo fonts/images được render đúng
-    if (!options?.skipBackend) {
+    const isDataUrl = typeof dataUrl === "string" && dataUrl.startsWith("data:image");
+    const shouldUseBackend = !options?.skipBackend && isDataUrl;
+
+    // Strategy 1: Ưu tiên backend download API với dataURL base64 (đảm bảo chất lượng trên mobile)
+    if (shouldUseBackend) {
       try {
         console.log("🔄 Sending card to backend API for download...");
         const response = await fetch("/api/download-card", {
