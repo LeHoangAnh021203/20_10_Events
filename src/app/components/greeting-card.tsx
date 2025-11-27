@@ -801,11 +801,26 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
         }
       }
 
-      // Final fallback to download
+      // Final fallback to download (desktop or when navigator.share not available)
       if (blob) {
-        const url = URL.createObjectURL(blob);
-        await triggerDownload(url, { skipBackend: true });
-        setTimeout(() => URL.revokeObjectURL(url), 1500);
+        const fileName = `foxie-card-${Date.now()}.png`;
+        try {
+          saveAs(blob, fileName);
+          setTimeout(() => {
+            alert("Ảnh đã được tải xuống! Kiểm tra thư mục Downloads hoặc Gallery của bạn.");
+          }, 500);
+        } catch (downloadError) {
+          console.warn("FileSaver download failed, falling back to generic download:", downloadError);
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = fileName;
+          link.style.display = "none";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          setTimeout(() => URL.revokeObjectURL(url), 1500);
+        }
       } else {
         await triggerDownload(dataUrl);
       }
