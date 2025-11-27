@@ -160,26 +160,26 @@ export async function GET(req: Request) {
                   console.log("⏭️ Order was synced by another process (check-status double-check), skipping:", orderId);
                 } else {
                   console.log("🔄 Syncing paid order to Google Sheets (check-status):", orderId);
-                  const syncResult = await sendOrderToGoogleSheets(
-                    orderId,
-                    updatedRecord,
-                    momoData.amount,
-                    momoData.transId?.toString(),
-                    momoData.message
-                  );
-                  
-                  // Nếu sync thành công, đánh dấu đã sync (nếu có thể ghi file)
-                  if (syncResult.success) {
-                    try {
-                      await upsertOrder(orderId, {
-                        sheetsSyncedAt: new Date().toISOString(),
-                      });
+            const syncResult = await sendOrderToGoogleSheets(
+              orderId,
+              updatedRecord,
+              momoData.amount,
+              momoData.transId?.toString(),
+              momoData.message
+            );
+            
+            // Nếu sync thành công, đánh dấu đã sync (nếu có thể ghi file)
+            if (syncResult.success) {
+              try {
+                await upsertOrder(orderId, {
+                  sheetsSyncedAt: new Date().toISOString(),
+                });
                       console.log("✅ Order synced to Google Sheets successfully (check-status):", orderId);
-                    } catch (fileError) {
-                      // Trên Vercel không thể ghi file, nhưng đã sync lên Sheets rồi nên OK
-                      console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
-                    }
-                  } else {
+              } catch (fileError) {
+                // Trên Vercel không thể ghi file, nhưng đã sync lên Sheets rồi nên OK
+                console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
+              }
+            } else {
                     console.error("❌ Failed to sync order to Google Sheets (check-status):", orderId, syncResult.error);
                   }
                 }

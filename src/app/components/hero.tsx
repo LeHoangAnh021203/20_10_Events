@@ -317,12 +317,18 @@ export default function Hero() {
 
   const persistData = (key: string, value: string) => {
     if (typeof window === "undefined") return;
+    // Lưu vào cả sessionStorage và localStorage
+    // localStorage là backup cho mobile (sessionStorage có thể bị xóa khi redirect)
     try {
       sessionStorage.setItem(key, value);
-    } catch {}
+    } catch (e) {
+      console.warn(`Could not save to sessionStorage: ${key}`, e);
+    }
     try {
       localStorage.setItem(key, value);
-    } catch {}
+    } catch (e) {
+      console.warn(`Could not save to localStorage: ${key}`, e);
+    }
   };
 
   useEffect(() => {

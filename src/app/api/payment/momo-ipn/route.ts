@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
-import { upsertOrder, getOrder } from "@/lib/order-store";
+import { upsertOrder, getOrder, OrderRecord } from "@/lib/order-store";
 import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
 
 export const runtime = "nodejs";
@@ -187,10 +187,10 @@ export async function POST(req: Request) {
 
       // Chỉ sync lên Google Sheets nếu có formData (quan trọng!)
       console.log("🔄 Syncing order to Google Sheets (IPN with formData):", orderId);
-      const syncResult = await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
-      
+        const syncResult = await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
+        
       // Nếu sync thành công, đánh dấu đã sync ngay lập tức
-      if (syncResult.success) {
+        if (syncResult.success) {
         try {
           await upsertOrder(orderId, {
             sheetsSyncedAt: new Date().toISOString(),

@@ -99,8 +99,12 @@ export async function POST(req: Request) {
     );
 
     if (!result.success) {
+      console.error("❌ Failed to sync to Google Sheets:", result.error);
       return NextResponse.json(
-        { error: result.error || "Không thể đồng bộ Google Sheets" },
+        { 
+          success: false,
+          error: result.error || "Không thể đồng bộ Google Sheets" 
+        },
         { status: 500 }
       );
     }
@@ -119,10 +123,11 @@ export async function POST(req: Request) {
   } catch (error) {
     console.error("POST /api/payment/sync-client thất bại:", error);
     return NextResponse.json(
-      { error: "Không thể đồng bộ dữ liệu đơn hàng" },
+      { 
+        success: false,
+        error: error instanceof Error ? error.message : "Không thể đồng bộ dữ liệu đơn hàng" 
+      },
       { status: 500 }
     );
   }
 }
-
-

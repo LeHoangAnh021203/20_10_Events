@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, Suspense } from "react";
+import { useEffect, useState, Suspense, useRef } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import GreetingCard from "@/app/components/greeting-card";
@@ -24,6 +24,7 @@ function PaymentResult() {
   const [formData, setFormData] = useState<FormData | null>(null);
   const [serviceName, setServiceName] = useState<string | null>(null);
   const [resolvedOrderId, setResolvedOrderId] = useState<string | null>(null);
+  const syncAttemptedRef = useRef(false); // Prevent duplicate syncs
 
   useEffect(() => {
     const resultCode = searchParams.get("resultCode");
@@ -52,50 +53,81 @@ function PaymentResult() {
 
   useEffect(() => {
     const syncWithSessionData = async () => {
-      if (status !== "success" || !resolvedOrderId || hasSynced) return;
+      // Prevent duplicate syncs - chỉ sync một lần
+      if (status !== "success" || !resolvedOrderId || hasSynced || syncAttemptedRef.current) {
+        return;
+      }
+      
+      syncAttemptedRef.current = true; // Đánh dấu đã bắt đầu sync
 
       let latestFormData = formData;
       let latestServiceName = serviceName;
 
       // Bước 1: Thử lấy từ state (đã load từ useEffect khác)
       // Bước 2: Thử lấy từ sessionStorage (có thể bị xóa trên mobile)
+      // Bước 2b: Thử lấy từ localStorage (backup cho mobile)
       if (typeof window !== "undefined") {
         if (!latestFormData) {
-          const stored = sessionStorage.getItem("formData");
+          // Ưu tiên sessionStorage
+          let stored = sessionStorage.getItem("formData");
+          // Nếu không có, thử localStorage (backup cho mobile)
+          if (!stored) {
+            stored = localStorage.getItem("formData");
+          }
           if (stored) {
             try {
               latestFormData = JSON.parse(stored);
-              console.log("✅ Loaded formData from sessionStorage");
+              setFormData(latestFormData);
+              console.log("✅ Loaded formData from storage");
             } catch (error) {
-              console.error("Không thể parse formData từ sessionStorage:", error);
+              console.error("Không thể parse formData từ storage:", error);
             }
           }
         }
 
         if (!latestServiceName) {
-          const storedService = sessionStorage.getItem("paidServiceName");
+          let storedService = sessionStorage.getItem("paidServiceName");
+          if (!storedService) {
+            storedService = localStorage.getItem("paidServiceName");
+          }
           if (storedService) {
             latestServiceName = storedService;
+            setServiceName(latestServiceName);
           }
         }
       }
 
       // Bước 3: Nếu vẫn không có formData, lấy từ API (quan trọng cho mobile)
+      // LƯU Ý: Trên Vercel, get-order có thể không trả về formData vì không lưu được file
+      // Nên ưu tiên dùng localStorage/sessionStorage
       if (!latestFormData && resolvedOrderId) {
         try {
-          console.log("🔄 Loading formData from API (mobile fallback):", resolvedOrderId);
+          console.log("🔄 Loading formData from API (fallback):", resolvedOrderId);
           const orderResponse = await fetch(`/api/payment/get-order?orderId=${resolvedOrderId}`);
           if (orderResponse.ok) {
             const orderData = await orderResponse.json();
             if (orderData.formData) {
               latestFormData = orderData.formData;
               setFormData(orderData.formData);
-              console.log("✅ Loaded formData from API");
+              // Lưu vào localStorage để lần sau không cần gọi API
+              try {
+                localStorage.setItem("formData", JSON.stringify(orderData.formData));
+                console.log("✅ Loaded formData from API and saved to localStorage");
+              } catch (storageError) {
+                console.warn("Could not save to localStorage:", storageError);
+              }
             }
             if (orderData.serviceName && !latestServiceName) {
               latestServiceName = orderData.serviceName;
               setServiceName(orderData.serviceName);
+              try {
+                localStorage.setItem("paidServiceName", orderData.serviceName);
+              } catch (storageError) {
+                console.warn("Could not save serviceName to localStorage:", storageError);
+              }
             }
+          } else {
+            console.warn("⚠️ Could not load order from API:", orderResponse.status);
           }
         } catch (error) {
           console.error("Error loading formData from API:", error);
@@ -130,13 +162,13 @@ function PaymentResult() {
 
       const clearStorage = () => {
         if (typeof window === "undefined") return;
+        // CHỈ xóa sessionStorage, GIỮ LẠI localStorage để backup cho mobile
+        // localStorage sẽ được xóa khi user hoàn tất (sau khi chia sẻ thiệp)
         ["formData", "paidServiceName", "pendingOrderPayload"].forEach((key) => {
           try {
             sessionStorage.removeItem(key);
           } catch {}
-          try {
-            localStorage.removeItem(key);
-          } catch {}
+          // KHÔNG xóa localStorage ở đây - cần cho greeting card
         });
       };
 
@@ -159,18 +191,38 @@ function PaymentResult() {
           });
 
           if (response.ok) {
-            const responseData = await response.json();
-            // Nếu đã sync rồi (alreadySynced: true), vẫn coi như thành công
-            if (responseData.success || responseData.alreadySynced) {
-              console.log("✅ Order synced successfully");
-              setHasSynced(true);
-              clearStorage();
-              return;
+            try {
+              const responseData = await response.json();
+              // Nếu đã sync rồi (alreadySynced: true), vẫn coi như thành công
+              if (responseData.success || responseData.alreadySynced) {
+                console.log("✅ Order synced successfully");
+                setHasSynced(true);
+                clearStorage();
+                return;
+              } else {
+                console.warn("⚠️ Sync response OK but success=false:", responseData);
+              }
+            } catch (parseError) {
+              console.error("❌ Failed to parse sync response:", parseError);
             }
+          } else {
+            // Response không OK, thử đọc error message
+            let errorMessage = `HTTP ${response.status}`;
+            try {
+              const errorText = await response.text();
+              if (errorText) {
+                try {
+                  const errorJson = JSON.parse(errorText);
+                  errorMessage = errorJson.error || errorJson.message || errorText;
+                } catch {
+                  errorMessage = errorText || errorMessage;
+                }
+              }
+            } catch (readError) {
+              console.warn("Could not read error response:", readError);
+            }
+            console.error("❌ Failed to sync via sync-client:", errorMessage);
           }
-
-          const errorText = await response.text();
-          console.error("❌ Failed to sync via sync-client:", errorText);
         } else {
           console.warn("⚠️ No formData available, cannot sync customer info for order:", resolvedOrderId);
           // Vẫn thử check-status để sync payment info (nhưng không có customer info)
@@ -206,7 +258,9 @@ function PaymentResult() {
     };
 
     syncWithSessionData();
-  }, [status, resolvedOrderId, formData, serviceName, hasSynced, searchParams]);
+    // CHỈ chạy khi status, resolvedOrderId, hoặc hasSynced thay đổi
+    // KHÔNG chạy lại khi formData/serviceName thay đổi (tránh duplicate sync)
+  }, [status, resolvedOrderId, hasSynced]);
 
   // Load formData from sessionStorage or API when component mounts
   useEffect(() => {
@@ -224,23 +278,35 @@ function PaymentResult() {
         };
 
         // Ưu tiên 1: Lấy từ sessionStorage (nhanh nhất)
-        const stored = readStorage("formData");
+        let stored = readStorage("formData");
+        // Nếu không có trong sessionStorage, thử localStorage (backup cho mobile)
+        if (!stored) {
+          try {
+            stored = localStorage.getItem("formData");
+          } catch {}
+        }
+        
         if (stored) {
           try {
             const data: FormData = JSON.parse(stored);
             setFormData(data);
-            console.log("✅ Loaded formData from sessionStorage");
+            console.log("✅ Loaded formData from storage");
           } catch (e) {
-            console.error("Error parsing form data from sessionStorage:", e);
+            console.error("Error parsing form data from storage:", e);
           }
         }
         
-        const storedService = readStorage("paidServiceName");
+        let storedService = readStorage("paidServiceName");
+        if (!storedService) {
+          try {
+            storedService = localStorage.getItem("paidServiceName");
+          } catch {}
+        }
         if (storedService) {
           setServiceName(storedService);
         }
 
-        // Ưu tiên 2: Nếu không có trong sessionStorage (thường xảy ra trên mobile),
+        // Ưu tiên 2: Nếu không có trong storage (thường xảy ra trên mobile),
         // lấy từ API ngay lập tức để đảm bảo có formData khi sync
         if (!stored && resolvedOrderId) {
           try {
@@ -250,12 +316,13 @@ function PaymentResult() {
               const orderData = await response.json();
               if (orderData.formData) {
                 setFormData(orderData.formData);
-                // Lưu vào sessionStorage để lần sau không cần gọi API
+                // Lưu vào cả sessionStorage và localStorage (backup cho mobile)
                 try {
                   sessionStorage.setItem("formData", JSON.stringify(orderData.formData));
-                  console.log("✅ Loaded formData from API and saved to sessionStorage");
+                  localStorage.setItem("formData", JSON.stringify(orderData.formData));
+                  console.log("✅ Loaded formData from API and saved to storage");
                 } catch (storageError) {
-                  console.warn("Could not save to sessionStorage:", storageError);
+                  console.warn("Could not save to storage:", storageError);
                   console.log("✅ Loaded formData from API (could not save to storage)");
                 }
               }
@@ -263,8 +330,9 @@ function PaymentResult() {
                 setServiceName(orderData.serviceName);
                 try {
                   sessionStorage.setItem("paidServiceName", orderData.serviceName);
+                  localStorage.setItem("paidServiceName", orderData.serviceName);
                 } catch (storageError) {
-                  console.warn("Could not save serviceName to sessionStorage:", storageError);
+                  console.warn("Could not save serviceName to storage:", storageError);
                 }
               }
             } else {
@@ -342,15 +410,18 @@ function PaymentResult() {
                     // Ưu tiên sử dụng formData từ state (đã được load từ API nếu cần)
                     let dataToUse = formData;
                     
-                    // Nếu state chưa có, thử lấy từ sessionStorage
+                    // Nếu state chưa có, thử lấy từ storage (sessionStorage hoặc localStorage)
                     if (!dataToUse && typeof window !== "undefined") {
-                      const storedFormData = sessionStorage.getItem("formData");
+                      let storedFormData = sessionStorage.getItem("formData");
+                      if (!storedFormData) {
+                        storedFormData = localStorage.getItem("formData");
+                      }
                       if (storedFormData) {
                         try {
                           dataToUse = JSON.parse(storedFormData);
                           setFormData(dataToUse);
                         } catch (e) {
-                          console.error("Error parsing form data from sessionStorage:", e);
+                          console.error("Error parsing form data from storage:", e);
                         }
                       }
                     }
