@@ -53,12 +53,12 @@ function PaymentResult() {
 
   useEffect(() => {
     const syncWithSessionData = async () => {
-      // Prevent duplicate syncs - chỉ sync một lần
-      if (status !== "success" || !resolvedOrderId || hasSynced || syncAttemptedRef.current) {
+      if (status !== "success" || !resolvedOrderId || hasSynced) {
         return;
       }
-      
-      syncAttemptedRef.current = true; // Đánh dấu đã bắt đầu sync
+      if (syncAttemptedRef.current) {
+        return;
+      }
 
       let latestFormData = formData;
       let latestServiceName = serviceName;
@@ -98,8 +98,6 @@ function PaymentResult() {
       }
 
       // Bước 3: Nếu vẫn không có formData, lấy từ API (quan trọng cho mobile)
-      // LƯU Ý: Trên Vercel, get-order có thể không trả về formData vì không lưu được file
-      // Nên ưu tiên dùng localStorage/sessionStorage
       if (!latestFormData && resolvedOrderId) {
         try {
           console.log("🔄 Loading formData from API (fallback):", resolvedOrderId);
@@ -171,6 +169,17 @@ function PaymentResult() {
           // KHÔNG xóa localStorage ở đây - cần cho greeting card
         });
       };
+
+      // Nếu vẫn không có formData, đợi cho tới khi load xong
+      if (!latestFormData) {
+        console.warn(
+          "⚠️ sync-client: formData chưa sẵn sàng, đợi load từ storage/API:",
+          resolvedOrderId
+        );
+        return;
+      }
+
+      syncAttemptedRef.current = true; // Đánh dấu chỉ sau khi đã có dữ liệu để sync
 
       try {
         // Chỉ sync nếu có formData (quan trọng để có thông tin khách hàng)
@@ -258,9 +267,7 @@ function PaymentResult() {
     };
 
     syncWithSessionData();
-    // CHỈ chạy khi status, resolvedOrderId, hoặc hasSynced thay đổi
-    // KHÔNG chạy lại khi formData/serviceName thay đổi (tránh duplicate sync)
-  }, [status, resolvedOrderId, hasSynced]);
+  }, [status, resolvedOrderId, formData, serviceName, hasSynced]);
 
   // Load formData from sessionStorage or API when component mounts
   useEffect(() => {
