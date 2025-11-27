@@ -31,13 +31,23 @@ function PaymentResult() {
     let orderId = searchParams.get("orderId");
     const message = searchParams.get("message");
 
-    // Nếu không có orderId trong URL, thử lấy từ sessionStorage
+    // Nếu không có orderId trong URL, thử lấy từ storage (sessionStorage -> localStorage)
     if (!orderId && typeof window !== "undefined") {
-      // Lấy orderId từ sessionStorage (có thể được lưu trước khi redirect)
-      const storedOrderId = sessionStorage.getItem("currentOrderId");
+      const readOrderId = () => {
+        try {
+          const sessionOrderId = sessionStorage.getItem("currentOrderId");
+          if (sessionOrderId) return sessionOrderId;
+        } catch {}
+        try {
+          return localStorage.getItem("currentOrderId");
+        } catch {}
+        return null;
+      };
+
+      const storedOrderId = readOrderId();
       if (storedOrderId) {
         orderId = storedOrderId;
-        console.log("📦 Retrieved orderId from sessionStorage:", orderId);
+        console.log("📦 Retrieved orderId from storage:", orderId);
       }
     }
     setResolvedOrderId(orderId ?? null);
