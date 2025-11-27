@@ -40,6 +40,31 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     serviceName ?? null
   );
   const [ignoreApiService, setIgnoreApiService] = useState(false);
+
+  const BRAND_KEY = "face wash fox";
+  const brandRegex = /(Face Wash Fox)/gi;
+
+  const highlightBrandText = (text: string) => {
+    if (!text) return null;
+    const parts = text.split(brandRegex);
+    return parts.map((part, idx) => {
+      if (part.toLowerCase() === BRAND_KEY) {
+        return (
+          <span key={`brand-${idx}`} className="text-[#eb3526] font-semibold">
+            {part}
+          </span>
+        );
+      }
+      return (
+        <span key={`text-${idx}`} className="inline">
+          {part}
+        </span>
+      );
+    });
+  };
+
+  const containsBrandText = (text: string) =>
+    typeof text === "string" && text.toLowerCase().includes(BRAND_KEY);
   useEffect(() => {
     if (serviceName) {
       setPaidServiceName(serviceName);
@@ -484,7 +509,10 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     return await response.blob();
   };
 
-  const triggerDownload = async (dataUrl: string) => {
+  const triggerDownload = async (
+    dataUrl: string,
+    options?: { skipBackend?: boolean }
+  ) => {
     const isMobile =
       /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(
         navigator.userAgent
@@ -496,59 +524,61 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
 
     // Strategy 1: Ưu tiên backend download API (giống logic QR code - đảm bảo chất lượng tốt nhất)
     // Backend API xử lý tốt hơn trên mobile và đảm bảo fonts/images được render đúng
-    try {
-      console.log("🔄 Sending card to backend API for download...");
-      const response = await fetch("/api/download-card", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ imageData: dataUrl }),
-      });
+    if (!options?.skipBackend) {
+      try {
+        console.log("🔄 Sending card to backend API for download...");
+        const response = await fetch("/api/download-card", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ imageData: dataUrl }),
+        });
 
-      if (response.ok) {
-        const blob = await response.blob();
-        const url = URL.createObjectURL(blob);
-        
-        // Try native share API first on mobile (giống QR code)
-        if (isMobile && typeof navigator !== "undefined" && navigator.share) {
-          try {
-            const file = new File([blob], fileName, { type: "image/png" });
-            if (navigator.canShare?.({ files: [file] })) {
-              await navigator.share({
-                files: [file],
-                title: "Foxie Card - Face Wash Fox",
-                text: "Thiệp chúc mừng từ Face Wash Fox",
-              });
-              URL.revokeObjectURL(url);
-              return;
+        if (response.ok) {
+          const blob = await response.blob();
+          const url = URL.createObjectURL(blob);
+          
+          // Try native share API first on mobile (giống QR code)
+          if (isMobile && typeof navigator !== "undefined" && navigator.share) {
+            try {
+              const file = new File([blob], fileName, { type: "image/png" });
+              if (navigator.canShare?.({ files: [file] })) {
+                await navigator.share({
+                  files: [file],
+                  title: "Foxie Card - Face Wash Fox",
+                  text: "Thiệp chúc mừng từ Face Wash Fox",
+                });
+                URL.revokeObjectURL(url);
+                return;
+              }
+            } catch (shareError) {
+              console.warn("Không thể chia sẻ trực tiếp:", shareError);
             }
-          } catch (shareError) {
-            console.warn("Không thể chia sẻ trực tiếp:", shareError);
           }
-        }
-        
-        // Download via link
-        const link = document.createElement("a");
-        link.href = url;
-        link.download = fileName;
-        link.style.display = "none";
-        document.body.appendChild(link);
-        link.click();
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
+          
+          // Download via link
+          const link = document.createElement("a");
+          link.href = url;
+          link.download = fileName;
+          link.style.display = "none";
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+          URL.revokeObjectURL(url);
 
-        setTimeout(() => {
-          alert(
-            "Ảnh đã được tải xuống! Kiểm tra thư mục Downloads hoặc Gallery của bạn."
-          );
-        }, 500);
-        return;
-      } else {
-        console.warn("Backend API returned error:", response.status);
+          setTimeout(() => {
+            alert(
+              "Ảnh đã được tải xuống! Kiểm tra thư mục Downloads hoặc Gallery của bạn."
+            );
+          }, 500);
+          return;
+        } else {
+          console.warn("Backend API returned error:", response.status);
+        }
+      } catch (error) {
+        console.log("Backend download failed, trying fallback:", error);
       }
-    } catch (error) {
-      console.log("Backend download failed, trying fallback:", error);
     }
 
     // Strategy 2: Fallback - Try FileSaver.js approach (client-side)
@@ -700,7 +730,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
   const handleScreenshot = async () => {
     try {
       const dataUrl = await exportCardAsPng();
-      triggerDownload(dataUrl);
+      await triggerDownload(dataUrl);
     } catch (error) {
       console.error("Không thể tạo ảnh thiệp:", error);
       alert("Xin lỗi, không thể tạo ảnh thiệp. Vui lòng thử lại sau!");
@@ -744,7 +774,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
           
           // Fallback to download if share not available
           const url = URL.createObjectURL(blob);
-          triggerDownload(url);
+          await triggerDownload(url, { skipBackend: true });
           setTimeout(() => URL.revokeObjectURL(url), 1500);
           return;
         }
@@ -774,10 +804,10 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
       // Final fallback to download
       if (blob) {
         const url = URL.createObjectURL(blob);
-        triggerDownload(url);
+        await triggerDownload(url, { skipBackend: true });
         setTimeout(() => URL.revokeObjectURL(url), 1500);
       } else {
-        triggerDownload(dataUrl);
+        await triggerDownload(dataUrl);
       }
 
       const fallbackText = `${t.shareText} ${formData.senderName} gửi đến ${formData.receiverName}: ${formData.message}`;
@@ -1085,7 +1115,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                                   lineIndex === 0 ? "1rem" : undefined,
                               }}
                             >
-                              {line}
+                              {highlightBrandText(line)}
                             </span>
                           </div>
                         ))}
@@ -1154,7 +1184,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                             textIndent: lineIndex === 0 ? "1rem" : undefined,
                           }}
                         >
-                          {line}
+                          {highlightBrandText(line)}
                         </span>
                       </div>
                     ))}
@@ -1186,6 +1216,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                                 <span className="text-[#eb3526] font-bold">
                                   {seg.text}
                                 </span>
+                              ) : containsBrandText(seg.text) ? (
+                                <>{highlightBrandText(seg.text)}</>
                               ) : (
                                 tokens.map((tk, i) => {
                                   if (/^\s+$/.test(tk))
