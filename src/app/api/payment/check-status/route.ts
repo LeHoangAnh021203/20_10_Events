@@ -127,10 +127,14 @@ export async function GET(req: Request) {
 
       // Cập nhật vào local storage để đồng bộ (nếu có thể)
       if (status === "PAID" || status === "FAILED") {
+        let existingOrder: OrderRecord | null = null;
         try {
-          // Lấy order hiện tại để giữ lại thông tin đầy đủ
-          const existingOrder = await getOrder(orderId);
-          
+          existingOrder = await getOrder(orderId);
+        } catch (fileError) {
+          console.warn("⚠️ Could not read order from file system (expected on Vercel):", fileError);
+        }
+        
+        try {
           const updatedRecord = await upsertOrder(orderId, {
             status,
             transId: momoData.transId?.toString(),
@@ -143,49 +147,69 @@ export async function GET(req: Request) {
               : new Date().toISOString(),
           });
 
-          // Nếu thanh toán thành công, sync lên Google Sheets (chỉ nếu chưa sync)
+          // Nếu thanh toán thành công, sync lên Google Sheets (chỉ nếu chưa sync và có formData)
           if (status === "PAID" && !updatedRecord.sheetsSyncedAt) {
-            // Double-check trước khi sync (tránh race condition với IPN hoặc sync-client)
-            const doubleCheckOrder = await getOrder(orderId);
-            if (doubleCheckOrder?.sheetsSyncedAt) {
-              console.log("⏭️ Order was synced by another process (check-status double-check), skipping:", orderId);
+            // QUAN TRỌNG: Chỉ sync nếu có formData (tránh sync không có thông tin khách hàng)
+            if (!updatedRecord.formData) {
+              console.log("⚠️ check-status: No formData found, skipping sync. Client-side sync will handle it:", orderId);
             } else {
-              console.log("🔄 Syncing paid order to Google Sheets (check-status):", orderId);
-              const syncResult = await sendOrderToGoogleSheets(
-                orderId,
-                updatedRecord,
-                momoData.amount,
-                momoData.transId?.toString(),
-                momoData.message
-              );
-              
-              // Nếu sync thành công, đánh dấu đã sync (nếu có thể ghi file)
-              if (syncResult.success) {
-                try {
-                  await upsertOrder(orderId, {
-                    sheetsSyncedAt: new Date().toISOString(),
-                  });
-                  console.log("✅ Order synced to Google Sheets successfully (check-status):", orderId);
-                } catch (fileError) {
-                  // Trên Vercel không thể ghi file, nhưng đã sync lên Sheets rồi nên OK
-                  console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
+              // Double-check trước khi sync (tránh race condition với IPN hoặc sync-client)
+              try {
+                const doubleCheckOrder = await getOrder(orderId);
+                if (doubleCheckOrder?.sheetsSyncedAt) {
+                  console.log("⏭️ Order was synced by another process (check-status double-check), skipping:", orderId);
+                } else {
+                  console.log("🔄 Syncing paid order to Google Sheets (check-status):", orderId);
+                  const syncResult = await sendOrderToGoogleSheets(
+                    orderId,
+                    updatedRecord,
+                    momoData.amount,
+                    momoData.transId?.toString(),
+                    momoData.message
+                  );
+                  
+                  // Nếu sync thành công, đánh dấu đã sync (nếu có thể ghi file)
+                  if (syncResult.success) {
+                    try {
+                      await upsertOrder(orderId, {
+                        sheetsSyncedAt: new Date().toISOString(),
+                      });
+                      console.log("✅ Order synced to Google Sheets successfully (check-status):", orderId);
+                    } catch (fileError) {
+                      // Trên Vercel không thể ghi file, nhưng đã sync lên Sheets rồi nên OK
+                      console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
+                    }
+                  } else {
+                    console.error("❌ Failed to sync order to Google Sheets (check-status):", orderId, syncResult.error);
+                  }
                 }
-              } else {
-                console.error("❌ Failed to sync order to Google Sheets (check-status):", orderId, syncResult.error);
+              } catch (fileError) {
+                console.warn("⚠️ Could not double-check order (expected on Vercel):", fileError);
+                // Vẫn thử sync nếu không check được
+                console.log("🔄 Syncing paid order to Google Sheets (check-status, no double-check):", orderId);
+                const syncResult = await sendOrderToGoogleSheets(
+                  orderId,
+                  updatedRecord,
+                  momoData.amount,
+                  momoData.transId?.toString(),
+                  momoData.message
+                );
+                if (syncResult.success) {
+                  console.log("✅ Order synced to Google Sheets successfully (check-status):", orderId);
+                }
               }
             }
           } else if (status === "PAID" && updatedRecord.sheetsSyncedAt) {
             console.log("⏭️ Order already synced to Google Sheets (check-status), skipping:", orderId);
           }
         } catch (fileError) {
-          // Trên Vercel, file system writes may fail - that's OK, we'll still sync to Google Sheets
+          // Trên Vercel, file system writes may fail - that's OK
           console.warn("⚠️ Could not save to local file system (expected on Vercel):", fileError);
           
-          // Vẫn sync lên Google Sheets nếu thanh toán thành công
-          if (status === "PAID") {
+          // Vẫn sync lên Google Sheets nếu thanh toán thành công VÀ có formData
+          if (status === "PAID" && existingOrder?.formData) {
             try {
-              const existingOrder = await getOrder(orderId).catch(() => null);
-              const recordForSheets = {
+              const recordForSheets: OrderRecord = {
                 status,
                 transId: momoData.transId?.toString(),
                 amount: momoData.amount,
@@ -196,17 +220,24 @@ export async function GET(req: Request) {
                   : new Date().toISOString(),
               };
               
-              console.log("🔄 Syncing paid order to Google Sheets (without local file):", orderId);
-              await sendOrderToGoogleSheets(
+              console.log("🔄 Syncing paid order to Google Sheets (check-status, without local file):", orderId);
+              const syncResult = await sendOrderToGoogleSheets(
                 orderId,
-                recordForSheets as OrderRecord,
+                recordForSheets,
                 momoData.amount,
                 momoData.transId?.toString(),
                 momoData.message
               );
+              if (syncResult.success) {
+                console.log("✅ Order synced to Google Sheets successfully (check-status, without local file):", orderId);
+              } else {
+                console.error("❌ Failed to sync to Google Sheets:", syncResult.error);
+              }
             } catch (sheetsError) {
               console.error("❌ Failed to sync to Google Sheets:", sheetsError);
             }
+          } else if (status === "PAID" && !existingOrder?.formData) {
+            console.log("⚠️ check-status: No formData available, skipping sync. Client-side sync will handle it:", orderId);
           }
         }
       }

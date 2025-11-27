@@ -38,7 +38,9 @@ export async function sendOrderToGoogleSheets(
 
     console.log("📤 Sending order to Google Sheets:", {
       orderId,
-      webhookUrl,
+      webhookUrl: webhookUrl ? `${webhookUrl.substring(0, 50)}...` : "NOT SET",
+      hasFormData: !!record?.formData,
+      hasServiceName: !!record?.serviceName,
       payload: JSON.stringify(payload, null, 2),
     });
 

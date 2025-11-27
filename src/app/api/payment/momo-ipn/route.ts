@@ -97,54 +97,96 @@ export async function POST(req: Request) {
       });
 
       // Lấy order hiện tại trước khi update để giữ lại thông tin đầy đủ
-      const existingOrder = await getOrder(orderId);
+      // Trên Vercel, file system là read-only nên có thể trả về null
+      let existingOrder: OrderRecord | null = null;
+      try {
+        existingOrder = await getOrder(orderId);
+      } catch (fileError) {
+        console.warn("⚠️ Could not read order from file system (expected on Vercel):", fileError);
+      }
       
       // Kiểm tra xem đã sync chưa TRƯỚC KHI update (tránh race condition)
+      // Trên Vercel, sheetsSyncedAt check có thể không hoạt động, nhưng vẫn thử
       if (existingOrder?.sheetsSyncedAt) {
         console.log("⏭️ Order already synced to Google Sheets (IPN), skipping:", orderId);
         // Vẫn update status và transId nhưng không sync lại
-        await upsertOrder(orderId, {
-          status: "PAID",
-          amount,
-          transId,
-          serviceName: existingOrder?.serviceName,
-          formData: existingOrder?.formData,
-        });
+        try {
+          await upsertOrder(orderId, {
+            status: "PAID",
+            amount,
+            transId,
+            serviceName: existingOrder?.serviceName,
+            formData: existingOrder?.formData,
+          });
+        } catch (fileError) {
+          console.warn("⚠️ Could not update order (expected on Vercel):", fileError);
+        }
         return NextResponse.json({
           message: "IPN received - already synced",
           resultCode: 0,
         });
       }
       
-      const updatedRecord = await upsertOrder(orderId, {
+      // QUAN TRỌNG: Trên Vercel, IPN có thể được gọi trước khi client-side sync
+      // Nếu không có formData, KHÔNG sync (để client-side sync làm việc đó với đầy đủ thông tin)
+      if (!existingOrder?.formData) {
+        console.log("⚠️ IPN: No formData found, skipping sync. Client-side sync will handle it:", orderId);
+        // Vẫn update status để đánh dấu đã thanh toán
+        try {
+          await upsertOrder(orderId, {
+            status: "PAID",
+            amount,
+            transId,
+          });
+        } catch (fileError) {
+          console.warn("⚠️ Could not update order (expected on Vercel):", fileError);
+        }
+        return NextResponse.json({
+          message: "IPN received - waiting for client-side sync with formData",
+          resultCode: 0,
+        });
+      }
+      
+      const updatedRecord: OrderRecord = {
         status: "PAID",
         amount,
         transId,
         // Giữ lại serviceName và formData từ order cũ
         serviceName: existingOrder?.serviceName,
         formData: existingOrder?.formData,
-      });
+        updatedAt: new Date().toISOString(),
+      };
 
-      console.log("Updated order record:", {
+      try {
+        await upsertOrder(orderId, updatedRecord);
+      } catch (fileError) {
+        console.warn("⚠️ Could not persist order locally (expected on Vercel):", fileError);
+      }
+
+      console.log("Updated order record (IPN):", {
         orderId,
         status: updatedRecord.status,
         hasServiceName: !!updatedRecord.serviceName,
         hasFormData: !!updatedRecord.formData,
-        sheetsSyncedAt: updatedRecord.sheetsSyncedAt,
       });
 
       // Double-check trước khi sync (tránh race condition với client-side sync)
-      const doubleCheckOrder = await getOrder(orderId);
-      if (doubleCheckOrder?.sheetsSyncedAt) {
-        console.log("⏭️ Order was synced by another process (IPN double-check), skipping:", orderId);
-        return NextResponse.json({
-          message: "IPN received - already synced by another process",
-          resultCode: 0,
-        });
+      // Trên Vercel có thể không check được, nhưng vẫn thử
+      try {
+        const doubleCheckOrder = await getOrder(orderId);
+        if (doubleCheckOrder?.sheetsSyncedAt) {
+          console.log("⏭️ Order was synced by another process (IPN double-check), skipping:", orderId);
+          return NextResponse.json({
+            message: "IPN received - already synced by another process",
+            resultCode: 0,
+          });
+        }
+      } catch (fileError) {
+        console.warn("⚠️ Could not double-check order (expected on Vercel):", fileError);
       }
 
-      // Chỉ sync lên Google Sheets nếu chưa sync
-      console.log("🔄 Syncing order to Google Sheets (IPN):", orderId);
+      // Chỉ sync lên Google Sheets nếu có formData (quan trọng!)
+      console.log("🔄 Syncing order to Google Sheets (IPN with formData):", orderId);
       const syncResult = await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
       
       // Nếu sync thành công, đánh dấu đã sync ngay lập tức
@@ -156,6 +198,7 @@ export async function POST(req: Request) {
           console.log("✅ Order synced to Google Sheets successfully (IPN):", orderId);
         } catch (fileError) {
           console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
+          // Trên Vercel không thể lưu sheetsSyncedAt, nhưng đã sync lên Sheets rồi nên OK
         }
       } else {
         console.error("❌ Failed to sync order to Google Sheets (IPN):", orderId, syncResult.error);
