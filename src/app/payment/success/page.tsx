@@ -57,12 +57,15 @@ function PaymentResult() {
       let latestFormData = formData;
       let latestServiceName = serviceName;
 
+      // Bước 1: Thử lấy từ state (đã load từ useEffect khác)
+      // Bước 2: Thử lấy từ sessionStorage (có thể bị xóa trên mobile)
       if (typeof window !== "undefined") {
         if (!latestFormData) {
           const stored = sessionStorage.getItem("formData");
           if (stored) {
             try {
               latestFormData = JSON.parse(stored);
+              console.log("✅ Loaded formData from sessionStorage");
             } catch (error) {
               console.error("Không thể parse formData từ sessionStorage:", error);
             }
@@ -74,6 +77,28 @@ function PaymentResult() {
           if (storedService) {
             latestServiceName = storedService;
           }
+        }
+      }
+
+      // Bước 3: Nếu vẫn không có formData, lấy từ API (quan trọng cho mobile)
+      if (!latestFormData && resolvedOrderId) {
+        try {
+          console.log("🔄 Loading formData from API (mobile fallback):", resolvedOrderId);
+          const orderResponse = await fetch(`/api/payment/get-order?orderId=${resolvedOrderId}`);
+          if (orderResponse.ok) {
+            const orderData = await orderResponse.json();
+            if (orderData.formData) {
+              latestFormData = orderData.formData;
+              setFormData(orderData.formData);
+              console.log("✅ Loaded formData from API");
+            }
+            if (orderData.serviceName && !latestServiceName) {
+              latestServiceName = orderData.serviceName;
+              setServiceName(orderData.serviceName);
+            }
+          }
+        } catch (error) {
+          console.error("Error loading formData from API:", error);
         }
       }
 
@@ -116,8 +141,9 @@ function PaymentResult() {
       };
 
       try {
+        // Chỉ sync nếu có formData (quan trọng để có thông tin khách hàng)
         if (latestFormData) {
-          console.log("🔄 Syncing order with session formData:", resolvedOrderId);
+          console.log("🔄 Syncing order with formData:", resolvedOrderId);
           const response = await fetch("/api/payment/sync-client", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
@@ -133,16 +159,26 @@ function PaymentResult() {
           });
 
           if (response.ok) {
-            console.log("✅ Order synced via session data");
-            setHasSynced(true);
-            clearStorage();
-            return;
+            const responseData = await response.json();
+            // Nếu đã sync rồi (alreadySynced: true), vẫn coi như thành công
+            if (responseData.success || responseData.alreadySynced) {
+              console.log("✅ Order synced successfully");
+              setHasSynced(true);
+              clearStorage();
+              return;
+            }
           }
 
           const errorText = await response.text();
-          console.error("❌ Failed to sync via session data:", errorText);
+          console.error("❌ Failed to sync via sync-client:", errorText);
+        } else {
+          console.warn("⚠️ No formData available, cannot sync customer info for order:", resolvedOrderId);
+          // Vẫn thử check-status để sync payment info (nhưng không có customer info)
+          // Điều này tốt hơn là không sync gì cả
         }
 
+        // Fallback: Nếu không có formData hoặc sync-client thất bại, thử check-status
+        // check-status sẽ query MoMo và sync nếu cần (nhưng có thể không có formData)
         console.log(
           "ℹ️ Falling back to check-status sync for order:",
           resolvedOrderId
@@ -151,9 +187,13 @@ function PaymentResult() {
           `/api/payment/check-status?orderId=${resolvedOrderId}`
         );
         if (fallbackResponse.ok) {
-          console.log("✅ Order synced via check-status fallback");
-          setHasSynced(true);
-          clearStorage();
+          const fallbackData = await fallbackResponse.json();
+          console.log("✅ Order status checked:", fallbackData.status);
+          // Chỉ đánh dấu đã sync nếu thực sự đã sync (có formData hoặc đã có trong DB)
+          if (latestFormData || fallbackData.status === "PAID") {
+            setHasSynced(true);
+            clearStorage();
+          }
         } else {
           console.error(
             "❌ Fallback check-status failed:",
@@ -171,7 +211,7 @@ function PaymentResult() {
   // Load formData from sessionStorage or API when component mounts
   useEffect(() => {
     const loadFormData = async () => {
-      if (typeof window !== "undefined") {
+      if (typeof window !== "undefined" && resolvedOrderId) {
         const readStorage = (key: string) => {
           try {
             const sessionValue = sessionStorage.getItem(key);
@@ -200,28 +240,35 @@ function PaymentResult() {
           setServiceName(storedService);
         }
 
-        // Ưu tiên 2: Nếu không có trong sessionStorage và có orderId, lấy từ API
-        let orderId = searchParams.get("orderId");
-        if (!orderId) {
-          orderId = readStorage("currentOrderId");
-        }
-        
+        // Ưu tiên 2: Nếu không có trong sessionStorage (thường xảy ra trên mobile),
+        // lấy từ API ngay lập tức để đảm bảo có formData khi sync
         if (!stored && resolvedOrderId) {
           try {
-            console.log("🔄 Loading formData from API for orderId:", resolvedOrderId);
+            console.log("🔄 Loading formData from API (mobile/fallback):", resolvedOrderId);
             const response = await fetch(`/api/payment/get-order?orderId=${resolvedOrderId}`);
             if (response.ok) {
               const orderData = await response.json();
               if (orderData.formData) {
                 setFormData(orderData.formData);
                 // Lưu vào sessionStorage để lần sau không cần gọi API
-                sessionStorage.setItem("formData", JSON.stringify(orderData.formData));
-                console.log("✅ Loaded formData from API and saved to sessionStorage");
+                try {
+                  sessionStorage.setItem("formData", JSON.stringify(orderData.formData));
+                  console.log("✅ Loaded formData from API and saved to sessionStorage");
+                } catch (storageError) {
+                  console.warn("Could not save to sessionStorage:", storageError);
+                  console.log("✅ Loaded formData from API (could not save to storage)");
+                }
               }
               if (orderData.serviceName) {
                 setServiceName(orderData.serviceName);
-                sessionStorage.setItem("paidServiceName", orderData.serviceName);
+                try {
+                  sessionStorage.setItem("paidServiceName", orderData.serviceName);
+                } catch (storageError) {
+                  console.warn("Could not save serviceName to sessionStorage:", storageError);
+                }
               }
+            } else {
+              console.warn("⚠️ Could not load order from API:", response.status);
             }
           } catch (error) {
             console.error("Error loading formData from API:", error);

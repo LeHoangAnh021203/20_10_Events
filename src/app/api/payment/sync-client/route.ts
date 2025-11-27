@@ -3,6 +3,7 @@ import {
   OrderFormData,
   OrderRecord,
   upsertOrder,
+  getOrder,
 } from "@/lib/order-store";
 import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
 
@@ -38,6 +39,24 @@ export async function POST(req: Request) {
       );
     }
 
+    // Kiểm tra xem order đã được sync chưa để tránh duplicate
+    let existingOrder: OrderRecord | null = null;
+    try {
+      existingOrder = await getOrder(orderId);
+    } catch (error) {
+      console.warn("⚠️ Could not read existing order (expected on Vercel):", error);
+    }
+
+    // Nếu đã sync rồi, không sync lại (tránh duplicate)
+    if (existingOrder?.sheetsSyncedAt) {
+      console.log("⏭️ Order already synced to Google Sheets, skipping:", orderId);
+      return NextResponse.json({ 
+        success: true, 
+        message: "Order already synced",
+        alreadySynced: true 
+      });
+    }
+
     const record: OrderRecord = {
       status,
       amount,
@@ -68,6 +87,16 @@ export async function POST(req: Request) {
         { error: result.error || "Không thể đồng bộ Google Sheets" },
         { status: 500 }
       );
+    }
+
+    // Đánh dấu đã sync thành công
+    try {
+      await upsertOrder(orderId, {
+        sheetsSyncedAt: new Date().toISOString(),
+      });
+      console.log("✅ Order synced to Google Sheets successfully:", orderId);
+    } catch (error) {
+      console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", error);
     }
 
     return NextResponse.json({ success: true });
