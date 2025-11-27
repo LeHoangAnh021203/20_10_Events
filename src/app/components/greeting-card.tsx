@@ -1336,7 +1336,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
             onClick={handleShare}
             className="flex items-center justify-center gap-2 bg-gradient-to-r from-yellow-200 to-yellow-500 hover:from-yellow-400 hover:to-green-700 text-white px-6 py-3 rounded-full shadow-lg w-full sm:w-auto"
           >
-            {isMobile ? t.shareAndSaveButton : t.shareButton}
+            {isMobile ? t.shareAndSaveButton : ""}
           </button>
         </div>
 
