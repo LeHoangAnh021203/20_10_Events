@@ -99,6 +99,23 @@ export async function POST(req: Request) {
       // Lấy order hiện tại trước khi update để giữ lại thông tin đầy đủ
       const existingOrder = await getOrder(orderId);
       
+      // Kiểm tra xem đã sync chưa TRƯỚC KHI update (tránh race condition)
+      if (existingOrder?.sheetsSyncedAt) {
+        console.log("⏭️ Order already synced to Google Sheets (IPN), skipping:", orderId);
+        // Vẫn update status và transId nhưng không sync lại
+        await upsertOrder(orderId, {
+          status: "PAID",
+          amount,
+          transId,
+          serviceName: existingOrder?.serviceName,
+          formData: existingOrder?.formData,
+        });
+        return NextResponse.json({
+          message: "IPN received - already synced",
+          resultCode: 0,
+        });
+      }
+      
       const updatedRecord = await upsertOrder(orderId, {
         status: "PAID",
         amount,
@@ -116,22 +133,32 @@ export async function POST(req: Request) {
         sheetsSyncedAt: updatedRecord.sheetsSyncedAt,
       });
 
-      // Chỉ sync lên Google Sheets nếu chưa sync hoặc chưa có timestamp
-      if (!updatedRecord.sheetsSyncedAt) {
-        console.log("🔄 Syncing order to Google Sheets (first time):", orderId);
-        const syncResult = await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
-        
-        // Nếu sync thành công, đánh dấu đã sync
-        if (syncResult.success) {
+      // Double-check trước khi sync (tránh race condition với client-side sync)
+      const doubleCheckOrder = await getOrder(orderId);
+      if (doubleCheckOrder?.sheetsSyncedAt) {
+        console.log("⏭️ Order was synced by another process (IPN double-check), skipping:", orderId);
+        return NextResponse.json({
+          message: "IPN received - already synced by another process",
+          resultCode: 0,
+        });
+      }
+
+      // Chỉ sync lên Google Sheets nếu chưa sync
+      console.log("🔄 Syncing order to Google Sheets (IPN):", orderId);
+      const syncResult = await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
+      
+      // Nếu sync thành công, đánh dấu đã sync ngay lập tức
+      if (syncResult.success) {
+        try {
           await upsertOrder(orderId, {
             sheetsSyncedAt: new Date().toISOString(),
           });
-          console.log("✅ Order synced to Google Sheets successfully:", orderId);
-        } else {
-          console.error("❌ Failed to sync order to Google Sheets:", orderId, syncResult.error);
+          console.log("✅ Order synced to Google Sheets successfully (IPN):", orderId);
+        } catch (fileError) {
+          console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
         }
       } else {
-        console.log("⏭️ Order already synced to Google Sheets, skipping:", orderId);
+        console.error("❌ Failed to sync order to Google Sheets (IPN):", orderId, syncResult.error);
       }
 
       // Here you can add additional logic:

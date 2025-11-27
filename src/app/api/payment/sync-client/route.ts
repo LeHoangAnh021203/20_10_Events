@@ -40,6 +40,7 @@ export async function POST(req: Request) {
     }
 
     // Kiểm tra xem order đã được sync chưa để tránh duplicate
+    // Check TRƯỚC KHI làm bất kỳ thao tác nào
     let existingOrder: OrderRecord | null = null;
     try {
       existingOrder = await getOrder(orderId);
@@ -49,7 +50,7 @@ export async function POST(req: Request) {
 
     // Nếu đã sync rồi, không sync lại (tránh duplicate)
     if (existingOrder?.sheetsSyncedAt) {
-      console.log("⏭️ Order already synced to Google Sheets, skipping:", orderId);
+      console.log("⏭️ Order already synced to Google Sheets (sync-client), skipping:", orderId);
       return NextResponse.json({ 
         success: true, 
         message: "Order already synced",
@@ -74,6 +75,21 @@ export async function POST(req: Request) {
       );
     }
 
+    // Double-check trước khi sync (tránh race condition với IPN)
+    try {
+      const doubleCheckOrder = await getOrder(orderId);
+      if (doubleCheckOrder?.sheetsSyncedAt) {
+        console.log("⏭️ Order was synced by another process (sync-client double-check), skipping:", orderId);
+        return NextResponse.json({ 
+          success: true, 
+          message: "Order already synced by another process",
+          alreadySynced: true 
+        });
+      }
+    } catch (error) {
+      console.warn("⚠️ Could not double-check order (expected on Vercel):", error);
+    }
+
     const result = await sendOrderToGoogleSheets(
       orderId,
       record,
@@ -89,12 +105,12 @@ export async function POST(req: Request) {
       );
     }
 
-    // Đánh dấu đã sync thành công
+    // Đánh dấu đã sync thành công ngay lập tức
     try {
       await upsertOrder(orderId, {
         sheetsSyncedAt: new Date().toISOString(),
       });
-      console.log("✅ Order synced to Google Sheets successfully:", orderId);
+      console.log("✅ Order synced to Google Sheets successfully (sync-client):", orderId);
     } catch (error) {
       console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", error);
     }

@@ -145,31 +145,37 @@ export async function GET(req: Request) {
 
           // Nếu thanh toán thành công, sync lên Google Sheets (chỉ nếu chưa sync)
           if (status === "PAID" && !updatedRecord.sheetsSyncedAt) {
-            console.log("🔄 Syncing paid order to Google Sheets:", orderId);
-            const syncResult = await sendOrderToGoogleSheets(
-              orderId,
-              updatedRecord,
-              momoData.amount,
-              momoData.transId?.toString(),
-              momoData.message
-            );
-            
-            // Nếu sync thành công, đánh dấu đã sync (nếu có thể ghi file)
-            if (syncResult.success) {
-              try {
-                await upsertOrder(orderId, {
-                  sheetsSyncedAt: new Date().toISOString(),
-                });
-                console.log("✅ Order synced to Google Sheets successfully:", orderId);
-              } catch (fileError) {
-                // Trên Vercel không thể ghi file, nhưng đã sync lên Sheets rồi nên OK
-                console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
-              }
+            // Double-check trước khi sync (tránh race condition với IPN hoặc sync-client)
+            const doubleCheckOrder = await getOrder(orderId);
+            if (doubleCheckOrder?.sheetsSyncedAt) {
+              console.log("⏭️ Order was synced by another process (check-status double-check), skipping:", orderId);
             } else {
-              console.error("❌ Failed to sync order to Google Sheets:", orderId, syncResult.error);
+              console.log("🔄 Syncing paid order to Google Sheets (check-status):", orderId);
+              const syncResult = await sendOrderToGoogleSheets(
+                orderId,
+                updatedRecord,
+                momoData.amount,
+                momoData.transId?.toString(),
+                momoData.message
+              );
+              
+              // Nếu sync thành công, đánh dấu đã sync (nếu có thể ghi file)
+              if (syncResult.success) {
+                try {
+                  await upsertOrder(orderId, {
+                    sheetsSyncedAt: new Date().toISOString(),
+                  });
+                  console.log("✅ Order synced to Google Sheets successfully (check-status):", orderId);
+                } catch (fileError) {
+                  // Trên Vercel không thể ghi file, nhưng đã sync lên Sheets rồi nên OK
+                  console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
+                }
+              } else {
+                console.error("❌ Failed to sync order to Google Sheets (check-status):", orderId, syncResult.error);
+              }
             }
           } else if (status === "PAID" && updatedRecord.sheetsSyncedAt) {
-            console.log("⏭️ Order already synced to Google Sheets, skipping:", orderId);
+            console.log("⏭️ Order already synced to Google Sheets (check-status), skipping:", orderId);
           }
         } catch (fileError) {
           // Trên Vercel, file system writes may fail - that's OK, we'll still sync to Google Sheets

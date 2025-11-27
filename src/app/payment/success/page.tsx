@@ -338,22 +338,46 @@ function PaymentResult() {
               </div>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
                 <button
-                  onClick={() => {
-                    // Kiểm tra formData trong sessionStorage trước khi hiển thị greeting card
-                    if (typeof window !== "undefined") {
+                  onClick={async () => {
+                    // Ưu tiên sử dụng formData từ state (đã được load từ API nếu cần)
+                    let dataToUse = formData;
+                    
+                    // Nếu state chưa có, thử lấy từ sessionStorage
+                    if (!dataToUse && typeof window !== "undefined") {
                       const storedFormData = sessionStorage.getItem("formData");
                       if (storedFormData) {
                         try {
-                          const data: FormData = JSON.parse(storedFormData);
-                          setFormData(data);
-                          setShowGreetingCard(true);
+                          dataToUse = JSON.parse(storedFormData);
+                          setFormData(dataToUse);
                         } catch (e) {
-                          console.error("Error parsing form data:", e);
-                          alert("Vui lòng điền thông tin thiệp chúc mừng trước.");
+                          console.error("Error parsing form data from sessionStorage:", e);
                         }
-                      } else {
-                        alert("Vui lòng điền thông tin thiệp chúc mừng trước.");
                       }
+                    }
+                    
+                    // Nếu vẫn không có, thử load từ API (quan trọng cho mobile)
+                    if (!dataToUse && resolvedOrderId) {
+                      try {
+                        console.log("🔄 Loading formData from API for greeting card:", resolvedOrderId);
+                        const response = await fetch(`/api/payment/get-order?orderId=${resolvedOrderId}`);
+                        if (response.ok) {
+                          const orderData = await response.json();
+                          if (orderData.formData) {
+                            dataToUse = orderData.formData;
+                            setFormData(dataToUse);
+                            console.log("✅ Loaded formData from API for greeting card");
+                          }
+                        }
+                      } catch (error) {
+                        console.error("Error loading formData from API:", error);
+                      }
+                    }
+                    
+                    // Hiển thị greeting card nếu có formData
+                    if (dataToUse) {
+                      setShowGreetingCard(true);
+                    } else {
+                      alert("Không thể tải thông tin thiệp chúc mừng. Vui lòng thử lại sau.");
                     }
                   }}
                   className="px-6 py-3 bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white font-semibold rounded-full shadow-lg transform transition hover:scale-105 flex items-center justify-center gap-2"
