@@ -5,7 +5,7 @@ export const runtime = "nodejs";
 
 export async function POST(req: Request) {
   try {
-    const { orderId, amount } = await req.json();
+    const { orderId, amount, serviceName } = await req.json();
 
     // Validate input
     if (!orderId || !amount) {
@@ -41,7 +41,10 @@ export async function POST(req: Request) {
     const redirectUrl = `${baseUrl}/payment/success`;
     const ipnUrl = `${baseUrl}/api/payment/momo-ipn`;
     const requestId = orderId;
-    const orderInfo = `Thanh toan don hang ${orderId}`;
+    // Tạo orderInfo với tên dịch vụ nếu có
+    const orderInfo = serviceName 
+      ? `Thanh toan don hang ${serviceName}` 
+      : `Thanh toan don hang ${orderId}`;
     const extraData = "";
 
     // Create signature

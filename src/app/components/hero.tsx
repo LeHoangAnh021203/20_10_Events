@@ -353,6 +353,7 @@ export default function Hero() {
             body: JSON.stringify({
               orderId,
               amount: selectedVoucher.price,
+              serviceName: selectedVoucher.name,
             }),
           });
 
