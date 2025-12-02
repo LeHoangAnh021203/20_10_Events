@@ -1,6 +1,6 @@
 interface EmailTemplateData {
   senderName: string;
-  receiverName: string;
+  receiverName?: string;
   message?: string;
   serviceName?: string;
   orderId?: string;
@@ -11,7 +11,7 @@ export function createPaymentSuccessEmail(data: EmailTemplateData): {
   subject: string;
   html: string;
 } {
-  const { senderName, receiverName, serviceName, orderId, amount } = data;
+  const { senderName, receiverName = "Người nhận", serviceName, orderId, amount } = data;
 
   const isFree = amount === 0 || amount === undefined;
   const subject = isFree 
@@ -134,7 +134,7 @@ export function createGreetingCardSentEmail(data: EmailTemplateData): {
   subject: string;
   html: string;
 } {
-  const { senderName, receiverName, message } = data;
+  const { senderName, receiverName = "Người nhận", message } = data;
 
   const subject = `💌 Thiệp chúc mừng đã được gửi thành công - Face Wash Fox`;
 
@@ -242,7 +242,7 @@ export function createGreetingCardReceiverEmail(data: EmailTemplateData): {
   subject: string;
   html: string;
 } {
-  const { senderName, receiverName, message, serviceName, orderId } = data;
+  const { senderName, receiverName = "Người nhận", message, serviceName, orderId } = data;
 
   const subject = `💌 Bạn có một thiệp chúc mừng từ ${senderName} - Face Wash Fox`;
 
@@ -353,7 +353,7 @@ export function createGreetingCardReceiverEmail(data: EmailTemplateData): {
       <p>Thiệp chúc mừng này được tạo riêng cho bạn với tất cả tình cảm và lời chúc tốt đẹp nhất. Hãy xem thiệp để nhận được những lời chúc ý nghĩa từ người thân yêu của bạn!</p>
       
       <div style="text-align: center;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://facewashfox.com"}/?showGreetingCard=1&orderId=${data.orderId || ""}" class="button">
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL || "https://facewashfox.com"}/?showGreetingCard=1&orderId=${orderId || ""}" class="button">
           Xem thiệp chúc mừng
         </a>
       </div>

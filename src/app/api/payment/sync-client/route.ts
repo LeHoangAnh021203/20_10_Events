@@ -130,7 +130,7 @@ export async function POST(req: Request) {
           try {
             const emailTemplate = createPaymentSuccessEmail({
               senderName: formData.senderName,
-              receiverName: formData.receiverName,
+              receiverName: formData.receiverName || "Người nhận",
               serviceName,
               orderId,
               amount,
@@ -172,7 +172,7 @@ export async function POST(req: Request) {
           try {
             const emailTemplate = createGreetingCardReceiverEmail({
               senderName: formData.senderName,
-              receiverName: formData.receiverName,
+              receiverName: formData.receiverName || "Người nhận",
               message: formData.message,
               serviceName,
               orderId,
