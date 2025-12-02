@@ -125,7 +125,7 @@ function PaymentResult() {
 
         if (!latestFormData) {
           // Ưu tiên sessionStorage
-          let stored = readStorageValue("formData");
+          const stored = readStorageValue("formData");
           if (stored) {
             try {
               latestFormData = JSON.parse(stored);
@@ -138,7 +138,7 @@ function PaymentResult() {
         }
 
         if (!latestServiceName) {
-          let storedService = readStorageValue("paidServiceName");
+          const storedService = readStorageValue("paidServiceName");
           if (storedService) {
             latestServiceName = storedService;
             setServiceName(latestServiceName);
