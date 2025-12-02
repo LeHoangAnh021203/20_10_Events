@@ -6,6 +6,10 @@ import { useLanguage } from "@/contexts/LanguageContext";
 import LanguageSwitcher from "./language-switcher";
 import { saveAs } from "file-saver";
 import { useRouter } from "next/navigation";
+import {
+  createGreetingCardSentEmail,
+  createGreetingCardReceiverEmail,
+} from "@/lib/email-templates";
 
 interface FormData {
   senderName: string;
@@ -31,7 +35,10 @@ const voucherImages = [
   { alt: "Diamond", src: "/Asset%204@4x.png" },
 ];
 
-export default function GreetingCard({ formData, serviceName }: GreetingCardProps) {
+export default function GreetingCard({
+  formData,
+  serviceName,
+}: GreetingCardProps) {
   const { t } = useLanguage();
   const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null);
@@ -40,6 +47,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     serviceName ?? null
   );
   const [ignoreApiService, setIgnoreApiService] = useState(false);
+  const [emailSent, setEmailSent] = useState(false);
+  const [receiverEmailSent, setReceiverEmailSent] = useState(false);
 
   const BRAND_KEY = "face wash fox";
   const brandRegex = /(Face Wash Fox)/gi;
@@ -93,21 +102,30 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
           // Try multiple keys for better compatibility
           const lastVoucher = sessionStorage.getItem("lastSelectedVoucher");
           const savedServiceName = sessionStorage.getItem("paidServiceName");
-          
+
           if (lastVoucher) {
             const voucher = JSON.parse(lastVoucher);
-            const price = typeof voucher.price === "number" ? voucher.price : null;
+            const price =
+              typeof voucher.price === "number" ? voucher.price : null;
             if (voucher && voucher.name) {
-              console.log("Got service from sessionStorage (lastSelectedVoucher):", voucher.name, "price:", price);
+              console.log(
+                "Got service from sessionStorage (lastSelectedVoucher):",
+                voucher.name,
+                "price:",
+                price
+              );
               setPaidServiceName(voucher.name);
               sessionStorage.setItem("paidServiceName", voucher.name);
               setIgnoreApiService(price === 0);
               return { name: voucher.name, isFree: price === 0 };
             }
           }
-          
+
           if (savedServiceName) {
-            console.log("Got service from sessionStorage (paidServiceName):", savedServiceName);
+            console.log(
+              "Got service from sessionStorage (paidServiceName):",
+              savedServiceName
+            );
             setPaidServiceName(savedServiceName);
             setIgnoreApiService(false);
             return { name: savedServiceName, isFree: false };
@@ -128,25 +146,35 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     // 2. KHÔNG có service trong sessionStorage HOẶC service trong sessionStorage KHÔNG phải miễn phí
     const fetchPaidService = async () => {
       if (!formData.senderPhone) return;
-      
+
       // Nếu đã có service từ sessionStorage và là voucher miễn phí, KHÔNG gọi API
       if (storageService && storageService.isFree) {
-        console.log("⏭️ Skipping API call - free voucher selected from sessionStorage:", storageService.name);
+        console.log(
+          "⏭️ Skipping API call - free voucher selected from sessionStorage:",
+          storageService.name
+        );
         return;
       }
-      
+
       // Nếu đã có service từ sessionStorage (không phải miễn phí), vẫn giữ nguyên và không override
       if (storageService && !storageService.isFree) {
-        console.log("✅ Service from sessionStorage exists, keeping it:", storageService.name);
+        console.log(
+          "✅ Service from sessionStorage exists, keeping it:",
+          storageService.name
+        );
         // Vẫn có thể gọi API để log, nhưng không override
       }
-      
+
       try {
-        const response = await fetch(`/api/get-paid-service?senderPhone=${encodeURIComponent(formData.senderPhone)}`);
+        const response = await fetch(
+          `/api/get-paid-service?senderPhone=${encodeURIComponent(
+            formData.senderPhone
+          )}`
+        );
         if (response.ok) {
           const data = await response.json();
           console.log("Fetched paid service from API:", data); // Debug log
-          
+
           // CHỈ override nếu:
           // 1. API trả về serviceName
           // 2. KHÔNG có service trong sessionStorage HOẶC service trong sessionStorage không phải miễn phí
@@ -155,23 +183,34 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
             // Nếu có storageService (dù miễn phí hay không), giữ nguyên storageService
             // Vì voucher đang được chọn quan trọng hơn đơn hàng đã thanh toán trước đó
             if (storageService) {
-              console.log("✅ Keeping service from sessionStorage (selected voucher), ignoring API result:", storageService.name);
+              console.log(
+                "✅ Keeping service from sessionStorage (selected voucher), ignoring API result:",
+                storageService.name
+              );
               return;
             }
-            
+
             // Chỉ dùng API result nếu không có service trong sessionStorage
             setPaidServiceName(data.serviceName);
-            console.log("Updated paidServiceName from API to:", data.serviceName); // Debug log
+            console.log(
+              "Updated paidServiceName from API to:",
+              data.serviceName
+            ); // Debug log
 
             if (typeof window !== "undefined") {
               try {
-                const lastVoucher = sessionStorage.getItem("lastSelectedVoucher");
+                const lastVoucher = sessionStorage.getItem(
+                  "lastSelectedVoucher"
+                );
                 if (lastVoucher) {
                   const voucher = JSON.parse(lastVoucher);
                   // CHỈ update nếu voucher không phải miễn phí
                   if (voucher.price !== 0) {
                     voucher.name = data.serviceName;
-                    sessionStorage.setItem("lastSelectedVoucher", JSON.stringify(voucher));
+                    sessionStorage.setItem(
+                      "lastSelectedVoucher",
+                      JSON.stringify(voucher)
+                    );
                   }
                 }
               } catch (e) {
@@ -179,11 +218,17 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
               }
             }
           } else if (data.serviceName && ignoreApiService) {
-            console.log("⏭️ Ignoring API result because free voucher is selected");
+            console.log(
+              "⏭️ Ignoring API result because free voucher is selected"
+            );
           }
         } else {
           const errorText = await response.text();
-          console.error("Failed to fetch paid service:", response.status, errorText);
+          console.error(
+            "Failed to fetch paid service:",
+            response.status,
+            errorText
+          );
           // If API fails but we have storage service, keep using it
           if (!storageService) {
             console.warn("No service found in sessionStorage and API failed");
@@ -203,13 +248,76 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     if (!storageService || !storageService.isFree) {
       fetchPaidService();
     } else {
-      console.log("⏭️ Skipping API call - free voucher selected from sessionStorage");
+      console.log(
+        "⏭️ Skipping API call - free voucher selected from sessionStorage"
+      );
     }
   }, [formData.senderPhone, ignoreApiService]);
 
+  // Auto-send email to receiver when greeting card is first displayed
+  useEffect(() => {
+    // Wait a bit for component to fully mount and data to be ready
+    const timer = setTimeout(async () => {
+      if (formData.receiverEmail && !receiverEmailSent) {
+        console.log("📧 Auto-sending greeting card email to receiver...");
+
+        try {
+          const emailTemplate = createGreetingCardReceiverEmail({
+            senderName: formData.senderName,
+            receiverName: formData.receiverName,
+            message: formData.message,
+            serviceName: paidServiceName || undefined,
+            orderId: undefined, // Not available in greeting card context
+          });
+
+          const emailResponse = await fetch("/api/send-email", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              to: formData.receiverEmail,
+              subject: emailTemplate.subject,
+              html: emailTemplate.html,
+              senderName: formData.senderName,
+              receiverName: formData.receiverName,
+            }),
+          });
+
+          if (emailResponse.ok) {
+            console.log(
+              "✅ Greeting card email sent to receiver:",
+              formData.receiverEmail
+            );
+            setReceiverEmailSent(true);
+          } else {
+            const errorText = await emailResponse.text();
+            console.warn(
+              "⚠️ Failed to send greeting card email to receiver:",
+              errorText
+            );
+          }
+        } catch (emailError) {
+          console.error(
+            "❌ Error sending greeting card email to receiver:",
+            emailError
+          );
+        }
+      }
+    }, 2000); // Wait 2 seconds after component mounts
+
+    return () => clearTimeout(timer);
+  }, [
+    formData.receiverEmail,
+    formData.senderName,
+    formData.receiverName,
+    formData.message,
+    paidServiceName,
+    receiverEmailSent,
+  ]);
+
   // Responsive character-per-line settings
   const maxCharsMessage = isMobile ? 37 : 70;
-  const maxCharsGreeting = isMobile ? 29 : 70;
   const maxCharsBody = isMobile ? 35 : 70;
   const maxCharsSenderName = isMobile ? 14 : 24;
 
@@ -257,16 +365,22 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
   const getHighlightPhrase = () => {
     if (paidServiceName) {
       console.log("getHighlightPhrase - paidServiceName:", paidServiceName); // Debug log
-      
+
       // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
       const normalizedName = normalizeText(paidServiceName);
       console.log("getHighlightPhrase - normalizedName:", normalizedName); // Debug log
-      
+
       // Check for specific service names (check more specific ones first)
-      if (normalizedName.includes("500.000") || normalizedName.includes("500000")) {
+      if (
+        normalizedName.includes("500.000") ||
+        normalizedName.includes("500000")
+      ) {
         console.log("Matched: Cash Voucher 500.000VNĐ");
         return "voucher Cash Voucher 500.000VNĐ";
-      } else if (normalizedName.includes("200.000") || normalizedName.includes("200000")) {
+      } else if (
+        normalizedName.includes("200.000") ||
+        normalizedName.includes("200000")
+      ) {
         console.log("Matched: Cash Voucher 200.000VNĐ");
         return "voucher Cash Voucher 200.000VNĐ";
       } else if (
@@ -291,19 +405,35 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
 
   // Generate dynamic body content based on paid service
   const getDynamicBodyContent = () => {
-    const baseText = "Luôn rạng rỡ, yêu bản thân và tận hưởng từng phút giây được nâng niu bởi Nhà Cáo. Gửi tặng bạn ngàn lời yêu thương thông qua ";
-    const endText = " để làn da luôn được chăm sóc đúng cách dẫu ngày thường hay ngày lễ!";
-    
+    const holidayPhrase = "Merry Christmas & Happy New Year !";
+    const closingLines = [
+      "ngọt ngào nhất cho làn da.",
+      "\nChúc bạn luôn là phiên bản rực rỡ nhất của chính mình và nhớ tự thưởng 45 phút chăm da cho bản thân và người thương trong dịp này nhé.",
+      "Cảm ơn bạn đã cho nhà Cáo cơ hội đồng hành cùng hành trình xinh đẹp ấy.",
+      holidayPhrase,
+    ];
+    const trailingText = `${closingLines[0]}${closingLines
+      .slice(1)
+      .map((line) => `\n${line}`)
+      .join("")}`;
+    const buildMessage = (prefix: string) => `${prefix} ${trailingText}`;
+
     if (paidServiceName) {
       // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
       const normalizedName = normalizeText(paidServiceName);
       console.log("getDynamicBodyContent - normalizedName:", normalizedName);
-      
+
       // Check for specific service names (check more specific ones first)
-      if (normalizedName.includes("500.000") || normalizedName.includes("500000")) {
-        return baseText + "voucher Cash Voucher 500.000VNĐ" + endText;
-      } else if (normalizedName.includes("200.000") || normalizedName.includes("200000")) {
-        return baseText + "voucher Cash Voucher 200.000VNĐ" + endText;
+      if (
+        normalizedName.includes("500.000") ||
+        normalizedName.includes("500000")
+      ) {
+        return buildMessage("voucher Cash Voucher 500.000VNĐ");
+      } else if (
+        normalizedName.includes("200.000") ||
+        normalizedName.includes("200000")
+      ) {
+        return buildMessage("voucher Cash Voucher 200.000VNĐ");
       } else if (
         normalizedName.includes("dịch vụ cộng thêm") ||
         normalizedName.includes("cong them") ||
@@ -312,20 +442,30 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
         normalizedName.startsWith("dịch vụ")
       ) {
         console.log("getDynamicBodyContent - Matched Dịch vụ Cộng thêm");
-        return baseText + "voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ" + endText;
+        return buildMessage("voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ");
       } else {
-        console.log("getDynamicBodyContent - No match, using:", paidServiceName);
-        return baseText + `voucher ${paidServiceName}` + endText;
+        console.log(
+          "getDynamicBodyContent - No match, using:",
+          paidServiceName
+        );
+        return buildMessage(`voucher ${paidServiceName}`);
       }
     }
     console.log("getDynamicBodyContent - No paidServiceName, using default");
-    return t.body; // Default fallback to original translation
+    return buildMessage("voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ");
   };
 
   const dynamicBodyContent = getDynamicBodyContent();
+  const combinedBodyText = `${t.faceWashGreeting} ${formData.receiverName} ${dynamicBodyContent}`;
 
   const highlightWords = new Set(
     highlightPhrase.toLowerCase().split(/\s+/).filter(Boolean)
+  );
+  const holidayWords = new Set(
+    "merry christmas & happy new year 2026!"
+      .toLowerCase()
+      .split(/\s+/)
+      .filter(Boolean)
   );
   const normalizeToken = (token: string) =>
     token.toLowerCase().replace(/[.,!?:;"'""()\[\]{}]/g, "");
@@ -333,11 +473,12 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     const compact = token.toLowerCase().replace(/[^a-z0-9]/g, "");
     // Check for VNĐ, vnd, or price patterns like 299000, 200000, 500000
     return (
-      (/\d/.test(compact) && (compact.endsWith("vnd") || compact.includes("vnd"))) ||
+      (/\d/.test(compact) &&
+        (compact.endsWith("vnd") || compact.includes("vnd"))) ||
       /^(299000|200000|500000|299|200|500)/.test(compact)
     );
   };
-  
+
   // Check if token contains price (like "299.000VNĐ")
   const containsPrice = (token: string) => {
     const normalized = token.toLowerCase();
@@ -350,23 +491,32 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
       normalized.includes("500000")
     );
   };
-  
+
   // Function to check if a text segment contains the full voucher phrase
   const containsVoucherPhrase = (text: string) => {
-    const normalizedText = normalizeText(text).replace(/[.,!?:;"'""()\[\]{}]/g, "");
-    
+    const normalizedText = normalizeText(text).replace(
+      /[.,!?:;"'""()\[\]{}]/g,
+      ""
+    );
+
     if (paidServiceName) {
       // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
       const normalizedName = normalizeText(paidServiceName);
-      
+
       // Check for specific service names (check more specific ones first)
-      if (normalizedName.includes("500.000") || normalizedName.includes("500000")) {
+      if (
+        normalizedName.includes("500.000") ||
+        normalizedName.includes("500000")
+      ) {
         return (
           normalizedText.includes("cash voucher 500000") ||
           normalizedText.includes("voucher cash voucher 500000") ||
           normalizedText.includes("cash voucher 500.000")
         );
-      } else if (normalizedName.includes("200.000") || normalizedName.includes("200000")) {
+      } else if (
+        normalizedName.includes("200.000") ||
+        normalizedName.includes("200000")
+      ) {
         return (
           normalizedText.includes("cash voucher 200000") ||
           normalizedText.includes("voucher cash voucher 200000") ||
@@ -379,18 +529,23 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
         normalizedName.includes("service-basic") ||
         normalizedName.startsWith("dịch vụ")
       ) {
-        console.log("containsVoucherPhrase - Matched Dịch vụ Cộng thêm for text:", text);
+        console.log(
+          "containsVoucherPhrase - Matched Dịch vụ Cộng thêm for text:",
+          text
+        );
         return (
           normalizedText.includes("voucher dịch vụ cộng thêm") ||
           normalizedText.includes("dịch vụ cộng thêm") ||
           normalizedText.includes("299000vnd") ||
           normalizedText.includes("299.000vnd") ||
-          normalizedText.includes("voucher dịch vụ cộng thêm trị giá lên đến 299000vnd") ||
+          normalizedText.includes(
+            "voucher dịch vụ cộng thêm trị giá lên đến 299000vnd"
+          ) ||
           normalizedText.includes("voucher dịch vụ cộng thêm trị giá")
         );
       }
     }
-    
+
     // Default fallback
     return (
       normalizedText.includes("voucher dịch vụ cộng thêm") ||
@@ -399,6 +554,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
       normalizedText.includes("299.000vnd")
     );
   };
+
 
   // Wrap text but keep original indices so we can style substrings across lines
   const wrapTextWithIndices = (
@@ -477,7 +633,9 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     const { toPng } = await import("html-to-image");
     const rect = node.getBoundingClientRect();
     const isMobileExport = window.innerWidth < 640;
-    const targetWidth = isMobileExport ? Math.round(rect.width) : Math.min(rect.width * 2, 1440);
+    const targetWidth = isMobileExport
+      ? Math.round(rect.width)
+      : Math.min(rect.width * 2, 1440);
     const targetHeight = Math.round((rect.height / rect.width) * targetWidth);
     const pixelRatio = isMobileExport ? 1.5 : 2;
 
@@ -522,7 +680,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
       /Safari/.test(navigator.userAgent) && !/Chrome/.test(navigator.userAgent);
     const fileName = `foxie-card-${Date.now()}.png`;
 
-    const isDataUrl = typeof dataUrl === "string" && dataUrl.startsWith("data:image");
+    const isDataUrl =
+      typeof dataUrl === "string" && dataUrl.startsWith("data:image");
     const shouldUseBackend = !options?.skipBackend && isDataUrl;
 
     // Strategy 1: Ưu tiên backend download API với dataURL base64 (đảm bảo chất lượng trên mobile)
@@ -540,7 +699,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
         if (response.ok) {
           const blob = await response.blob();
           const url = URL.createObjectURL(blob);
-          
+
           // Try native share API first on mobile (giống QR code)
           if (isMobile && typeof navigator !== "undefined" && navigator.share) {
             try {
@@ -558,7 +717,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
               console.warn("Không thể chia sẻ trực tiếp:", shareError);
             }
           }
-          
+
           // Download via link
           const link = document.createElement("a");
           link.href = url;
@@ -729,10 +888,120 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     }
   };
 
+  // Helper function to send greeting card email to sender (only once)
+  const sendGreetingCardEmailToSender = async () => {
+    if (emailSent || !formData.senderEmail) return;
+
+    try {
+      const emailTemplate = createGreetingCardSentEmail({
+        senderName: formData.senderName,
+        receiverName: formData.receiverName,
+        message: formData.message,
+      });
+
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: formData.senderEmail,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          senderName: formData.senderName,
+          receiverName: formData.receiverName,
+        }),
+      });
+
+      if (emailResponse.ok) {
+        console.log(
+          "✅ Greeting card email sent to sender:",
+          formData.senderEmail
+        );
+        setEmailSent(true);
+      } else {
+        console.warn("⚠️ Failed to send greeting card email to sender");
+      }
+    } catch (emailError) {
+      console.error(
+        "❌ Error sending greeting card email to sender:",
+        emailError
+      );
+      // Don't show error to user, email is optional
+    }
+  };
+
+  // Helper function to send greeting card email to receiver
+  const sendGreetingCardEmailToReceiver = async () => {
+    if (!formData.receiverEmail) {
+      console.log("ℹ️ No receiver email, skipping receiver notification");
+      return;
+    }
+
+    if (receiverEmailSent) {
+      console.log("ℹ️ Receiver email already sent, skipping");
+      return;
+    }
+
+    try {
+      const emailTemplate = createGreetingCardReceiverEmail({
+        senderName: formData.senderName,
+        receiverName: formData.receiverName,
+        message: formData.message,
+        serviceName: paidServiceName || undefined,
+      });
+
+      const emailResponse = await fetch("/api/send-email", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          to: formData.receiverEmail,
+          subject: emailTemplate.subject,
+          html: emailTemplate.html,
+          senderName: formData.senderName,
+          receiverName: formData.receiverName,
+        }),
+      });
+
+      if (emailResponse.ok) {
+        console.log(
+          "✅ Greeting card email sent to receiver:",
+          formData.receiverEmail
+        );
+        setReceiverEmailSent(true);
+      } else {
+        const errorText = await emailResponse.text();
+        console.warn(
+          "⚠️ Failed to send greeting card email to receiver:",
+          errorText
+        );
+      }
+    } catch (emailError) {
+      console.error(
+        "❌ Error sending greeting card email to receiver:",
+        emailError
+      );
+      // Don't show error to user, email is optional
+    }
+  };
+
+  // Send emails to both sender and receiver
+  const sendGreetingCardEmails = async () => {
+    await Promise.all([
+      sendGreetingCardEmailToSender(),
+      sendGreetingCardEmailToReceiver(),
+    ]);
+  };
+
   const handleScreenshot = async () => {
     try {
       const dataUrl = await exportCardAsPng();
       await triggerDownload(dataUrl);
+
+      // Send email notifications after successful card download
+      await sendGreetingCardEmails();
     } catch (error) {
       console.error("Không thể tạo ảnh thiệp:", error);
       alert("Xin lỗi, không thể tạo ảnh thiệp. Vui lòng thử lại sau!");
@@ -743,7 +1012,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
     try {
       // Export card to dataURL first
       const dataUrl = await exportCardAsPng();
-      
+
       // Try backend API first (giống QR code logic)
       try {
         const response = await fetch("/api/download-card", {
@@ -756,7 +1025,7 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
 
         if (response.ok) {
           const blob = await response.blob();
-          
+
           // Try native share API
           if (navigator.share) {
             const file = new File([blob], `foxie-card-${Date.now()}.png`, {
@@ -770,14 +1039,18 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
 
             if (navigator.canShare?.(shareData)) {
               await navigator.share(shareData);
+              // Send email notifications after successful share
+              await sendGreetingCardEmails();
               return;
             }
           }
-          
+
           // Fallback to download if share not available
           const url = URL.createObjectURL(blob);
           await triggerDownload(url, { skipBackend: true });
           setTimeout(() => URL.revokeObjectURL(url), 1500);
+          // Send email notifications after successful download
+          await sendGreetingCardEmails();
           return;
         }
       } catch (apiError) {
@@ -799,6 +1072,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
 
         if (navigator.canShare?.(shareData)) {
           await navigator.share(shareData);
+          // Send email notifications after successful share
+          await sendGreetingCardEmails();
           return;
         }
       }
@@ -809,10 +1084,17 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
         try {
           saveAs(blob, fileName);
           setTimeout(() => {
-            alert("Ảnh đã được tải xuống! Kiểm tra thư mục Downloads hoặc Gallery của bạn.");
+            alert(
+              "Ảnh đã được tải xuống! Kiểm tra thư mục Downloads hoặc Gallery của bạn."
+            );
           }, 500);
+          // Send email notifications after successful download
+          await sendGreetingCardEmails();
         } catch (downloadError) {
-          console.warn("FileSaver download failed, falling back to generic download:", downloadError);
+          console.warn(
+            "FileSaver download failed, falling back to generic download:",
+            downloadError
+          );
           const url = URL.createObjectURL(blob);
           const link = document.createElement("a");
           link.href = url;
@@ -822,15 +1104,21 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
           link.click();
           document.body.removeChild(link);
           setTimeout(() => URL.revokeObjectURL(url), 1500);
+          // Send email notifications after successful download
+          await sendGreetingCardEmails();
         }
       } else {
         await triggerDownload(dataUrl);
+        // Send email notifications after successful download
+        await sendGreetingCardEmails();
       }
 
       const fallbackText = `${t.shareText} ${formData.senderName} gửi đến ${formData.receiverName}: ${formData.message}`;
       try {
         await navigator.clipboard?.writeText(fallbackText);
         alert(t.shareSuccess);
+        // Send email notifications after successful share
+        await sendGreetingCardEmails();
       } catch (clipboardError) {
         console.warn("Không thể sao chép vào clipboard:", clipboardError);
         alert(t.shareError);
@@ -1073,7 +1361,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                       <span
                         className="text-[20px] md:text[20px] text-gray-600 "
                         style={{
-                          fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
+                          fontFamily:
+                            "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                           fontWeight: "600",
                         }}
                       >
@@ -1093,7 +1382,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                         isMobile ? "text-[20px] pl-3" : "text-[24px] pl-4"
                       } text-gray-800 leading-relaxed border-b border-gray-300 pb-0.5 gap-1`}
                       style={{
-                        fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
+                        fontFamily:
+                          "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                         fontWeight: "800",
                       }}
                     >
@@ -1126,7 +1416,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                                   : "text-[24px] pl-4"
                               } text-gray-800 leading-relaxed w-full`}
                               style={{
-                                fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
+                                fontFamily:
+                                  "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                                 fontWeight: "400",
                                 textIndent:
                                   lineIndex === 0 ? "1rem" : undefined,
@@ -1180,32 +1471,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                       </span>
                     </div>
 
-                    {/* Fixed content with auto-wrapping */}
-                    {wrapTextIntoLines(
-                      `${t.faceWashGreeting} ${formData.receiverName},`,
-                      maxCharsGreeting
-                    ).map((line, lineIndex) => (
-                      <div
-                        key={`greeting-${lineIndex}`}
-                        className={`${
-                          isMobile ? "h-6 text-[10px]" : "h-7"
-                        } border-b border-gray-300 text-[15px] flex items-center justify-center`}
-                      >
-                        <span
-                          className={`${
-                            isMobile ? "text-[20px] pl-3" : "text-[24px] pl-4"
-                          } text-gray-800 leading-relaxed w-full`}
-                          style={{
-                            fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
-                            fontWeight: "400",
-                            textIndent: lineIndex === 0 ? "1rem" : undefined,
-                          }}
-                        >
-                          {highlightBrandText(line)}
-                        </span>
-                      </div>
-                    ))}
-                    {wrapTextWithIndices(dynamicBodyContent, maxCharsBody).map(
+                    {/* Fixed content + voucher paragraph combined */}
+                    {wrapTextWithIndices(combinedBodyText, maxCharsBody).map(
                       (seg, lineIndex) => {
                         const tokens = seg.text.split(/(\s+)/); // keep spaces
                         return (
@@ -1222,7 +1489,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                                   : "text-[24px] pl-4"
                               } text-gray-800 leading-relaxed w-full`}
                               style={{
-                                fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
+                                fontFamily:
+                                  "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                                 fontWeight: "400",
                                 textIndent:
                                   lineIndex === 0 ? "1rem" : undefined,
@@ -1242,11 +1510,15 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                                   const norm = normalizeToken(tk);
                                   if (
                                     highlightWords.has(norm) ||
+                                    holidayWords.has(norm) ||
                                     isPriceToken(tk) ||
                                     containsPrice(tk)
                                   ) {
                                     return (
-                                      <strong key={i} className="text-[#eb3526]">
+                                      <strong
+                                        key={i}
+                                        className="text-[#eb3526]"
+                                      >
                                         {tk}
                                       </strong>
                                     );
@@ -1278,7 +1550,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                           <span
                             className="text-base md:text-[24px] text-orange-500 text-center leading-relaxed whitespace-pre-wrap break-words"
                             style={{
-                              fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
+                              fontFamily:
+                                "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                               fontWeight: "600",
                             }}
                           >
@@ -1292,7 +1565,8 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
                       <span
                         className="text-[20px] md:text-[20px] text-gray-800 text-center items-center justify-center leading-relaxed pl-3 md:pl-4 w-40 "
                         style={{
-                          fontFamily: "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
+                          fontFamily:
+                            "var(--font-bonheur-royale), 'Bonheur Royale', cursive",
                           fontWeight: "400",
                         }}
                       >
@@ -1467,8 +1741,6 @@ export default function GreetingCard({ formData, serviceName }: GreetingCardProp
             animation: zoomInOut 3s ease-in-out infinite;
           }
         `}</style>
-
-        
       </div>
     </div>
   );

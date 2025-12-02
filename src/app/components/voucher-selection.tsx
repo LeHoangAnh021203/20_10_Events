@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect, type MouseEvent } from "react";
 import { X, Check, Gift, Sparkles } from "lucide-react";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
 export interface VoucherOption {
@@ -13,6 +14,7 @@ export interface VoucherOption {
   services: string[];
   benefits: string[];
   image?: string;
+  features?: string[];
 }
 
 interface VoucherSelectionProps {
@@ -30,6 +32,26 @@ export default function VoucherSelection({
   const [detailVoucher, setDetailVoucher] = useState<VoucherOption | null>(
     null
   );
+  const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
+  const serviceVideoSrc = "/To_video__202512011638.mp4";
+  const serviceVideoRef = useRef<HTMLVideoElement | null>(null);
+  const SERVICE_VIDEO_PLAYBACK_RATE = 3.1;
+
+  useEffect(() => {
+    if (serviceVideoRef.current) {
+      serviceVideoRef.current.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
+    }
+  }, [hoveredCardId]);
+
+  const theme = {
+    background:
+      "linear-gradient(180deg, #FFECD9 0%, #FFC9A1 45%, #F8985E 100%)",
+    badgeBg: "rgba(248, 152, 94, 0.25)",
+    badgeBorder: "rgba(248, 152, 94, 0.45)",
+    chipBorder: "rgba(248, 152, 94, 0.6)",
+    buttonBg: "#F57C3A",
+    buttonFg: "#ffffff",
+  };
 
   const voucherOptions: VoucherOption[] = [
     {
@@ -51,6 +73,7 @@ export default function VoucherSelection({
         "Giảm stress, thư giãn tinh thần",
         "Da sáng mịn, tươi trẻ hơn",
       ],
+      features: ["dịch vụ"],
     },
     {
       id: "cash-200k",
@@ -69,6 +92,7 @@ export default function VoucherSelection({
         "Có thể tặng cho người thân",
         "Áp dụng tại tất cả chi nhánh",
       ],
+      features: ["tiền mặt"],
     },
     {
       id: "cash-500k",
@@ -89,8 +113,30 @@ export default function VoucherSelection({
         "Áp dụng tại tất cả chi nhánh",
         "Được tư vấn chăm sóc da miễn phí",
       ],
+      features: ["tiền mặt"],
     },
   ];
+
+  const getVoucherMedia = (voucher: VoucherOption) => {
+    switch (voucher.id) {
+      case "service-basic":
+        return {
+          image: "/Custom for web - Voucher DVCT-01.png",
+          overlayText: "",
+        };
+      case "cash-200k":
+        return {
+          image: "/Custom for web - Voucher DVCT-01.png",
+          overlayText: "",
+        };
+      case "cash-500k":
+      default:
+        return {
+          image: "/Custom for web - Voucher DVCT-01.png",
+          overlayText: "",
+        };
+    }
+  };
 
   const formatPrice = (price: number) => {
     if (price === 0) {
@@ -132,70 +178,130 @@ export default function VoucherSelection({
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="relative"
+            className="flex justify-center"
           >
-            <div
-              className={`bg-white rounded-lg shadow-lg overflow-hidden cursor-pointer transform transition-all hover:scale-105 ${
-                selectedVoucherId === voucher.id
-                  ? "ring-4 ring-orange-400 shadow-xl"
-                  : ""
-              }`}
-              onClick={() => handleCardClick(voucher)}
-            >
-              {/* Badge */}
-              <div
-                className={`absolute top-4 right-4 px-3 py-1 rounded-full text-xs font-semibold z-10 ${
-                  voucher.type === "cash"
-                    ? "bg-green-500 text-white"
-                    : "bg-orange-500 text-white"
-                }`}
-              >
-                {voucher.type === "cash" ? "💰 Cash" : "✨ Service"}
-              </div>
-
-              {/* Content */}
-              <div className="p-6">
-                <div className="flex items-center justify-center mb-4">
-                  {voucher.type === "cash" ? (
-                    <Gift className="w-12 h-12 text-orange-500" />
-                  ) : (
-                    <Sparkles className="w-12 h-12 text-orange-500" />
-                  )}
-                </div>
-
-                <h3
-                  className={`${
-                    isMobile ? "text-xl" : "text-2xl"
-                  } font-bold text-gray-800 mb-2 text-center`}
+            {(() => {
+              const isSelected = selectedVoucherId === voucher.id;
+              const isHovered = hoveredCardId === voucher.id;
+              const media = getVoucherMedia(voucher);
+              return (
+                <div
+                  className={`relative w-full max-w-[min(90vh,90vw)] ${
+                    isMobile ? "aspect-[3/4]" : "aspect-[4/5]"
+                  } overflow-hidden rounded-[32px] border border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.25)] transition-all duration-500 hover:shadow-orange-300 hover:scale-[1.01] cursor-pointer ${
+                    isSelected ? "ring-4 ring-[#F57C3A]" : ""
+                  }`}
+                  style={{ backgroundImage: theme.background }}
+                  onClick={() => handleCardClick(voucher)}
+                  onMouseEnter={() => setHoveredCardId(voucher.id)}
+                  onMouseLeave={() => setHoveredCardId(null)}
                 >
-                  {voucher.name}
-                </h3>
+                  <div className="flex h-full flex-col">
+                    {/* Media area */}
+                    <div className="relative h-1/2 w-full overflow-hidden rounded-[24px] bg-black">
+                      <Image
+                        src={media.image}
+                        alt={voucher.name}
+                        fill
+                        className={`object-cover object-center transition-transform duration-[1200ms] ease-out ${
+                          isHovered ? "scale-110" : "scale-100"
+                        }`}
+                        priority={voucher.price === 0}
+                      />
+                      {voucher.id === "service-basic" && (
+                        <video
+                          ref={serviceVideoRef}
+                          src={serviceVideoSrc}
+                          muted
+                          loop
+                          playsInline
+                          autoPlay
+                          preload="metadata"
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                            isHovered ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                      )}
+                      <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-transparent" />
+                      <div
+                        className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-500 ${
+                          isHovered ? "opacity-100" : "opacity-0"
+                        }`}
+                      >
+                        <div className="absolute bottom-4 left-4 right-4 text-white/90 text-xs sm:text-sm font-medium tracking-wide">
+                          {media.overlayText}
+                        </div>
+                      </div>
+                    </div>
 
-                <p className="text-gray-600 text-sm mb-4 text-center min-h-[40px]">
-                  {voucher.description}
-                </p>
+                    {/* Content area */}
+                    <div className="flex-1 flex flex-col justify-end gap-4 p-6">
+                     
 
-                <div className="text-center mb-4">
-                  <span
-                    className={`${
-                      isMobile ? "text-2xl" : "text-3xl"
-                    } font-bold text-[#eb3526]`}
-                  >
-                    {formatPrice(voucher.price)}
-                  </span>
+                      <div className="space-y-1">
+                        <h3 className="text-2xl font-semibold text-white tracking-tight drop-shadow">
+                          {voucher.name}
+                        </h3>
+                      </div>
+
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-2xl font-bold text-white">
+                            {formatPrice(voucher.price)}
+                          </span>
+                          {voucher.price > 0 && (
+                            <span className="text-xs text-white/50 line-through">
+                              {formatPrice(voucher.price + 50000)}
+                            </span>
+                          )}
+                        </div>
+                        <div className="flex gap-2 flex-wrap justify-end max-w-[45%]">
+                          {(voucher.features ?? voucher.services)
+                            .slice(0, 2)
+                            .map((feature) => (
+                              <span
+                                key={feature}
+                                className="px-2 py-1 text-xs font-medium text-white rounded-md"
+                                style={{
+                                  backgroundColor: "rgba(0,0,0,0.12)",
+                                  border: `1px solid ${theme.chipBorder}`,
+                                }}
+                              >
+                                {feature}
+                              </span>
+                            ))}
+                        </div>
+                      </div>
+
+                      <div className="flex gap-3 flex-col sm:flex-row">
+                        <button
+                          className="flex-1 font-semibold rounded-full py-2 px-4 transition-all shadow-lg shadow-black/20"
+                          style={{
+                            backgroundColor: theme.buttonBg,
+                            color: theme.buttonFg,
+                          }}
+                          onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                            event.stopPropagation();
+                            handleCardClick(voucher);
+                          }}
+                        >
+                          {isSelected ? "Đã chọn" : "Chọn "}
+                        </button>
+                        <button
+                          className="flex-1 border border-white/40 hover:bg-white/15 bg-transparent rounded-full py-2 px-4 text-white transition-colors"
+                          onClick={(event: MouseEvent<HTMLButtonElement>) => {
+                            event.stopPropagation();
+                            handleViewDetail(voucher);
+                          }}
+                        >
+                          Chi tiết
+                        </button>
+                      </div>
+                    </div>
+                  </div>
                 </div>
-
-                <button
-                  className="w-full py-2 px-4 bg-gradient-to-r from-red-500 to-orange-300 hover:from-red-600 hover:to-orange-600 text-white font-semibold rounded-lg transition-all"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    handleViewDetail(voucher);
-                  }}
-                >
-                  Xem chi tiết
-                </button>
-              </div>
-            </div>
+              );
+            })()}
           </motion.div>
         ))}
       </div>

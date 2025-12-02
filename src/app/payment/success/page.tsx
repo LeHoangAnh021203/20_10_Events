@@ -30,6 +30,7 @@ function PaymentResult() {
     const resultCode = searchParams.get("resultCode");
     let orderId = searchParams.get("orderId");
     const message = searchParams.get("message");
+    const showCard = searchParams.get("showCard"); // New parameter to force show greeting card
 
     // Nếu không có orderId trong URL, thử lấy từ storage (sessionStorage -> localStorage)
     if (!orderId && typeof window !== "undefined") {
@@ -52,12 +53,26 @@ function PaymentResult() {
     }
     setResolvedOrderId(orderId ?? null);
 
+    // Nếu có showCard=1, tự động load formData và hiển thị greeting card
+    if (showCard === "1" && orderId) {
+      setStatus("success"); // Set success để có thể load formData
+      return; // Skip resultCode check
+    }
+
     if (resultCode === "0") {
       setStatus("success");
       console.log("Thanh toán thành công:", { orderId, message });
-    } else {
+    } else if (resultCode !== null) {
+      // Chỉ set failed nếu có resultCode và không phải "0"
       setStatus("failed");
       console.log("Thanh toán thất bại:", { orderId, resultCode, message });
+    } else if (orderId) {
+      // Nếu có orderId nhưng không có resultCode (từ email link), set success và load data
+      setStatus("success");
+      console.log("Loading order from email link:", { orderId });
+    } else {
+      // Nếu không có gì, giữ loading
+      setStatus("loading");
     }
   }, [searchParams]);
 
@@ -280,8 +295,10 @@ function PaymentResult() {
   }, [status, resolvedOrderId, formData, serviceName, hasSynced, searchParams]);
 
   // Load formData from sessionStorage or API when component mounts
+  // Also auto-show greeting card if coming from email link
   useEffect(() => {
     const loadFormData = async () => {
+      const showCard = searchParams.get("showCard");
       if (typeof window !== "undefined" && resolvedOrderId) {
         const readStorage = (key: string) => {
           try {
@@ -351,6 +368,12 @@ function PaymentResult() {
                 } catch (storageError) {
                   console.warn("Could not save serviceName to storage:", storageError);
                 }
+              }
+
+              // Auto-show greeting card if coming from email link
+              if (showCard === "1" && orderData.formData) {
+                setShowGreetingCard(true);
+                console.log("✅ Auto-showing greeting card from email link");
               }
             } else {
               console.warn("⚠️ Could not load order from API:", response.status);

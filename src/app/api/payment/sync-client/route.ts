@@ -6,6 +6,7 @@ import {
   getOrder,
 } from "@/lib/order-store";
 import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
+import { createPaymentSuccessEmail, createGreetingCardReceiverEmail } from "@/lib/email-templates";
 
 export const runtime = "nodejs";
 
@@ -117,6 +118,99 @@ export async function POST(req: Request) {
       console.log("✅ Order synced to Google Sheets successfully (sync-client):", orderId);
     } catch (error) {
       console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", error);
+    }
+
+    // Send email notifications to both sender and receiver (in parallel)
+    const emailPromises: Promise<void>[] = [];
+
+    // Email to sender (payment confirmation)
+    if (formData.senderEmail) {
+      emailPromises.push(
+        (async () => {
+          try {
+            const emailTemplate = createPaymentSuccessEmail({
+              senderName: formData.senderName,
+              receiverName: formData.receiverName,
+              serviceName,
+              orderId,
+              amount,
+            });
+
+            const emailResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/send-email`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  to: formData.senderEmail,
+                  subject: emailTemplate.subject,
+                  html: emailTemplate.html,
+                  senderName: formData.senderName,
+                  receiverName: formData.receiverName,
+                }),
+              }
+            );
+
+            if (emailResponse.ok) {
+              console.log("✅ Payment success email sent to sender:", formData.senderEmail);
+            } else {
+              console.warn("⚠️ Failed to send payment success email to sender:", await emailResponse.text());
+            }
+          } catch (emailError) {
+            console.error("❌ Error sending payment success email to sender:", emailError);
+          }
+        })()
+      );
+    }
+
+    // Email to receiver (greeting card notification)
+    if (formData.receiverEmail) {
+      emailPromises.push(
+        (async () => {
+          try {
+            const emailTemplate = createGreetingCardReceiverEmail({
+              senderName: formData.senderName,
+              receiverName: formData.receiverName,
+              message: formData.message,
+              serviceName,
+              orderId,
+            });
+
+            const emailResponse = await fetch(
+              `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/api/send-email`,
+              {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({
+                  to: formData.receiverEmail,
+                  subject: emailTemplate.subject,
+                  html: emailTemplate.html,
+                  senderName: formData.senderName,
+                  receiverName: formData.receiverName,
+                }),
+              }
+            );
+
+            if (emailResponse.ok) {
+              console.log("✅ Greeting card email sent to receiver:", formData.receiverEmail);
+            } else {
+              console.warn("⚠️ Failed to send greeting card email to receiver:", await emailResponse.text());
+            }
+          } catch (emailError) {
+            console.error("❌ Error sending greeting card email to receiver:", emailError);
+          }
+        })()
+      );
+    }
+
+    // Send all emails in parallel
+    if (emailPromises.length > 0) {
+      await Promise.all(emailPromises);
+      console.log("✅ All payment confirmation emails sent successfully");
     }
 
     return NextResponse.json({ success: true });

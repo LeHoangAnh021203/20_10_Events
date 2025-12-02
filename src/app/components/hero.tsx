@@ -19,6 +19,16 @@ interface FormData {
   message: string;
 }
 
+const HERO_COLORS = {
+  primary: "#FF6B2C",
+  primaryDark: "#E0561E",
+  secondary: "#FF9248",
+  accent: "#FFD8BC",
+  gradientLight: "#FFF8F1",
+  gradientMid: "#FFE7D2",
+  gradientDark: "#FFD2B2",
+};
+
 export default function Hero() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -545,13 +555,23 @@ export default function Hero() {
       >
         {/* Background */}
         {isMobile ? (
-          <div className="absolute inset-0 bg-gradient-to-b from-white via-[#f7f8ff] to-[#e1e7ff]" />
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `linear-gradient(180deg, ${HERO_COLORS.gradientLight} 0%, ${HERO_COLORS.gradientMid} 45%, ${HERO_COLORS.gradientDark} 100%)`,
+            }}
+          />
         ) : (
-          <div className="absolute inset-0">
+          <div
+            className="absolute inset-0"
+            style={{
+              background: `radial-gradient(circle at top, ${HERO_COLORS.gradientLight} 0%, ${HERO_COLORS.gradientMid} 45%, ${HERO_COLORS.gradientDark} 100%)`,
+            }}
+          >
             <GodRays
               colorBack="#00000000"
-              colors={["#FFFFFF6E", "#F3F3F3F0", "#8A8A8A", "#989898"]}
-              colorBloom="#FFFFFF"
+              colors={["#FFF4E6", "#FFDCC2", "#FFB48A", "#FF8F4C"]}
+              colorBloom="#FFEAD6"
               offsetX={0.85}
               offsetY={-1}
               intensity={1}
@@ -617,10 +637,11 @@ export default function Hero() {
                 <motion.div
                   style={{
                     borderRadius: isMobile ? "24px" : "100px",
+                    background: `linear-gradient(120deg, ${HERO_COLORS.primary} 0%, ${HERO_COLORS.secondary} 100%)`,
                   }}
                   layout
                   layoutId="cta-card"
-                  className="absolute inset-0 bg-[#004FE5] items-center justify-center transform-gpu will-change-transform"
+                  className="absolute inset-0 items-center justify-center transform-gpu will-change-transform"
                 ></motion.div>
                 <motion.button
                   initial={{ opacity: 0, scale: 0.8 }}
@@ -738,9 +759,10 @@ export default function Hero() {
               transition={{ duration: 0.3 }}
               style={{
                 borderRadius: isMobile ? "32px 32px 0 0" : "24px",
+                background: `linear-gradient(140deg, ${HERO_COLORS.primary} 0%, ${HERO_COLORS.secondary} 100%)`,
               }}
               layout
-              className={`relative flex w-full bg-[#004FE5] transform-gpu will-change-transform ${
+              className={`relative flex w-full transform-gpu will-change-transform ${
                 isMobile
                   ? "max-h-[95vh] flex-col overflow-y-auto rounded-t-[32px] pb-6"
                   : "h-full overflow-y-auto rounded-[24px]"
@@ -759,7 +781,7 @@ export default function Hero() {
               >
                 <MeshGradient
                   speed={1}
-                  colors={["#2452F1", "#022474", "#163DB9", "#0B1D99"]}
+                  colors={["#FFB267", "#FF8A3C", "#E35A12", "#FF6B2C"]}
                   distortion={0.8}
                   swirl={0.1}
                   grainMixer={0}
@@ -915,13 +937,15 @@ export default function Hero() {
 
                   <div className="pt-6 sm:pt-8 mt-6 sm:mt-8 border-t border-white/20">
                     <div className="flex items-center gap-3 sm:gap-4">
-                      <Image
-                        src="/logo.png"
-                        alt="Sarah Chen"
-                        width={48}
-                        height={48}
-                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-                      />
+                      <div className="w-14 h-14 rounded-full border-2 bg-blue flex justify-center items-center">
+                        <Image
+                          src="/logo.png"
+                          alt="Sarah Chen"
+                          width={48}
+                          height={48}
+                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+                        />
+                      </div>
                       <div>
                         <p className="text-base sm:text-lg lg:text-xl text-white">
                           Face Wash Fox
@@ -1009,7 +1033,7 @@ export default function Hero() {
                                   />
                                   <div>
                                     <p className="font-semibold text-base">
-                                     Ví MoMo
+                                      Ví MoMo
                                     </p>
                                     <p className="text-xs opacity-80">
                                       Áp dụng toàn bộ ngân hàng và ví điện tử
@@ -1064,11 +1088,13 @@ export default function Hero() {
                                   }
                                   className={`w-full px-6 py-3 rounded-full font-semibold shadow-lg transition-colors ${
                                     isPaymentReady
-                                      ? "bg-white/30 text-white cursor-not-allowed"
-                                      : "bg-white text-[#0041C1] hover:bg-white/90"
+                                      ? "bg-white/30 text-white/80 cursor-not-allowed"
+                                      : "bg-white text-[#B43403] hover:bg-white/90"
                                   }`}
                                 >
-                                  {isPaymentReady ? "Đang thực hiện..." : "Thanh toán"}
+                                  {isPaymentReady
+                                    ? "Đang thực hiện..."
+                                    : "Thanh toán"}
                                 </button>
                                 {!isPaymentReady && (
                                   <p className="text-xs text-white/70 text-center"></p>

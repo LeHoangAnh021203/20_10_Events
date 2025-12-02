@@ -44,7 +44,9 @@ function LandingPageContent() {
 
   const [showGreetingCard, setShowGreetingCard] = useState(false);
   const [submittedData, setSubmittedData] = useState<FormData | null>(null);
-  const [selectedServiceName, setSelectedServiceName] = useState<string | null>(null);
+  const [selectedServiceName, setSelectedServiceName] = useState<string | null>(
+    null
+  );
   const [formData, setFormData] = useState<FormData>({
     senderName: "",
     senderPhone: "",
@@ -75,21 +77,68 @@ function LandingPageContent() {
     if (!shouldShow) return;
     if (typeof window === "undefined") return;
 
-    const stored = sessionStorage.getItem("formData");
-    if (stored) {
-      try {
-        const data: FormData = JSON.parse(stored);
-        setSubmittedData(data);
-        setShowGreetingCard(true);
-
-        const storedService = sessionStorage.getItem("paidServiceName");
-        if (storedService) {
-          setSelectedServiceName(storedService);
+    const orderId = searchParams.get("orderId");
+    
+    // Nếu có orderId, load từ API (trường hợp từ email link)
+    const loadFromOrderId = async () => {
+      if (orderId) {
+        try {
+          console.log("🔄 Loading formData from orderId:", orderId);
+          const response = await fetch(`/api/payment/get-order?orderId=${orderId}`);
+          if (response.ok) {
+            const orderData = await response.json();
+            if (orderData.formData) {
+              setSubmittedData(orderData.formData);
+              setShowGreetingCard(true);
+              
+              if (orderData.serviceName) {
+                setSelectedServiceName(orderData.serviceName);
+              }
+              
+              // Lưu vào storage để backup
+              try {
+                sessionStorage.setItem("formData", JSON.stringify(orderData.formData));
+                if (orderData.serviceName) {
+                  sessionStorage.setItem("paidServiceName", orderData.serviceName);
+                }
+              } catch (storageError) {
+                console.warn("Could not save to storage:", storageError);
+              }
+              
+              console.log("✅ Loaded formData from API for greeting card");
+              return true;
+            }
+          } else {
+            console.warn("⚠️ Could not load order from API:", response.status);
+          }
+        } catch (error) {
+          console.error("Error loading formData from API:", error);
         }
-      } catch (error) {
-        console.error("Không thể khôi phục dữ liệu thiệp:", error);
       }
-    }
+      return false;
+    };
+
+    // Thử load từ orderId trước
+    loadFromOrderId().then((loaded) => {
+      // Nếu không load được từ orderId, thử load từ storage
+      if (!loaded) {
+        const stored = sessionStorage.getItem("formData");
+        if (stored) {
+          try {
+            const data: FormData = JSON.parse(stored);
+            setSubmittedData(data);
+            setShowGreetingCard(true);
+
+            const storedService = sessionStorage.getItem("paidServiceName");
+            if (storedService) {
+              setSelectedServiceName(storedService);
+            }
+          } catch (error) {
+            console.error("Không thể khôi phục dữ liệu thiệp:", error);
+          }
+        }
+      }
+    });
   }, [searchParams, showGreetingCard]);
 
   const handleInputChange = (field: keyof FormData, value: string) => {
@@ -112,8 +161,10 @@ function LandingPageContent() {
     const requiredFields: Array<keyof FormData> = [
       "senderName",
       "senderPhone",
+      "senderEmail",
       "receiverName",
       "receiverPhone",
+      "receiverEmail",
       "message",
     ];
     const missingFields = requiredFields.filter(
@@ -152,16 +203,18 @@ function LandingPageContent() {
       return;
     }
 
-    // Email validation
+    // Email validation (now required)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    const invalidEmail = [
-      sanitizedForm.senderEmail,
-      sanitizedForm.receiverEmail,
-    ]
-      .filter(Boolean)
-      .find((email) => !emailRegex.test(email));
+    if (!emailRegex.test(sanitizedForm.senderEmail)) {
+      setNotification({
+        title: t.invalidEmail,
+        description: t.invalidEmailDesc,
+        variant: "destructive",
+      });
+      return;
+    }
 
-    if (invalidEmail) {
+    if (!emailRegex.test(sanitizedForm.receiverEmail)) {
       setNotification({
         title: t.invalidEmail,
         description: t.invalidEmailDesc,
@@ -184,10 +237,8 @@ function LandingPageContent() {
       return;
     }
 
-    // Allow duplicate sender/receiver name and phone as long as format is valid
+    // Prevent duplicate sender/receiver email
     if (
-      sanitizedForm.senderEmail &&
-      sanitizedForm.receiverEmail &&
       sanitizedForm.senderEmail.toLowerCase() ===
         sanitizedForm.receiverEmail.toLowerCase()
     ) {
@@ -224,7 +275,7 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50">
+    <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-yellow-50">
       <LanguageSwitcher />
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Left side falling elements */}
@@ -532,49 +583,29 @@ function LandingPageContent() {
         className="container mx-auto px-4 py-8 max-w-4xl text-black"
         style={{ fontFamily: "var(--font-poppins)" }}
       >
-        <div className="shadow-lg border-0backdrop-blur-sm rounded-lg bg-[#feeedd]">
+        <div className="shadow-lg border-0 backdrop-blur-sm rounded-lg bg-gradient-to-b from-[#feeedd] via-[#fef5f0] to-white overflow-hidden">
           {/* Header */}
-          <header className="w-full">
+          <header className="w-full mb-10 relative">
             <Image
-              src="/header.png"
+              src="/Send a wish A2-02.png"
               alt="Foxie Club 20.10 Special - Món quà dành tặng cho bạn"
               width={1920}
               height={600}
               priority
-              className="w-full h-auto object-cover rounded-lg"
+              className="w-full h-auto object-contain rounded-t-lg"
+              style={{ objectPosition: 'top center' }}
             />
           </header>
-          <div
-            className={`text-center pb-6 ${
-              isMobile ? "mt-[-80px] px-4" : "mt-[-130px]"
-            }`}
-          >
-            <h1
-              className={`${
-                isMobile ? "text-[22px] mt-4" : "text-[59pt] mt-[-10] "
-              } font-bold text-[#eb3526] mb-2`}
-              style={{ fontFamily: "var(--font-poppins)", fontWeight: "500" }}
-            >
-              <strong>{t.title}</strong>
-            </h1>
-            <p
-              className={`text-gray-600 ${isMobile ? "text-base" : "text-lg"}`}
-            >
-              {t.subtitle}
-            </p>
-          </div>
 
-          <div className={`${isMobile ? "px-4" : "px-6"} pb-8`}>
-            <div
-              className={`${isMobile ? "space-y-6" : "space-y-8"}`}
-            >
+          <div className={`${isMobile ? "px-4" : "px-6"} pb-8 relative z-10`}>
+            <div className={`${isMobile ? "space-y-6" : "space-y-8"}`}>
               {/* Sender Information */}
-              <div className="space-y-4">
+              <div className="space-y-4 relative">
                 <div
-                  className={`absolute left-1/2  -translate-x-1/2 -translate-y-1/2 transform ${
+                  className={`absolute left-1/2 -translate-x-1/2 -translate-y-1/2 transform ${
                     isMobile
-                      ? "w-76 opacity-20 z-0 top-[80%]"
-                      : "w-34 sm:w-28 md:w-98 opacity-20 z-100 top-[140%]"
+                      ? "w-20 opacity-15 z-0 top-[60%]"
+                      : "w-32 sm:w-40 md:w-48 opacity-15 z-0 top-[80%]"
                   } pointer-events-none`}
                 >
                   <div className="animate-zoom-in-out">
@@ -658,7 +689,7 @@ function LandingPageContent() {
                       isMobile ? "text-xs" : "text-sm"
                     } font-medium`}
                   >
-                    {t.email}
+                    {t.email} *
                   </label>
                   <input
                     id="senderEmail"
@@ -751,7 +782,7 @@ function LandingPageContent() {
                       isMobile ? "text-xs" : "text-sm"
                     } font-medium`}
                   >
-                    {t.email}
+                    {t.email} *
                   </label>
                   <input
                     id="receiverEmail"
@@ -847,18 +878,39 @@ function LandingPageContent() {
 
           {/* Footer */}
           <footer className="w-full">
-            <div className="bg-white/80 backdrop-blur-sm px-4 py-8 sm:px-6 mb-[-10] md:mb-[-150]">
+            <div className="bg-white/80 backdrop-blur-sm px-4 py-8 sm:px-6">
               <div className="grid gap-3 text-center text-sm text-gray-700 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                 {[
-                  { href: "/dieu-khoan-giao-dich", label: "Điều khoản giao dịch" },
-                  { href: "/chinh-sach-thanh-toan", label: "Chính sách thanh toán" },
-                  { href: "/chinh-sach-doi-tra-hoan-tien", label: "Chính sách đổi trả – hoàn tiền" },
-                  { href: "/chinh-sach-giao-nhan", label: "Chính sách giao nhận" },
-                  { href: "/chinh-sach-bao-mat-thong-tin", label: "Chính sách bảo mật thông tin" },
-                  { href: "/chinh-sach-bao-mat-thanh-toan", label: "Chính sách bảo mật thanh toán" },
+                  {
+                    href: "/dieu-khoan-giao-dich",
+                    label: "Điều khoản giao dịch",
+                  },
+                  {
+                    href: "/chinh-sach-thanh-toan",
+                    label: "Chính sách thanh toán",
+                  },
+                  {
+                    href: "/chinh-sach-doi-tra-hoan-tien",
+                    label: "Chính sách đổi trả – hoàn tiền",
+                  },
+                  {
+                    href: "/chinh-sach-giao-nhan",
+                    label: "Chính sách giao nhận",
+                  },
+                  {
+                    href: "/chinh-sach-bao-mat-thong-tin",
+                    label: "Chính sách bảo mật thông tin",
+                  },
+                  {
+                    href: "/chinh-sach-bao-mat-thanh-toan",
+                    label: "Chính sách bảo mật thanh toán",
+                  },
                   { href: "/lien-he", label: "Liên hệ" },
                 ].map((link) => (
-                  <div key={link.href} className="flex items-center justify-center">
+                  <div
+                    key={link.href}
+                    className="flex items-center justify-center"
+                  >
                     <Link
                       href={link.href}
                       className="inline-flex w-full max-w-[260px] items-center justify-center rounded-full border border-orange-200 px-4 py-2 font-semibold text-orange-600 hover:bg-orange-50"
@@ -870,7 +922,7 @@ function LandingPageContent() {
               </div>
             </div>
             <Image
-              src="/footer.png"
+              src="/Send a wish A2-03.png"
               alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
               width={1920}
               height={400}
@@ -925,9 +977,9 @@ function LandingPageContent() {
 
 export default function LandingPage() {
   return (
-    <Suspense
+      <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50" />
+        <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-yellow-50" />
       }
     >
       <LandingPageContent />

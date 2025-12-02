@@ -158,7 +158,7 @@ export const translations: Record<Language, Translations> = {
     withLove: "Với tình yêu thương,",
     
     // Greeting card specific
-    faceWashGreeting: "Nhân ngày 20/10, Face Wash Fox chúc",
+    faceWashGreeting: "Mùa lễ hội nhộn nhịp nhất năm đã đến rồi, Face Wash Fox gửi đến",
     signatureText: "Thân mến gửi trao ❤️!",
     
     // Share text
