@@ -75,46 +75,64 @@ export default function VoucherSelection({
       ],
       features: ["dịch vụ"],
     },
-    // {
-    //   id: "cash-200k",
-    //   name: "Cash Voucher 200.000đ",
-    //   price: 200000,
-    //   type: "cash",
-    //   description: "Voucher tiền mặt trị giá 200.000 VNĐ",
-    //   services: [
-    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-    //     "Áp dụng cho tất cả sản phẩm",
-    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
-    //   ],
-    //   benefits: [
-    //     "Linh hoạt trong việc sử dụng",
-    //     "Không giới hạn thời gian sử dụng",
-    //     "Có thể tặng cho người thân",
-    //     "Áp dụng tại tất cả chi nhánh",
-    //   ],
-    //   features: ["tiền mặt"],
-    // },
-    // {
-    //   id: "cash-500k",
-    //   name: "Cash Voucher 500.000đ",
-    //   price: 500000,
-    //   type: "cash",
-    //   description: "Voucher tiền mặt trị giá 500.000 VNĐ",
-    //   services: [
-    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-    //     "Áp dụng cho tất cả sản phẩm",
-    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
-    //     "Ưu tiên đặt lịch dịch vụ cao cấp",
-    //   ],
-    //   benefits: [
-    //     "Linh hoạt trong việc sử dụng",
-    //     "Không giới hạn thời gian sử dụng",
-    //     "Có thể tặng cho người thân",
-    //     "Áp dụng tại tất cả chi nhánh",
-    //     "Được tư vấn chăm sóc da miễn phí",
-    //   ],
-    //   features: ["tiền mặt"],
-    // },
+    {
+      id: "test-2k",
+      name: "Voucher test thanh toán 2.000đ",
+      price: 2000,
+      type: "cash",
+      description: "Voucher dùng để kiểm thử luồng thanh toán chỉ 2.000đ",
+      services: [
+        "Dùng để test quy trình thanh toán MoMo",
+        "Không tạo quyền lợi thực tế",
+        "Có thể chọn nhiều lần để kiểm thử",
+      ],
+      benefits: [
+        "Thanh toán nhanh gọn với giá trị nhỏ",
+        "Giúp kiểm tra email/ghi nhận đơn",
+        "Không áp dụng ưu đãi thực tế",
+      ],
+      features: ["test"],
+    },
+    {
+      id: "cash-200k",
+      name: "Cash Voucher 200.000đ",
+      price: 200000,
+      type: "cash",
+      description: "Voucher tiền mặt trị giá 200.000 VNĐ",
+      services: [
+        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+        "Áp dụng cho tất cả sản phẩm",
+        "Có thể kết hợp với các chương trình khuyến mãi khác",
+      ],
+      benefits: [
+        "Linh hoạt trong việc sử dụng",
+        "Không giới hạn thời gian sử dụng",
+        "Có thể tặng cho người thân",
+        "Áp dụng tại tất cả chi nhánh",
+      ],
+      features: ["tiền mặt"],
+    },
+    {
+      id: "cash-500k",
+      name: "Cash Voucher 500.000đ",
+      price: 500000,
+      type: "cash",
+      description: "Voucher tiền mặt trị giá 500.000 VNĐ",
+      services: [
+        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+        "Áp dụng cho tất cả sản phẩm",
+        "Có thể kết hợp với các chương trình khuyến mãi khác",
+        "Ưu tiên đặt lịch dịch vụ cao cấp",
+      ],
+      benefits: [
+        "Linh hoạt trong việc sử dụng",
+        "Không giới hạn thời gian sử dụng",
+        "Có thể tặng cho người thân",
+        "Áp dụng tại tất cả chi nhánh",
+        "Được tư vấn chăm sóc da miễn phí",
+      ],
+      features: ["tiền mặt"],
+    },
   ];
 
   const getVoucherMedia = (voucher: VoucherOption) => {
@@ -130,6 +148,7 @@ export default function VoucherSelection({
           overlayText: "",
         };
       case "cash-500k":
+      case "test-2k":
       default:
         return {
           image: "/Custom for web - Voucher DVCT-01.png",

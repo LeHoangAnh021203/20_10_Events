@@ -305,6 +305,23 @@ export default function Hero() {
             "Được tư vấn chăm sóc da miễn phí",
           ],
         },
+        {
+          id: "test-2k",
+          name: "Voucher test thanh toán 2.000đ",
+          price: 2000,
+          type: "cash" as const,
+          description: "Voucher dùng để kiểm thử luồng thanh toán chỉ 2.000đ",
+          services: [
+            "Dùng để test quy trình thanh toán MoMo",
+            "Không tạo quyền lợi thực tế",
+            "Có thể chọn nhiều lần để kiểm thử",
+          ],
+          benefits: [
+            "Thanh toán nhanh gọn với giá trị nhỏ",
+            "Giúp kiểm tra email/ghi nhận đơn",
+            "Không áp dụng ưu đãi thực tế",
+          ],
+        },
       ];
 
       const foundVoucher = voucherOptions.find((v) => v.id === voucherId);

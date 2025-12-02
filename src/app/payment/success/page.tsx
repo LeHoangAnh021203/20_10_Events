@@ -91,14 +91,41 @@ function PaymentResult() {
       // Bước 1: Thử lấy từ state (đã load từ useEffect khác)
       // Bước 2: Thử lấy từ sessionStorage (có thể bị xóa trên mobile)
       // Bước 2b: Thử lấy từ localStorage (backup cho mobile)
+      // Bước 2c: Thử lấy từ pendingOrderPayload (đã lưu toàn bộ thông tin trước khi redirect)
+      let pendingPayload: {
+        orderId: string;
+        amount: number;
+        serviceName?: string;
+        formData?: FormData;
+        createdAt?: number;
+      } | null = null;
+
       if (typeof window !== "undefined") {
+        const readStorageValue = (key: string) => {
+          try {
+            const sessionValue = sessionStorage.getItem(key);
+            if (sessionValue) return sessionValue;
+          } catch {}
+          try {
+            return localStorage.getItem(key);
+          } catch {}
+          return null;
+        };
+
+        const pendingPayloadRaw =
+          readStorageValue("pendingOrderPayload") ||
+          localStorage.getItem("pendingOrderPayload");
+        if (pendingPayloadRaw) {
+          try {
+            pendingPayload = JSON.parse(pendingPayloadRaw);
+          } catch (error) {
+            console.warn("Không thể parse pendingOrderPayload:", error);
+          }
+        }
+
         if (!latestFormData) {
           // Ưu tiên sessionStorage
-          let stored = sessionStorage.getItem("formData");
-          // Nếu không có, thử localStorage (backup cho mobile)
-          if (!stored) {
-            stored = localStorage.getItem("formData");
-          }
+          let stored = readStorageValue("formData");
           if (stored) {
             try {
               latestFormData = JSON.parse(stored);
@@ -111,13 +138,28 @@ function PaymentResult() {
         }
 
         if (!latestServiceName) {
-          let storedService = sessionStorage.getItem("paidServiceName");
-          if (!storedService) {
-            storedService = localStorage.getItem("paidServiceName");
-          }
+          let storedService = readStorageValue("paidServiceName");
           if (storedService) {
             latestServiceName = storedService;
             setServiceName(latestServiceName);
+          }
+        }
+
+        // Nếu vẫn chưa có dữ liệu, thử lấy từ pendingOrderPayload
+        if (pendingPayload) {
+          if (
+            (!resolvedOrderId || resolvedOrderId === pendingPayload.orderId) &&
+            pendingPayload.orderId
+          ) {
+            if (!latestFormData && pendingPayload.formData) {
+              latestFormData = pendingPayload.formData;
+              setFormData(pendingPayload.formData);
+              console.log("✅ Loaded formData từ pendingOrderPayload");
+            }
+            if (!latestServiceName && pendingPayload.serviceName) {
+              latestServiceName = pendingPayload.serviceName;
+              setServiceName(pendingPayload.serviceName);
+            }
           }
         }
       }
@@ -157,10 +199,15 @@ function PaymentResult() {
         }
       }
 
-      const lastVoucherRaw =
-        typeof window !== "undefined"
-          ? sessionStorage.getItem("lastSelectedVoucher")
-          : null;
+      let lastVoucherRaw: string | null = null;
+      if (typeof window !== "undefined") {
+        try {
+          lastVoucherRaw = sessionStorage.getItem("lastSelectedVoucher");
+          if (!lastVoucherRaw) {
+            lastVoucherRaw = localStorage.getItem("lastSelectedVoucher");
+          }
+        } catch {}
+      }
       let voucherPrice: number | undefined;
       if (lastVoucherRaw) {
         try {
@@ -173,6 +220,16 @@ function PaymentResult() {
           }
         } catch (error) {
           console.warn("Không thể parse voucher cuối:", error);
+        }
+      }
+
+      // Nếu vẫn chưa có giá trị, thử lấy từ pendingOrderPayload
+      if ((!voucherPrice || Number.isNaN(voucherPrice)) && pendingPayload) {
+        if (
+          (!resolvedOrderId || pendingPayload.orderId === resolvedOrderId) &&
+          typeof pendingPayload.amount === "number"
+        ) {
+          voucherPrice = pendingPayload.amount;
         }
       }
 
