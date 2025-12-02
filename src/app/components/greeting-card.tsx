@@ -442,7 +442,9 @@ export default function GreetingCard({
         normalizedName.startsWith("dịch vụ")
       ) {
         console.log("getDynamicBodyContent - Matched Dịch vụ Cộng thêm");
-        return buildMessage("voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ");
+        return buildMessage(
+          "voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VNĐ"
+        );
       } else {
         console.log(
           "getDynamicBodyContent - No match, using:",
@@ -554,7 +556,6 @@ export default function GreetingCard({
       normalizedText.includes("299.000vnd")
     );
   };
-
 
   // Wrap text but keep original indices so we can style substrings across lines
   const wrapTextWithIndices = (
@@ -1160,7 +1161,7 @@ export default function GreetingCard({
               {/* Left side falling elements */}
               <div className="absolute -top-20 left-10 w-16 h-16 animate-fall-down-left opacity-30 ">
                 <Image
-                  src="/20.10/Asset 5@4x.png"
+                  src="/Holiday/DVCT 1@4x.png"
                   alt="falling decoration"
                   width={64}
                   height={64}
@@ -1170,7 +1171,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 left-12 w-24 h-24 animate-fall-down-left-delayed-1 opacity-25 ">
                 <Image
-                  src="/20.10/Asset 7@4x.png"
+                  src="/Holiday/DVCT 2@4x.png"
                   alt="falling decoration"
                   width={48}
                   height={48}
@@ -1180,7 +1181,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 left-12 w-12 h-12 animate-fall-down-left-delayed-2 opacity-20 ">
                 <Image
-                  src="/20.10/aaa@4x.png"
+                  src="/Holiday/DVCT 3@4x.png"
                   alt="falling decoration"
                   width={48}
                   height={48}
@@ -1191,7 +1192,7 @@ export default function GreetingCard({
               {/* Right side falling elements */}
               <div className="absolute -top-20 right-10 w-32 h-32 animate-fall-down-right opacity-35 ">
                 <Image
-                  src="/20.10/Asset 6@4x.png"
+                  src="/Holiday/Nơ@4x.png"
                   alt="falling decoration"
                   width={56}
                   height={56}
@@ -1201,7 +1202,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-24 h-24 animate-fall-down-right-delayed-1 opacity-35 ">
                 <Image
-                  src="/20.10/Asset 8@4x.png"
+                  src="/Holiday/Tag sinh nhật cáo@4x.png"
                   alt="falling decoration"
                   width={40}
                   height={40}
@@ -1211,7 +1212,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-14 h-14 animate-fall-down-right-delayed-2 opacity-35 ">
                 <Image
-                  src="/20.10/bbb@4x.png"
+                  src="/Holiday/Trái tim@4x.png"
                   alt="falling decoration"
                   width={24}
                   height={24}
@@ -1221,7 +1222,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-20 h-20 animate-fall-down-right opacity-20">
                 <Image
-                  src="/20.10/ccc@4x.png"
+                  src="/Holiday/Voucher@4x.png"
                   alt="falling decoration"
                   width={32}
                   height={32}
@@ -1232,7 +1233,7 @@ export default function GreetingCard({
 
             <div className="absolute -top-20 left-1/2 w-18 h-18 animate-fall-down-left opacity-15 ">
               <Image
-                src="/20.10/ccc@4x.png"
+                src="/Holiday/DVCT 1@4x.png"
                 alt="falling decoration"
                 width={32}
                 height={32}
@@ -1242,7 +1243,7 @@ export default function GreetingCard({
 
             <div className="absolute -top-20 left-1/2 w-20 h-20 animate-fall-down-right-delayed-1 opacity-20 ">
               <Image
-                src="/20.10/Asset 5@4x.png"
+                src="/Holiday/Trái tim@4x.png"
                 alt="falling decoration"
                 width={40}
                 height={40}
@@ -1251,7 +1252,7 @@ export default function GreetingCard({
             </div>
             <header className="w-full">
               <Image
-                src="/Header fix@4x.png"
+                src="/Holiday/Header-02.png"
                 alt="Foxie Club 20.10 Special - Món quà dành tặng cho bạn"
                 width={1920}
                 height={600}
@@ -1282,11 +1283,11 @@ export default function GreetingCard({
                   className={`absolute ${
                     isMobile
                       ? "top-33 left-2 w-16 opacity-70"
-                      : "top-40 left-8 w-24 sm:w-28 md:w-32 opacity-80"
+                      : "top-73 left-[-1] w-24 sm:w-28 md:w-32 opacity-80"
                   } animate-float-y z-100`}
                 >
                   <Image
-                    src="/Cáo mùa hè/Asset 1@4x.png"
+                    src="/Holiday/Cáo và voucher@4x.png"
                     alt="decorative fox"
                     width={256}
                     height={256}
@@ -1302,7 +1303,7 @@ export default function GreetingCard({
                   } animate-float-x z-100`}
                 >
                   <Image
-                    src="/Cáo mùa hè/Asset 6@4x.png"
+                    src="/Holiday/Hộp quà@4x.png"
                     alt="decorative fox"
                     width={256}
                     height={256}
@@ -1318,7 +1319,7 @@ export default function GreetingCard({
                   } animate-swing-60 z-100`}
                 >
                   <Image
-                    src="/Cáo mùa hè/Asset 8@4x.png"
+                    src="/Holiday/Nón sinh nhật@4x.png"
                     alt="decorative sun"
                     width={256}
                     height={256}
@@ -1580,19 +1581,11 @@ export default function GreetingCard({
             {/* Letter Footer */}
             <footer className="w-full mt-8 relative">
               <Image
-                src="/Footer@4x.png"
+                src="/Holiday/Footer-03.png"
                 alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
                 width={1920}
                 height={400}
                 className="w-full h-auto object-cover"
-              />
-              <Image
-                src="/QR_Dieu_Khoan_20_10.png"
-                alt="QR Code - Điều khoản sử dụng"
-                width={120}
-                height={120}
-                priority
-                className="absolute bottom-3 right-3 w-16 h-16 sm:bottom-4 sm:right-4 sm:w-24 sm:h-24 object-cover z-10"
               />
             </footer>
           </div>
