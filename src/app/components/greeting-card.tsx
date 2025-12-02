@@ -1171,7 +1171,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 left-12 w-24 h-24 animate-fall-down-left-delayed-1 opacity-25 ">
                 <Image
-                  src="/Holiday/DVCT 2@4x.png"
+                  src="/Giáng sinh/Asset 6@4x.png"
                   alt="falling decoration"
                   width={48}
                   height={48}
@@ -1212,7 +1212,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-14 h-14 animate-fall-down-right-delayed-2 opacity-35 ">
                 <Image
-                  src="/Holiday/Trái tim@4x.png"
+                  src="/Tết/Asset 10@4x.png"
                   alt="falling decoration"
                   width={24}
                   height={24}
@@ -1222,7 +1222,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-20 h-20 animate-fall-down-right opacity-20">
                 <Image
-                  src="/Holiday/Voucher@4x.png"
+                  src="/Giáng sinh/Asset 3@4x.png"
                   alt="falling decoration"
                   width={32}
                   height={32}
@@ -1282,7 +1282,7 @@ export default function GreetingCard({
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "top-33 left-2 w-16 opacity-70"
+                      ? "top-40 left-2 w-16 opacity-70"
                       : "top-73 left-[-1] w-24 sm:w-28 md:w-32 opacity-80"
                   } animate-float-y z-100`}
                 >
@@ -1298,12 +1298,12 @@ export default function GreetingCard({
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "bottom-35 left-2 w-16 opacity-70"
+                      ? "bottom-30 left-2 w-16 opacity-70"
                       : "bottom-50 left-2 w-20 sm:w-24 md:w-28 opacity-80"
                   } animate-float-x z-100`}
                 >
                   <Image
-                    src="/Holiday/Hộp quà@4x.png"
+                    src="/Tết/Asset 3@4x.png"
                     alt="decorative fox"
                     width={256}
                     height={256}
@@ -1314,12 +1314,12 @@ export default function GreetingCard({
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "bottom-22 right-6 w-16 opacity-80"
+                      ? "bottom-18 right-6 w-16 opacity-80"
                       : "bottom-38 right-8 w-20 sm:w-20 md:w20 opacity-100"
                   } animate-swing-60 z-100`}
                 >
                   <Image
-                    src="/Holiday/Nón sinh nhật@4x.png"
+                    src="/Giáng sinh/Asset 10@4x.png"
                     alt="decorative sun"
                     width={256}
                     height={256}

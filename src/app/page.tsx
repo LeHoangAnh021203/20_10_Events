@@ -285,7 +285,7 @@ function LandingPageContent() {
           } animate-fall-down-left opacity-30`}
         >
           <Image
-            src="/20.10/Asset 5@4x.png"
+            src="/Giáng sinh/Asset 2@4x.png"
             alt="falling decoration"
             width={64}
             height={64}
@@ -299,7 +299,7 @@ function LandingPageContent() {
           } animate-fall-down-left-delayed-1 opacity-25`}
         >
           <Image
-            src="/20.10/Asset 7@4x.png"
+            src="/Giáng sinh/Asset 3@4x.png"
             alt="falling decoration"
             width={48}
             height={48}
@@ -313,7 +313,7 @@ function LandingPageContent() {
           } animate-fall-down-left-delayed-2 opacity-20`}
         >
           <Image
-            src="/20.10/aaa@4x.png"
+            src="/Giáng sinh/Asset 5@4x.png"
             alt="falling decoration"
             width={32}
             height={32}
@@ -328,7 +328,7 @@ function LandingPageContent() {
           } animate-fall-down-right opacity-35`}
         >
           <Image
-            src="/20.10/Asset 6@4x.png"
+            src="/Tết/Asset 1@4x.png"
             alt="falling decoration"
             width={56}
             height={56}
@@ -342,7 +342,7 @@ function LandingPageContent() {
           } animate-fall-down-right-delayed-1 opacity-30`}
         >
           <Image
-            src="/20.10/Asset 8@4x.png"
+            src="/Tết/Asset 4@4x.png"
             alt="falling decoration"
             width={40}
             height={40}
@@ -356,7 +356,7 @@ function LandingPageContent() {
           } animate-fall-down-right-delayed-2`}
         >
           <Image
-            src="/20.10/bbb@4x.png"
+            src="/Tết/Asset 5@4x.png"
             alt="falling decoration"
             width={24}
             height={24}
@@ -370,7 +370,7 @@ function LandingPageContent() {
           } animate-fall-down-right opacity-20`}
         >
           <Image
-            src="/20.10/ccc@4x.png"
+            src="/Tết/Asset 6@4x.png"
             alt="falling decoration"
             width={32}
             height={32}
@@ -385,7 +385,7 @@ function LandingPageContent() {
           } animate-fall-down-left opacity-25`}
         >
           <Image
-            src="/20.10/Asset 6@4x.png"
+            src="/Tết/Asset 7@4x.png"
             alt="falling decoration"
             width={64}
             height={64}
@@ -399,7 +399,7 @@ function LandingPageContent() {
           } animate-fall-down-left-delayed-1 opacity-20`}
         >
           <Image
-            src="/20.10/Asset 8@4x.png"
+            src="/Tết/Asset 8@4x.png"
             alt="falling decoration"
             width={48}
             height={48}
@@ -413,7 +413,7 @@ function LandingPageContent() {
           } animate-fall-down-left-delayed-2 opacity-30`}
         >
           <Image
-            src="/20.10/bbb@4x.png"
+            src="/Tết/Asset 9@4x.png"
             alt="falling decoration"
             width={56}
             height={56}
@@ -427,7 +427,7 @@ function LandingPageContent() {
           } animate-fall-down-left opacity-15`}
         >
           <Image
-            src="/20.10/ccc@4x.png"
+            src="/Tết/Asset 10@4x.png"
             alt="falling decoration"
             width={40}
             height={40}
@@ -442,7 +442,7 @@ function LandingPageContent() {
           } animate-fall-down-right opacity-30`}
         >
           <Image
-            src="/20.10/Asset 5@4x.png"
+            src="/Giáng sinh/Asset 4@4x.png"
             alt="falling decoration"
             width={80}
             height={80}
@@ -456,7 +456,7 @@ function LandingPageContent() {
           } animate-fall-down-right-delayed-1 opacity-25`}
         >
           <Image
-            src="/20.10/Asset 7@4x.png"
+            src="/Giáng sinh/Asset 8@4x.png"
             alt="falling decoration"
             width={64}
             height={64}
@@ -470,7 +470,7 @@ function LandingPageContent() {
           } animate-fall-down-right-delayed-2 opacity-20`}
         >
           <Image
-            src="/20.10/aaa@4x.png"
+            src="/Giáng sinh/Asset 9@4x.png"
             alt="falling decoration"
             width={48}
             height={48}
@@ -484,7 +484,7 @@ function LandingPageContent() {
           } animate-fall-down-right opacity-35`}
         >
           <Image
-            src="/20.10/bbb@4x.png"
+            src="/Giáng sinh/Asset 11@4x.png"
             alt="falling decoration"
             width={56}
             height={56}
@@ -499,7 +499,7 @@ function LandingPageContent() {
           } animate-fall-down-left opacity-15 z-100`}
         >
           <Image
-            src="/20.10/ccc@4x.png"
+            src="/Giáng sinh/Asset 12@4x.png"
             alt="falling decoration"
             width={32}
             height={32}
@@ -513,7 +513,7 @@ function LandingPageContent() {
           } animate-fall-down-right-delayed-1 opacity-20 z-100`}
         >
           <Image
-            src="/20.10/Asset 5@4x.png"
+            src="/Holiday/Cáo và voucher@4x.png"
             alt="falling decoration"
             width={40}
             height={40}
@@ -528,7 +528,7 @@ function LandingPageContent() {
           } animate-fall-down-left-delayed-1 opacity-25 z-100`}
         >
           <Image
-            src="/20.10/Asset 6@4x.png"
+            src="/Holiday/Tag sinh nhật Cáo@4x.png"
             alt="falling decoration"
             width={72}
             height={72}
@@ -542,7 +542,7 @@ function LandingPageContent() {
           } animate-fall-down-left opacity-20 z-100`}
         >
           <Image
-            src="/20.10/Asset 8@4x.png"
+            src="/Holiday/DVCT 1@4x.png"
             alt="falling decoration"
             width={56}
             height={56}
@@ -556,7 +556,7 @@ function LandingPageContent() {
           } animate-fall-down-right-delayed-2 opacity-30 z-100`}
         >
           <Image
-            src="/20.10/Asset 7@4x.png"
+            src="/Holiday/Voucher@4x.png"
             alt="falling decoration"
             width={64}
             height={64}
@@ -570,7 +570,7 @@ function LandingPageContent() {
           } animate-fall-down-right opacity-25 z-100`}
         >
           <Image
-            src="/20.10/aaa@4x.png"
+            src="/Tết/Asset 2@4x.png"
             alt="falling decoration"
             width={32}
             height={32}

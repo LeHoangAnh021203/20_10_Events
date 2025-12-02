@@ -36,7 +36,7 @@ export default function TermsPage() {
             {/* Header */}
             <header className="w-full">
               <Image
-                src="/Header fix@4x.png"
+                src="/Holiday/Header-02.png"
                 alt="Foxie Club 20.10 Special"
                 width={1920}
                 height={600}
@@ -67,11 +67,11 @@ export default function TermsPage() {
                 className={`absolute ${
                   isMobile
                     ? "top-40 left-2 w-16 opacity-70"
-                    : "top-48 left-8 w-24 sm:w-28 md:w-32 opacity-80"
+                    : "top-90 left-2 w-24 sm:w-28 md:w-32 opacity-80"
                 } animate-float-y z-100`}
               >
                 <Image
-                  src="/Cáo mùa hè/Asset 1@4x.png"
+                  src="/Giáng sinh/Asset 7@4x.png"
                   alt="decorative fox"
                   width={256}
                   height={256}
@@ -82,12 +82,12 @@ export default function TermsPage() {
               <div
                 className={`absolute ${
                   isMobile
-                    ? "bottom-40 left-2 w-16 opacity-70"
-                    : "bottom-60 left-2 w-20 sm:w-24 md:w-28 opacity-80"
+                    ? "bottom-35 left-2 w-16 opacity-70"
+                    : "bottom-58 left-2 w-20 sm:w-24 md:w-28 opacity-80"
                 } animate-float-x z-100`}
               >
                 <Image
-                  src="/Cáo mùa hè/Asset 6@4x.png"
+                  src="/Giáng sinh/Asset 12@4x.png"
                   alt="decorative fox"
                   width={256}
                   height={256}
@@ -98,12 +98,12 @@ export default function TermsPage() {
               <div
                 className={`absolute ${
                   isMobile
-                    ? "bottom-30 right-6 w-16 opacity-80"
-                    : "bottom-48 right-8 w-20 sm:w-20 md:w20 opacity-100"
+                    ? "bottom-25 right-6 w-16 opacity-80"
+                    : "bottom-55 right-8 w-20 sm:w-20 md:w20 opacity-100"
                 } animate-swing-60 z-100`}
               >
                 <Image
-                  src="/Cáo mùa hè/Asset 8@4x.png"
+                  src="/Giáng sinh/Asset 13@4x.png"
                   alt="decorative sun"
                   width={256}
                   height={256}
@@ -147,7 +147,7 @@ export default function TermsPage() {
             {/* Footer */}
             <footer className="w-full mt-8">
               <Image
-                src="/Footer@4x.png"
+                src="/Holiday/Footer-03.png"
                 alt="Foxie Club Footer"
                 width={1920}
                 height={400}
