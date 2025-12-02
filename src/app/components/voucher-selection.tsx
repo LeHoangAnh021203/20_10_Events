@@ -75,46 +75,46 @@ export default function VoucherSelection({
       ],
       features: ["dịch vụ"],
     },
-    {
-      id: "cash-200k",
-      name: "Cash Voucher 200.000đ",
-      price: 200000,
-      type: "cash",
-      description: "Voucher tiền mặt trị giá 200.000 VNĐ",
-      services: [
-        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-        "Áp dụng cho tất cả sản phẩm",
-        "Có thể kết hợp với các chương trình khuyến mãi khác",
-      ],
-      benefits: [
-        "Linh hoạt trong việc sử dụng",
-        "Không giới hạn thời gian sử dụng",
-        "Có thể tặng cho người thân",
-        "Áp dụng tại tất cả chi nhánh",
-      ],
-      features: ["tiền mặt"],
-    },
-    {
-      id: "cash-500k",
-      name: "Cash Voucher 500.000đ",
-      price: 500000,
-      type: "cash",
-      description: "Voucher tiền mặt trị giá 500.000 VNĐ",
-      services: [
-        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-        "Áp dụng cho tất cả sản phẩm",
-        "Có thể kết hợp với các chương trình khuyến mãi khác",
-        "Ưu tiên đặt lịch dịch vụ cao cấp",
-      ],
-      benefits: [
-        "Linh hoạt trong việc sử dụng",
-        "Không giới hạn thời gian sử dụng",
-        "Có thể tặng cho người thân",
-        "Áp dụng tại tất cả chi nhánh",
-        "Được tư vấn chăm sóc da miễn phí",
-      ],
-      features: ["tiền mặt"],
-    },
+    // {
+    //   id: "cash-200k",
+    //   name: "Cash Voucher 200.000đ",
+    //   price: 200000,
+    //   type: "cash",
+    //   description: "Voucher tiền mặt trị giá 200.000 VNĐ",
+    //   services: [
+    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+    //     "Áp dụng cho tất cả sản phẩm",
+    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
+    //   ],
+    //   benefits: [
+    //     "Linh hoạt trong việc sử dụng",
+    //     "Không giới hạn thời gian sử dụng",
+    //     "Có thể tặng cho người thân",
+    //     "Áp dụng tại tất cả chi nhánh",
+    //   ],
+    //   features: ["tiền mặt"],
+    // },
+    // {
+    //   id: "cash-500k",
+    //   name: "Cash Voucher 500.000đ",
+    //   price: 500000,
+    //   type: "cash",
+    //   description: "Voucher tiền mặt trị giá 500.000 VNĐ",
+    //   services: [
+    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+    //     "Áp dụng cho tất cả sản phẩm",
+    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
+    //     "Ưu tiên đặt lịch dịch vụ cao cấp",
+    //   ],
+    //   benefits: [
+    //     "Linh hoạt trong việc sử dụng",
+    //     "Không giới hạn thời gian sử dụng",
+    //     "Có thể tặng cho người thân",
+    //     "Áp dụng tại tất cả chi nhánh",
+    //     "Được tư vấn chăm sóc da miễn phí",
+    //   ],
+    //   features: ["tiền mặt"],
+    // },
   ];
 
   const getVoucherMedia = (voucher: VoucherOption) => {
@@ -168,9 +168,7 @@ export default function VoucherSelection({
     <>
       {/* Voucher Cards Grid */}
       <div
-        className={`grid ${
-          isMobile ? "grid-cols-1" : "grid-cols-1 md:grid-cols-3"
-        } gap-6 mt-8`}
+        className={`flex justify-center items-start gap-6 mt-8`}
       >
         {voucherOptions.map((voucher) => (
           <motion.div
@@ -196,7 +194,7 @@ export default function VoucherSelection({
                   onMouseEnter={() => setHoveredCardId(voucher.id)}
                   onMouseLeave={() => setHoveredCardId(null)}
                 >
-                  <div className="flex h-full flex-col">
+                  <div className="flex h-full flex-col w-90">
                     {/* Media area */}
                     <div className="relative h-1/2 w-full overflow-hidden rounded-[24px] bg-black">
                       <Image
@@ -294,7 +292,7 @@ export default function VoucherSelection({
                             handleViewDetail(voucher);
                           }}
                         >
-                          Chi tiết
+                          Điều khoản
                         </button>
                       </div>
                     </div>
@@ -324,106 +322,127 @@ export default function VoucherSelection({
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              <div
-                className={`bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative ${
-                  isMobile ? "p-4" : "p-8"
-                }`}
-              >
-                {/* Close Button */}
-                <button
-                  onClick={handleCloseDetail}
-                  className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
+              {detailVoucher.price === 0 ? (
+                // Free voucher: Show image
+                <div className="relative max-w-4xl w-full max-h-[95vh] flex items-center justify-center">
+                  <button
+                    onClick={handleCloseDetail}
+                    className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-white rounded-full transition-colors z-10 shadow-lg"
+                  >
+                    <X className="w-5 h-5 text-gray-800" />
+                  </button>
+                  <div className="relative w-full h-full">
+                    <Image
+                      src="/Screenshot 2025-12-02 at 10.29.03.png"
+                      alt="Điều khoản áp dụng - Face Wash Fox"
+                      width={1200}
+                      height={1600}
+                      className="w-full h-auto rounded-lg shadow-2xl"
+                      priority
+                    />
+                  </div>
+                </div>
+              ) : (
+                // Paid vouchers: Show detailed content
+                <div
+                  className={`bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative ${
+                    isMobile ? "p-4" : "p-8"
+                  }`}
                 >
-                  <X className="w-5 h-5 text-gray-600" />
-                </button>
-
-                {/* Header */}
-                <div className="text-center mb-6">
-                  <div className="flex items-center justify-center mb-4">
-                    {detailVoucher.type === "cash" ? (
-                      <Gift className="w-16 h-16 text-orange-500" />
-                    ) : (
-                      <Sparkles className="w-16 h-16 text-orange-500" />
-                    )}
-                  </div>
-                  <h2
-                    className={`${
-                      isMobile ? "text-2xl" : "text-3xl"
-                    } font-bold text-gray-800 mb-2`}
+                  {/* Close Button */}
+                  <button
+                    onClick={handleCloseDetail}
+                    className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
                   >
-                    {detailVoucher.name}
-                  </h2>
-                  <p className="text-gray-600 mb-4">
-                    {detailVoucher.description}
-                  </p>
-                  <div className="text-center">
-                    <span
+                    <X className="w-5 h-5 text-gray-600" />
+                  </button>
+
+                  {/* Header */}
+                  <div className="text-center mb-6">
+                    <div className="flex items-center justify-center mb-4">
+                      {detailVoucher.type === "cash" ? (
+                        <Gift className="w-16 h-16 text-orange-500" />
+                      ) : (
+                        <Sparkles className="w-16 h-16 text-orange-500" />
+                      )}
+                    </div>
+                    <h2
                       className={`${
-                        isMobile ? "text-3xl" : "text-4xl"
-                      } font-bold text-[#eb3526]`}
+                        isMobile ? "text-2xl" : "text-3xl"
+                      } font-bold text-gray-800 mb-2`}
                     >
-                      {formatPrice(detailVoucher.price)}
-                    </span>
-                  </div>
-                </div>
-
-                {/* Services Included */}
-                <div className="mb-6">
-                  <h3
-                    className={`${
-                      isMobile ? "text-lg" : "text-xl"
-                    } font-semibold text-gray-800 mb-4 flex items-center gap-2`}
-                  >
-                    <Check className="w-5 h-5 text-green-500" />
-                    Dịch vụ đi kèm
-                  </h3>
-                  <ul className="space-y-2">
-                    {detailVoucher.services.map((service, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-gray-700"
-                      >
-                        <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                        <span>{service}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Benefits */}
-                <div className="mb-6">
-                  <h3
-                    className={`${
-                      isMobile ? "text-lg" : "text-xl"
-                    } font-semibold text-gray-800 mb-4 flex items-center gap-2`}
-                  >
-                    <Gift className="w-5 h-5 text-orange-500" />
-                    Những gì bạn sẽ nhận được
-                  </h3>
-                  <ul className="space-y-2">
-                    {detailVoucher.benefits.map((benefit, index) => (
-                      <li
-                        key={index}
-                        className="flex items-start gap-2 text-gray-700"
-                      >
-                        <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 mt-2" />
-                        <span>{benefit}</span>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-
-                {/* Payment Button */}
-                <div className="">
-                  <div className="text-center ">
-                    <p className="text-sm text-gray-600 mb-2">
-                      {detailVoucher.price === 0
-                        ? "Bấm tiếp tục để nhận voucher"
-                        : "Thanh toán để nhận voucher"}
+                      {detailVoucher.name}
+                    </h2>
+                    <p className="text-gray-600 mb-4">
+                      {detailVoucher.description}
                     </p>
+                    <div className="text-center">
+                      <span
+                        className={`${
+                          isMobile ? "text-3xl" : "text-4xl"
+                        } font-bold text-[#eb3526]`}
+                      >
+                        {formatPrice(detailVoucher.price)}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Services Included */}
+                  <div className="mb-6">
+                    <h3
+                      className={`${
+                        isMobile ? "text-lg" : "text-xl"
+                      } font-semibold text-gray-800 mb-4 flex items-center gap-2`}
+                    >
+                      <Check className="w-5 h-5 text-green-500" />
+                      Dịch vụ đi kèm
+                    </h3>
+                    <ul className="space-y-2">
+                      {detailVoucher.services.map((service, index) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-2 text-gray-700"
+                        >
+                          <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
+                          <span>{service}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Benefits */}
+                  <div className="mb-6">
+                    <h3
+                      className={`${
+                        isMobile ? "text-lg" : "text-xl"
+                      } font-semibold text-gray-800 mb-4 flex items-center gap-2`}
+                    >
+                      <Gift className="w-5 h-5 text-orange-500" />
+                      Những gì bạn sẽ nhận được
+                    </h3>
+                    <ul className="space-y-2">
+                      {detailVoucher.benefits.map((benefit, index) => (
+                        <li
+                          key={index}
+                          className="flex items-start gap-2 text-gray-700"
+                        >
+                          <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 mt-2" />
+                          <span>{benefit}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Payment Button */}
+                  <div className="">
+                    <div className="text-center ">
+                      <p className="text-sm text-gray-600 mb-2">
+                        Thanh toán để nhận voucher
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              )}
             </motion.div>
           </>
         )}

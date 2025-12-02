@@ -1,7 +1,7 @@
 "use client";
 import type React from "react";
 import GreetingCard from "./components/greeting-card";
-import LanguageSwitcher from "./components/language-switcher";
+// import LanguageSwitcher from "./components/language-switcher";
 import { Suspense, useEffect, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -122,21 +122,21 @@ function LandingPageContent() {
     loadFromOrderId().then((loaded) => {
       // Nếu không load được từ orderId, thử load từ storage
       if (!loaded) {
-        const stored = sessionStorage.getItem("formData");
-        if (stored) {
-          try {
-            const data: FormData = JSON.parse(stored);
-            setSubmittedData(data);
-            setShowGreetingCard(true);
+    const stored = sessionStorage.getItem("formData");
+    if (stored) {
+      try {
+        const data: FormData = JSON.parse(stored);
+        setSubmittedData(data);
+        setShowGreetingCard(true);
 
-            const storedService = sessionStorage.getItem("paidServiceName");
-            if (storedService) {
-              setSelectedServiceName(storedService);
-            }
-          } catch (error) {
-            console.error("Không thể khôi phục dữ liệu thiệp:", error);
-          }
+        const storedService = sessionStorage.getItem("paidServiceName");
+        if (storedService) {
+          setSelectedServiceName(storedService);
         }
+      } catch (error) {
+        console.error("Không thể khôi phục dữ liệu thiệp:", error);
+      }
+    }
       }
     });
   }, [searchParams, showGreetingCard]);
@@ -161,10 +161,8 @@ function LandingPageContent() {
     const requiredFields: Array<keyof FormData> = [
       "senderName",
       "senderPhone",
-      "senderEmail",
       "receiverName",
       "receiverPhone",
-      "receiverEmail",
       "message",
     ];
     const missingFields = requiredFields.filter(
@@ -203,9 +201,9 @@ function LandingPageContent() {
       return;
     }
 
-    // Email validation (now required)
+    // Email validation (optional - only validate if provided)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(sanitizedForm.senderEmail)) {
+    if (sanitizedForm.senderEmail && !emailRegex.test(sanitizedForm.senderEmail)) {
       setNotification({
         title: t.invalidEmail,
         description: t.invalidEmailDesc,
@@ -214,7 +212,7 @@ function LandingPageContent() {
       return;
     }
 
-    if (!emailRegex.test(sanitizedForm.receiverEmail)) {
+    if (sanitizedForm.receiverEmail && !emailRegex.test(sanitizedForm.receiverEmail)) {
       setNotification({
         title: t.invalidEmail,
         description: t.invalidEmailDesc,
@@ -237,8 +235,10 @@ function LandingPageContent() {
       return;
     }
 
-    // Prevent duplicate sender/receiver email
+    // Prevent duplicate sender/receiver email (only if both are provided)
     if (
+      sanitizedForm.senderEmail &&
+      sanitizedForm.receiverEmail &&
       sanitizedForm.senderEmail.toLowerCase() ===
         sanitizedForm.receiverEmail.toLowerCase()
     ) {
@@ -276,7 +276,7 @@ function LandingPageContent() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-yellow-50">
-      <LanguageSwitcher />
+      {/* <LanguageSwitcher /> */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Left side falling elements */}
         <div
@@ -689,7 +689,7 @@ function LandingPageContent() {
                       isMobile ? "text-xs" : "text-sm"
                     } font-medium`}
                   >
-                    {t.email} *
+                    {t.email}
                   </label>
                   <input
                     id="senderEmail"
@@ -782,7 +782,7 @@ function LandingPageContent() {
                       isMobile ? "text-xs" : "text-sm"
                     } font-medium`}
                   >
-                    {t.email} *
+                    {t.email}
                   </label>
                   <input
                     id="receiverEmail"
@@ -977,7 +977,7 @@ function LandingPageContent() {
 
 export default function LandingPage() {
   return (
-      <Suspense
+    <Suspense
       fallback={
         <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-yellow-50" />
       }

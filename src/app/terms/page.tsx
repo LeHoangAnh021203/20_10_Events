@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
-import LanguageSwitcher from "../components/language-switcher";
+// import LanguageSwitcher from "../components/language-switcher";
 
 export default function TermsPage() {
   const { t } = useLanguage();
@@ -18,7 +18,7 @@ export default function TermsPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50 py-4 md:py-8 text-black">
-      <LanguageSwitcher />
+      {/* <LanguageSwitcher /> */}
       <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
         {/* Back Button */}
         <div className="mb-4 md:mb-6">

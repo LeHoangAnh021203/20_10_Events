@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
-import LanguageSwitcher from "./language-switcher";
+// import LanguageSwitcher from "./language-switcher";
 import { saveAs } from "file-saver";
 import { useRouter } from "next/navigation";
 import {
@@ -318,7 +318,7 @@ export default function GreetingCard({
 
   // Responsive character-per-line settings
   const maxCharsMessage = isMobile ? 37 : 70;
-  const maxCharsBody = isMobile ? 35 : 70;
+  const maxCharsBody = isMobile ? 33 : 65;
   const maxCharsSenderName = isMobile ? 14 : 24;
 
   // Function to wrap text into lines based on character limit
@@ -1131,7 +1131,7 @@ export default function GreetingCard({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50 py-4 md:py-8 text-black">
-      <LanguageSwitcher />
+      {/* <LanguageSwitcher /> */}
       <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
         {/* Back Button */}
         <div className="mb-4 md:mb-6">
