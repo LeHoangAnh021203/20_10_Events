@@ -75,24 +75,7 @@ export default function VoucherSelection({
       ],
       features: ["dịch vụ"],
     },
-    {
-      id: "test-2k",
-      name: "Voucher test thanh toán 2.000đ",
-      price: 2000,
-      type: "cash",
-      description: "Voucher dùng để kiểm thử luồng thanh toán chỉ 2.000đ",
-      services: [
-        "Dùng để test quy trình thanh toán MoMo",
-        "Không tạo quyền lợi thực tế",
-        "Có thể chọn nhiều lần để kiểm thử",
-      ],
-      benefits: [
-        "Thanh toán nhanh gọn với giá trị nhỏ",
-        "Giúp kiểm tra email/ghi nhận đơn",
-        "Không áp dụng ưu đãi thực tế",
-      ],
-      features: ["test"],
-    },
+
     {
       id: "cash-200k",
       name: "Cash Voucher 200.000đ",
@@ -186,9 +169,7 @@ export default function VoucherSelection({
   return (
     <>
       {/* Voucher Cards Grid */}
-      <div
-        className={`flex justify-center items-start gap-6 mt-8`}
-      >
+      <div className={`flex justify-center items-start gap-6 mt-8`}>
         {voucherOptions.map((voucher) => (
           <motion.div
             key={voucher.id}
@@ -253,8 +234,6 @@ export default function VoucherSelection({
 
                     {/* Content area */}
                     <div className="flex-1 flex flex-col justify-end gap-4 p-6">
-                     
-
                       <div className="space-y-1">
                         <h3 className="text-2xl font-semibold text-white tracking-tight drop-shadow">
                           {voucher.name}

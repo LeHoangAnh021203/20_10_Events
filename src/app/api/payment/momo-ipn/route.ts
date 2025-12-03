@@ -23,7 +23,20 @@ interface MoMoIPNBody {
 
 export async function POST(req: Request) {
   try {
-    const body: MoMoIPNBody = await req.json();
+    // Log raw body for debugging
+    const rawBody = await req.text();
+    console.log("📥 MoMo IPN received - Raw body:", rawBody);
+    
+    let body: MoMoIPNBody;
+    try {
+      body = JSON.parse(rawBody);
+    } catch (parseError) {
+      console.error("❌ Failed to parse IPN body:", parseError);
+      return NextResponse.json(
+        { error: "Invalid JSON body", details: parseError instanceof Error ? parseError.message : "Unknown error" },
+        { status: 400 }
+      );
+    }
 
     const {
       partnerCode,
@@ -41,10 +54,23 @@ export async function POST(req: Request) {
       responseTime,
     } = body;
 
+    console.log("📥 MoMo IPN parsed:", {
+      partnerCode,
+      orderId,
+      hasSignature: !!signature,
+      resultCode,
+      amount,
+    });
+
     // Validate required fields
     if (!partnerCode || !orderId || !signature) {
+      console.error("❌ Missing required fields:", {
+        hasPartnerCode: !!partnerCode,
+        hasOrderId: !!orderId,
+        hasSignature: !!signature,
+      });
       return NextResponse.json(
-        { error: "Thiếu thông tin bắt buộc" },
+        { error: "Thiếu thông tin bắt buộc", details: { partnerCode: !!partnerCode, orderId: !!orderId, signature: !!signature } },
         { status: 400 }
       );
     }
@@ -75,16 +101,19 @@ export async function POST(req: Request) {
       .digest("hex");
 
     if (signature !== expected) {
-      console.error("Invalid signature from MoMo IPN:", {
-        received: signature,
-        expected,
+      console.error("❌ Invalid signature from MoMo IPN:", {
         orderId,
+        received: signature?.substring(0, 20) + "...",
+        expected: expected?.substring(0, 20) + "...",
+        rawSignature,
       });
       return NextResponse.json(
-        { error: "Invalid signature" },
+        { error: "Invalid signature", orderId },
         { status: 400 }
       );
     }
+    
+    console.log("✅ Signature verified successfully for order:", orderId);
 
     // Process payment result
     if (resultCode === 0) {

@@ -83,6 +83,9 @@ export async function POST(req: Request) {
       secretKey: secretKey ? "SET" : "MISSING",
       momoApiUrl: momoApiUrl,
       baseUrl: baseUrl,
+      redirectUrl: redirectUrl,
+      ipnUrl: ipnUrl, // ⚠️ QUAN TRỌNG: URL này sẽ được MoMo gọi sau khi thanh toán
+      orderId: orderId,
     });
 
     const res = await fetch(momoApiUrl, {
