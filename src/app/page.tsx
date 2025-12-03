@@ -277,6 +277,14 @@ function LandingPageContent() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-yellow-50">
       {/* <LanguageSwitcher /> */}
+      <div className="relative z-20 w-full flex justify-center sm:justify-end px-4 sm:px-6 pt-4">
+        <Link
+          href="https://cuahang.facewashfox.com/"
+          className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
+        >
+          Xem chi nhánh
+        </Link>
+      </div>
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {/* Left side falling elements */}
         <div

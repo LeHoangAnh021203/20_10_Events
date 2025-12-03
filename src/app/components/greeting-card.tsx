@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Image from "next/image";
+import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 // import LanguageSwitcher from "./language-switcher";
 import { saveAs } from "file-saver";
@@ -1133,6 +1134,14 @@ export default function GreetingCard({
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50 py-4 md:py-8 text-black">
       {/* <LanguageSwitcher /> */}
+      <div className="w-full flex justify-center sm:justify-end px-4 sm:px-6 mb-2">
+        <Link
+          href="https://cuahang.facewashfox.com/"
+          className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
+        >
+          Xem chi nhánh
+        </Link>
+      </div>
       <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
         {/* Back Button */}
         <div className="mb-4 md:mb-6">
@@ -1578,8 +1587,22 @@ export default function GreetingCard({
                 </div>
               </div>
             </div>
+            {/* Booking QR (included inside export area so it appears in saved image) */}
+            <div className="mt-6 flex flex-col items-center gap-3 px-4 pb-4">
+              <p className="text-sm text-gray-700 text-center">
+                Quét mã QR bên dưới để đặt lịch tại Face Wash Fox
+              </p>
+              <Image
+                src="/qr-dat-lich.png"
+                alt="QR đặt lịch tại Face Wash Fox"
+                width={200}
+                height={200}
+                className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl bg-white border border-orange-200 shadow-md"
+              />
+            </div>
+
             {/* Letter Footer */}
-            <footer className="w-full mt-8 relative">
+            <footer className="w-full mt-4 relative">
               <Image
                 src="/Holiday/Footer-03.png"
                 alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { GodRays, MeshGradient } from "@paper-design/shaders-react";
 import Image from "next/image";
 import VoucherSelection, { VoucherOption } from "./voucher-selection";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import momoLogoCircle from "../../../public/Logo MoMo Circle.png";
 
@@ -52,6 +53,7 @@ export default function Hero() {
   const [mobileGuideDismissed, setMobileGuideDismissed] = useState(false);
   const hasAttemptedMoMoRef = useRef(false);
   const [isPaymentReady, setIsPaymentReady] = useState(false);
+  const [isCtaLoading, setIsCtaLoading] = useState(false);
 
   const submitFreeVoucherToSheet = useCallback(async () => {
     if (!formData || !selectedVoucher || selectedVoucher.price > 0) {
@@ -85,29 +87,31 @@ export default function Hero() {
   }, [formData, selectedVoucher]);
 
   const handleExpand = () => {
-    if (selectedVoucher) {
-      // Save selected voucher to sessionStorage for later use
-      sessionStorage.setItem(
-        "lastSelectedVoucher",
-        JSON.stringify(selectedVoucher)
-      );
-      // Also save service name separately for easy access
-      sessionStorage.setItem("paidServiceName", selectedVoucher.name);
+    if (!selectedVoucher || isCtaLoading) return;
 
-      // Nếu gói miễn phí (price = 0), redirect luôn không mở popup
-      if (selectedVoucher.price === 0) {
-        submitFreeVoucherToSheet();
-        router.push("/?showGreetingCard=1");
-        return;
-      }
-      setIsExpanded(true);
-    }
+    setIsCtaLoading(true);
+
+    // Save selected voucher to storage for later use (payment + greeting card)
+    sessionStorage.setItem("lastSelectedVoucher", JSON.stringify(selectedVoucher));
+    sessionStorage.setItem("paidServiceName", selectedVoucher.name);
+
+    // Với voucher trả phí: chỉ mở popup thanh toán
+    setIsExpanded(true);
+    setIsCtaLoading(false);
   };
 
   const handleContinue = async () => {
-    await submitFreeVoucherToSheet();
-    // Redirect đến trang chủ để hiển thị thiệp chúc mừng
-    router.push("/?showGreetingCard=1");
+    if (isCtaLoading) return;
+    setIsCtaLoading(true);
+
+    try {
+      await submitFreeVoucherToSheet();
+      // Redirect đến trang chủ để hiển thị thiệp chúc mừng
+      router.push("/?showGreetingCard=1");
+    } finally {
+      // Cho phép bấm lại nếu có lỗi / user quay lại
+      setIsCtaLoading(false);
+    }
   };
 
   const formatPrice = (price: number) => {
@@ -611,6 +615,15 @@ export default function Hero() {
           </div>
         )}
 
+        <div className="relative z-10 flex w-full justify-center sm:justify-end mb-4 px-2 sm:px-0">
+          <Link
+            href="https://cuahang.facewashfox.com/"
+            className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
+          >
+            Xem chi nhánh
+          </Link>
+        </div>
+
         <div
           className={`relative z-10 flex flex-col gap-4 sm:gap-6 ${
             isMobile
@@ -669,7 +682,7 @@ export default function Hero() {
                   onClick={
                     selectedVoucher?.price === 0 ? handleContinue : handleExpand
                   }
-                  disabled={!selectedVoucher}
+                  disabled={!selectedVoucher || isCtaLoading}
                   className={`h-15 px-6 sm:px-8 py-3 text-lg sm:text-xl font-regular tracking-[-0.01em] relative ${
                     selectedVoucher
                       ? "text-[#E3E3E3] cursor-pointer"
@@ -677,7 +690,11 @@ export default function Hero() {
                   } ${isMobile ? "w-full rounded-2xl" : "rounded-full"}`}
                 >
                   {selectedVoucher?.price === 0
-                    ? "Tiếp tục"
+                    ? isCtaLoading
+                      ? "Đang xử lý..."
+                      : "Tiếp tục"
+                    : isCtaLoading
+                    ? "Đang mở thanh toán..."
                     : "Thanh Toán Ngay"}
                 </motion.button>
               </motion.div>
