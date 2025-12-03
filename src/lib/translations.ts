@@ -182,7 +182,7 @@ export const translations: Record<Language, Translations> = {
 
     // Terms page
     termsTitle: "Điều khoản sử dụng",
-    termsSubtitle: "Foxie Club - 20.10 Special",
+    termsSubtitle: "Foxie Club - Birthday Special",
     termsBackButton: "Quay lại",
     termsContent: [
       "Mỗi khách hàng được tham gia gửi/nhận quà tặng DVCT tối đa 3 lần trong suốt thời gian diễn ra CTKM;",

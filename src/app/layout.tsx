@@ -58,7 +58,7 @@ const poppins = localFont({
 
 export const metadata: Metadata = {
   title: "FBNetwork's events",
-  description: "FOXIE Dành Tặng Cho Bạn 2010 MÓN QUÀ!!!",
+  description: "Đón Sinh Nhật Cùng Cáo!!!",
 };
 
 export default function RootLayout({
