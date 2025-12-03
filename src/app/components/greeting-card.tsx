@@ -31,11 +31,11 @@ interface GreetingCardProps {
 const encodeAssetSrc = (path: string) => encodeURI(path);
 
 const voucherImages = [
-  { alt: "Bronze", src: encodeAssetSrc("/Asset%201@4x.png") },
-  { alt: "Silver", src: encodeAssetSrc("/Asset%203@4x.png") },
-  { alt: "Gold", src: encodeAssetSrc("/Asset%202@4x.png") },
-  { alt: "Platinum", src: encodeAssetSrc("/Asset%205@4x.png") },
-  { alt: "Diamond", src: encodeAssetSrc("/Asset%204@4x.png") },
+  { alt: "Bronze", src: encodeAssetSrc("/Asset 1@4x.png") },
+  { alt: "Silver", src: encodeAssetSrc("/Asset 3@4x.png") },
+  { alt: "Gold", src: encodeAssetSrc("/Asset 2@4x.png") },
+  { alt: "Platinum", src: encodeAssetSrc("/Asset 5@4x.png") },
+  { alt: "Diamond", src: encodeAssetSrc("/Asset 4@4x.png") },
 ];
 
 export default function GreetingCard({
