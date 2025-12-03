@@ -617,26 +617,75 @@ export default function GreetingCard({
       await d.fonts?.ready;
     } catch {}
 
-    // Wait for images to load
+    // Wait for images to load - improved for mobile
     const images = node.querySelectorAll("img");
-    await Promise.all(
-      Array.from(images).map((img) => {
-        if (img.complete) return Promise.resolve();
-        return new Promise<void>((resolve) => {
-          img.onload = () => resolve();
-          img.onerror = () => resolve();
-          setTimeout(() => resolve(), 1000);
-        });
-      })
-    );
+    const imagePromises = Array.from(images).map((img) => {
+      // Ensure image src is absolute URL for html-to-image
+      const currentSrc = img.getAttribute("src") || img.src;
+      if (currentSrc && currentSrc.startsWith("/")) {
+        const absoluteSrc = window.location.origin + currentSrc;
+        // Only update if different to avoid unnecessary reloads
+        if (img.src !== absoluteSrc) {
+          img.src = absoluteSrc;
+        }
+      }
+      
+      if (img.complete && img.naturalWidth > 0) {
+        return Promise.resolve();
+      }
+      
+      return new Promise<void>((resolve) => {
+        const timeout = setTimeout(() => {
+          console.warn("Image load timeout:", img.src);
+          resolve();
+        }, 3000);
+        
+        const onLoad = () => {
+          clearTimeout(timeout);
+          img.removeEventListener("load", onLoad);
+          img.removeEventListener("error", onError);
+          resolve();
+        };
+        
+        const onError = () => {
+          clearTimeout(timeout);
+          img.removeEventListener("load", onLoad);
+          img.removeEventListener("error", onError);
+          console.warn("Image load error:", img.src);
+          resolve();
+        };
+        
+        img.addEventListener("load", onLoad);
+        img.addEventListener("error", onError);
+      });
+    });
+    
+    await Promise.all(imagePromises);
+    
+    // Additional delay for mobile to ensure all rendering is complete
+    const isMobileExport = window.innerWidth < 640;
+    if (isMobileExport) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
 
     // Force reflow to ensure all styles are applied
     void node.offsetHeight;
+    
+    // Double-check all images are loaded
+    const unloadedImages = Array.from(images).filter(
+      (img) => !img.complete || img.naturalWidth === 0
+    );
+    if (unloadedImages.length > 0) {
+      console.warn("Some images may not be loaded:", unloadedImages.length);
+      // Wait a bit more for mobile
+      if (isMobileExport) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
+    }
 
     // Use html-to-image with consistent settings
     const { toPng } = await import("html-to-image");
     const rect = node.getBoundingClientRect();
-    const isMobileExport = window.innerWidth < 640;
     const targetWidth = isMobileExport
       ? Math.min(Math.round(rect.width), 900)
       : Math.min(Math.round(rect.width * 1.5), 1200);
@@ -644,7 +693,7 @@ export default function GreetingCard({
     const pixelRatio = isMobileExport ? 1.2 : 1.4;
 
     return toPng(node, {
-      cacheBust: false,
+      cacheBust: true, // Enable cache busting for mobile
       backgroundColor: "#ffffff",
       quality: 1,
       pixelRatio,
@@ -1136,13 +1185,20 @@ export default function GreetingCard({
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50 py-4 md:py-8 text-black">
       {/* <LanguageSwitcher /> */}
-      <div className="w-full flex justify-center sm:justify-end px-4 sm:px-6 mb-2">
+      {/* Desktop: Show buttons at top */}
+      <div className="hidden sm:flex w-full justify-end gap-2 px-4 sm:px-6 mb-2">
         <Link
           href="https://cuahang.facewashfox.com/"
-          className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
+          className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
         >
           Xem chi nhánh
         </Link>
+        <a
+          href="tel:0889866666"
+          className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-orange-500/90 px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-orange-600 transition"
+        >
+          Gọi hotline
+        </a>
       </div>
       <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
         {/* Back Button */}
@@ -1636,6 +1692,22 @@ export default function GreetingCard({
               />
             </footer>
           </div>
+        </div>
+
+        {/* Mobile: Show buttons above action buttons */}
+        <div className="flex sm:hidden w-full justify-center gap-2 px-4 mt-8 mb-4">
+          <Link
+            href="https://cuahang.facewashfox.com/"
+            className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-3 py-1.5 text-xs font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
+          >
+            Xem chi nhánh
+          </Link>
+          <a
+            href="tel:0889866666"
+            className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-orange-500/90 px-3 py-1.5 text-xs font-semibold text-white shadow-sm hover:bg-orange-600 transition"
+          >
+            Gọi hotline
+          </a>
         </div>
 
         {/* Action Buttons */}

@@ -615,13 +615,19 @@ export default function Hero() {
           </div>
         )}
 
-        <div className="relative z-10 flex w-full justify-center sm:justify-end mb-4 px-2 sm:px-0">
+        <div className="relative z-10 flex w-full justify-center sm:justify-end gap-2 mb-4 px-2 sm:px-0">
           <Link
             href="https://cuahang.facewashfox.com/"
-            className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
+            className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-white/90 px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-orange-700 shadow-sm hover:bg-orange-50 transition"
           >
             Xem chi nhánh
           </Link>
+          <a
+            href="tel:0889866666"
+            className="inline-flex items-center justify-center rounded-full border border-orange-300 bg-orange-500/90 px-3 sm:px-4 py-1.5 text-xs sm:text-sm font-semibold text-white shadow-sm hover:bg-orange-600 transition"
+          >
+            Gọi hotline
+          </a>
         </div>
 
         <div
