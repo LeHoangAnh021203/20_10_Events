@@ -1055,8 +1055,8 @@ export default function GreetingCard({
   const handleScreenshot = async () => {
     if (isSaving) return;
     
-    // On mobile, after first save, require refresh for best quality
-    if (isMobile && saveCount >= 1) {
+    // On mobile, require refresh from the first save for best quality
+    if (isMobile && saveCount >= 0) {
       const shouldRefresh = confirm(
         "Để đảm bảo thiệp đẹp nhất, vui lòng làm mới trang trước khi lưu lại nhé! 💝\n\nBạn có muốn làm mới trang ngay bây giờ không?"
       );
