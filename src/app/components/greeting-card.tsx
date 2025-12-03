@@ -621,69 +621,122 @@ export default function GreetingCard({
     } catch {}
 
     // Wait for images to load - improved for mobile
+    const isMobileExport = window.innerWidth < 640;
     const images = node.querySelectorAll("img");
-    const imagePromises = Array.from(images).map((img) => {
-      // Ensure image src is absolute URL for html-to-image
-      const currentSrc = img.getAttribute("src") || img.src;
-      if (currentSrc && currentSrc.startsWith("/")) {
-        const absoluteSrc = window.location.origin + currentSrc;
-        // Only update if different to avoid unnecessary reloads
-        if (img.src !== absoluteSrc) {
-          img.src = absoluteSrc;
-        }
-      }
-      
-      if (img.complete && img.naturalWidth > 0) {
-        return Promise.resolve();
-      }
-      
+    
+    // First, convert all relative URLs to absolute and ensure they're loaded
+    const imageLoadPromises = Array.from(images).map((img) => {
       return new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => {
-          console.warn("Image load timeout:", img.src);
-          resolve();
-        }, 3000);
+        const originalSrc = img.getAttribute("src") || img.src;
+        let targetSrc = originalSrc;
         
-        const onLoad = () => {
-          clearTimeout(timeout);
+        // Convert to absolute URL if relative
+        if (originalSrc && originalSrc.startsWith("/")) {
+          targetSrc = window.location.origin + originalSrc;
+        }
+        
+        // If src needs to change, we need to wait for it to load
+        const needsReload = img.src !== targetSrc;
+        
+        // If already loaded with correct src, resolve immediately
+        if (!needsReload && img.complete && img.naturalWidth > 0) {
+          resolve();
+          return;
+        }
+        
+        // Set up load handlers before changing src
+        const timeout = setTimeout(() => {
+          console.warn("Image load timeout:", targetSrc);
           img.removeEventListener("load", onLoad);
           img.removeEventListener("error", onError);
           resolve();
+        }, isMobileExport ? 5000 : 3000);
+        
+        const onLoad = () => {
+          // Verify image actually loaded (not just cached placeholder)
+          if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+            clearTimeout(timeout);
+            img.removeEventListener("load", onLoad);
+            img.removeEventListener("error", onError);
+            resolve();
+          }
         };
         
         const onError = () => {
           clearTimeout(timeout);
           img.removeEventListener("load", onLoad);
           img.removeEventListener("error", onError);
-          console.warn("Image load error:", img.src);
+          console.warn("Image load error:", targetSrc);
           resolve();
         };
         
         img.addEventListener("load", onLoad);
         img.addEventListener("error", onError);
+        
+        // Change src if needed (this will trigger load event)
+        if (needsReload) {
+          img.src = targetSrc;
+        } else if (!img.complete) {
+          // If src is already correct but not loaded, trigger load check
+          // by forcing a re-check
+          const currentSrc = img.src;
+          img.src = "";
+          img.src = currentSrc;
+        }
       });
     });
     
-    await Promise.all(imagePromises);
+    await Promise.all(imageLoadPromises);
     
     // Additional delay for mobile to ensure all rendering is complete
-    const isMobileExport = window.innerWidth < 640;
     if (isMobileExport) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
+      await new Promise((resolve) => setTimeout(resolve, 800));
+    } else {
+      await new Promise((resolve) => setTimeout(resolve, 300));
     }
 
-    // Force reflow to ensure all styles are applied
+    // Force reflow multiple times to ensure all styles are computed
+    void node.offsetHeight;
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => resolve());
+      });
+    });
     void node.offsetHeight;
     
-    // Double-check all images are loaded
+    // Final verification - retry any images that still aren't loaded
     const unloadedImages = Array.from(images).filter(
       (img) => !img.complete || img.naturalWidth === 0
     );
     if (unloadedImages.length > 0) {
-      console.warn("Some images may not be loaded:", unloadedImages.length);
-      // Wait a bit more for mobile
-      if (isMobileExport) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+      console.warn("Retrying unloaded images:", unloadedImages.length);
+      await Promise.all(
+        unloadedImages.map((img) => {
+          return new Promise<void>((resolve) => {
+            const timeout = setTimeout(resolve, isMobileExport ? 3000 : 2000);
+            const onLoad = () => {
+              clearTimeout(timeout);
+              img.removeEventListener("load", onLoad);
+              img.removeEventListener("error", onError);
+              resolve();
+            };
+            const onError = () => {
+              clearTimeout(timeout);
+              img.removeEventListener("load", onLoad);
+              img.removeEventListener("error", onError);
+              resolve();
+            };
+            img.addEventListener("load", onLoad);
+            img.addEventListener("error", onError);
+            // Force reload
+            const currentSrc = img.src;
+            img.src = "";
+            img.src = currentSrc;
+          });
+        })
+      );
+      // Wait a bit more after retry
+      await new Promise((resolve) => setTimeout(resolve, isMobileExport ? 500 : 300));
     }
 
     // Use html-to-image with consistent settings
