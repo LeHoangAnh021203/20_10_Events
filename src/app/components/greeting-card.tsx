@@ -1217,7 +1217,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-24 h-24 animate-fall-down-right-delayed-1 opacity-35 ">
                 <Image
-                  src={encodeAssetSrc("/Holiday/Tag sinh nhật cáo@4x.png")}
+                  src={encodeAssetSrc("/Holiday/Tag sinh nhật Cáo@4x.png")}
                   alt="falling decoration"
                   width={40}
                   height={40}
