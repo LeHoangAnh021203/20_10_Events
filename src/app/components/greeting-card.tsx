@@ -636,10 +636,10 @@ export default function GreetingCard({
     const rect = node.getBoundingClientRect();
     const isMobileExport = window.innerWidth < 640;
     const targetWidth = isMobileExport
-      ? Math.round(rect.width)
-      : Math.min(rect.width * 2, 1440);
+      ? Math.min(Math.round(rect.width), 900)
+      : Math.min(Math.round(rect.width * 1.5), 1200);
     const targetHeight = Math.round((rect.height / rect.width) * targetWidth);
-    const pixelRatio = isMobileExport ? 1.5 : 2;
+    const pixelRatio = isMobileExport ? 1.2 : 1.4;
 
     return toPng(node, {
       cacheBust: false,
@@ -1175,6 +1175,7 @@ export default function GreetingCard({
                   width={64}
                   height={64}
                   className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
 
@@ -1185,6 +1186,7 @@ export default function GreetingCard({
                   width={48}
                   height={48}
                   className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
 
@@ -1195,6 +1197,7 @@ export default function GreetingCard({
                   width={48}
                   height={48}
                   className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
 
@@ -1206,6 +1209,7 @@ export default function GreetingCard({
                   width={56}
                   height={56}
                   className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
 
@@ -1216,6 +1220,7 @@ export default function GreetingCard({
                   width={40}
                   height={40}
                   className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
 
@@ -1226,6 +1231,7 @@ export default function GreetingCard({
                   width={24}
                   height={24}
                   className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
 
@@ -1236,6 +1242,7 @@ export default function GreetingCard({
                   width={32}
                   height={32}
                   className="w-full h-full object-contain"
+                  unoptimized
                 />
               </div>
             </div>
@@ -1247,6 +1254,7 @@ export default function GreetingCard({
                 width={32}
                 height={32}
                 className="w-full h-full object-contain"
+                unoptimized
               />
             </div>
 
@@ -1257,6 +1265,7 @@ export default function GreetingCard({
                 width={40}
                 height={40}
                 className="w-full h-full object-contain"
+                unoptimized
               />
             </div>
             <header className="w-full">
@@ -1267,6 +1276,7 @@ export default function GreetingCard({
                 height={600}
                 priority
                 className="w-full h-auto object-cover"
+                unoptimized
               />
             </header>
             {/* Decorative Elements */}
@@ -1302,13 +1312,14 @@ export default function GreetingCard({
                     height={256}
                     className="w-full h-auto drop-shadow-md rotate-[-8deg]"
                     aria-hidden
+                    unoptimized
                   />
                 </div>
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "bottom-30 left-2 w-16 opacity-70"
-                      : "bottom-50 left-2 w-20 sm:w-24 md:w-28 opacity-80"
+                      ? "bottom-80 left-2 w-16 opacity-70"
+                      : "bottom-100 left-2 w-20 sm:w-24 md:w-28 opacity-80"
                   } animate-float-x z-100`}
                 >
                   <Image
@@ -1318,13 +1329,14 @@ export default function GreetingCard({
                     height={256}
                     className="w-full h-auto drop-shadow-md"
                     aria-hidden
+                    unoptimized
                   />
                 </div>
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "bottom-18 right-6 w-16 opacity-80"
-                      : "bottom-38 right-8 w-20 sm:w-20 md:w20 opacity-100"
+                      ? "bottom-68 right-1 w-16 opacity-80"
+                      : "bottom-[350] right-8 w-20 sm:w-20 md:w20 opacity-100"
                   } animate-swing-60 z-100`}
                 >
                   <Image
@@ -1334,6 +1346,7 @@ export default function GreetingCard({
                     height={256}
                     className="w-full h-auto drop-shadow-md"
                     aria-hidden
+                    unoptimized
                   />
                 </div>
               </>
@@ -1360,6 +1373,7 @@ export default function GreetingCard({
                   height={256}
                   className="w-full h-auto transform drop-shadow-md rotate-[-8deg] "
                   aria-hidden
+                  unoptimized
                 />
               </div>
               <div className="bg-white/80 backdrop-blur-sm rounded-md md:rounded-lg p-4 md:p-6 border border-orange-200 shadow-sm">
@@ -1449,6 +1463,7 @@ export default function GreetingCard({
                           width={50}
                           height={50}
                           className="w-4 h-auto object-cover"
+                          unoptimized
                         />
                         <Image
                           src="/Sticker 4@4x.png"
@@ -1456,6 +1471,7 @@ export default function GreetingCard({
                           width={50}
                           height={50}
                           className="w-4 h-auto object-cover"
+                          unoptimized
                         />
                         <Image
                           src="/Sticker 5@4x.png"
@@ -1463,6 +1479,7 @@ export default function GreetingCard({
                           width={50}
                           height={50}
                           className="w-10 h-auto object-cover"
+                          unoptimized
                         />
                         <Image
                           src="/Sticker 6@4x.png"
@@ -1470,6 +1487,7 @@ export default function GreetingCard({
                           width={50}
                           height={50}
                           className="w-4 h-auto object-cover"
+                          unoptimized
                         />
                         <Image
                           src="/Sticker 7@4x.png"
@@ -1477,6 +1495,7 @@ export default function GreetingCard({
                           width={50}
                           height={50}
                           className="w-4 h-auto object-cover"
+                          unoptimized
                         />
                       </span>
                     </div>
@@ -1554,6 +1573,7 @@ export default function GreetingCard({
                             width={50}
                             height={50}
                             className="w-8 sm:w-12 h-auto ml-4 md:ml-5 mb-8 md:mb-9 opacity-15"
+                            unoptimized
                           />
                         </span>
                         <div className="absolute inset-0 flex items-center justify-center px-2">
@@ -1598,6 +1618,7 @@ export default function GreetingCard({
                 width={200}
                 height={200}
                 className="w-32 h-32 sm:w-40 sm:h-40 rounded-xl bg-white border border-orange-200 shadow-md"
+                unoptimized
               />
             </div>
 
@@ -1609,6 +1630,7 @@ export default function GreetingCard({
                 width={1920}
                 height={400}
                 className="w-full h-auto object-cover"
+                unoptimized
               />
             </footer>
           </div>
