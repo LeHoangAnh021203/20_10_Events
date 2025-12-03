@@ -86,12 +86,21 @@ export async function POST(req: Request) {
       );
     }
 
+    console.log("🔑 MoMo credentials check:", {
+      hasSecretKey: !!secretKey,
+      hasAccessKey: !!accessKey,
+      secretKeyLength: secretKey?.length || 0,
+      accessKeyMatch: accessKey === "urT5rn4etaYlzsd2",
+      partnerCodeFromRequest: partnerCode,
+    });
+
     // Verify signature
     // Convert all values to string to ensure consistent format
-    const transIdStr = String(transId || "");
-    const amountStr = String(amount || "");
-    const resultCodeStr = String(resultCode || "");
-    const responseTimeStr = String(responseTime || "");
+    // Use ?? instead of || to handle 0 values correctly
+    const transIdStr = String(transId ?? "");
+    const amountStr = String(amount ?? "");
+    const resultCodeStr = String(resultCode ?? "");
+    const responseTimeStr = String(responseTime ?? "");
     
     const rawSignature =
       `accessKey=${accessKey}` +
