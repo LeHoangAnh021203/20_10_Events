@@ -52,6 +52,9 @@ export default function GreetingCard({
   const [ignoreApiService, setIgnoreApiService] = useState(false);
   const [emailSent, setEmailSent] = useState(false);
   const [receiverEmailSent, setReceiverEmailSent] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isSharing, setIsSharing] = useState(false);
+  const [isNavigating, setIsNavigating] = useState(false);
 
   const BRAND_KEY = "face wash fox";
   const brandRegex = /(Face Wash Fox)/gi;
@@ -610,77 +613,120 @@ export default function GreetingCard({
 
   const exportCardAsPng = async () => {
     const node = getCardNode();
+    const isMobileExport = window.innerWidth < 640;
 
-    // Wait for fonts and images
+    // Wait for fonts
     try {
       const d = document as unknown as { fonts?: { ready?: Promise<void> } };
       await d.fonts?.ready;
     } catch {}
 
-    // Wait for images to load - improved for mobile
+    // Pre-load all images with cache busting to ensure fresh load every time
     const images = node.querySelectorAll("img");
-    const imagePromises = Array.from(images).map((img) => {
-      // Ensure image src is absolute URL for html-to-image
-      const currentSrc = img.getAttribute("src") || img.src;
-      if (currentSrc && currentSrc.startsWith("/")) {
-        const absoluteSrc = window.location.origin + currentSrc;
-        // Only update if different to avoid unnecessary reloads
-        if (img.src !== absoluteSrc) {
-          img.src = absoluteSrc;
-        }
-      }
-      
-      if (img.complete && img.naturalWidth > 0) {
-        return Promise.resolve();
-      }
-      
-      return new Promise<void>((resolve) => {
-        const timeout = setTimeout(() => {
-          console.warn("Image load timeout:", img.src);
-          resolve();
-        }, 3000);
-        
-        const onLoad = () => {
-          clearTimeout(timeout);
-          img.removeEventListener("load", onLoad);
-          img.removeEventListener("error", onError);
-          resolve();
-        };
-        
-        const onError = () => {
-          clearTimeout(timeout);
-          img.removeEventListener("load", onLoad);
-          img.removeEventListener("error", onError);
-          console.warn("Image load error:", img.src);
-          resolve();
-        };
-        
-        img.addEventListener("load", onLoad);
-        img.addEventListener("error", onError);
-      });
-    });
-    
-    await Promise.all(imagePromises);
-    
-    // Additional delay for mobile to ensure all rendering is complete
-    const isMobileExport = window.innerWidth < 640;
-    if (isMobileExport) {
-      await new Promise((resolve) => setTimeout(resolve, 500));
-    }
+    const imageLoadPromises: Promise<void>[] = [];
+    const timestamp = Date.now();
 
-    // Force reflow to ensure all styles are applied
+    Array.from(images).forEach((img, index) => {
+      const originalSrc = img.getAttribute("src") || img.src;
+      let absoluteSrc = originalSrc;
+
+      // Convert to absolute URL if relative
+      if (originalSrc && originalSrc.startsWith("/")) {
+        absoluteSrc = window.location.origin + originalSrc;
+      }
+
+      // Add cache busting query parameter to force fresh load
+      const url = new URL(absoluteSrc, window.location.href);
+      url.searchParams.set("_export", `${timestamp}_${index}`);
+      const cacheBustedSrc = url.toString();
+
+      // Create a promise that ensures image is loaded
+      const loadPromise = new Promise<void>((resolve) => {
+        // Check if already loaded with correct src
+        if (img.complete && img.naturalWidth > 0 && img.src === cacheBustedSrc) {
+          resolve();
+          return;
+        }
+
+        // Create new image to preload
+        const preloadImg = document.createElement("img");
+        preloadImg.crossOrigin = "anonymous";
+
+        const timeout = setTimeout(() => {
+          console.warn("Image preload timeout:", cacheBustedSrc);
+          resolve();
+        }, isMobileExport ? 5000 : 3000);
+
+        preloadImg.onload = () => {
+          clearTimeout(timeout);
+          // Update original img src only after preload succeeds
+          if (img.src !== cacheBustedSrc) {
+            img.src = cacheBustedSrc;
+          }
+          resolve();
+        };
+
+        preloadImg.onerror = () => {
+          clearTimeout(timeout);
+          console.warn("Image preload error:", cacheBustedSrc);
+          // Still try to use original src
+          if (img.src !== absoluteSrc && absoluteSrc !== originalSrc) {
+            img.src = absoluteSrc;
+          }
+          resolve();
+        };
+
+        preloadImg.src = cacheBustedSrc;
+      });
+
+      imageLoadPromises.push(loadPromise);
+    });
+
+    // Wait for all images to preload
+    await Promise.all(imageLoadPromises);
+
+    // Additional wait to ensure DOM is stable
+    await new Promise((resolve) => setTimeout(resolve, isMobileExport ? 800 : 300));
+
+    // Force reflow multiple times to ensure all styles are computed
     void node.offsetHeight;
-    
-    // Double-check all images are loaded
-    const unloadedImages = Array.from(images).filter(
+    await new Promise<void>((resolve) => {
+      requestAnimationFrame(() => resolve());
+    });
+    void node.offsetHeight;
+
+    // Final check - reload any images that still aren't loaded
+    const stillUnloaded = Array.from(images).filter(
       (img) => !img.complete || img.naturalWidth === 0
     );
-    if (unloadedImages.length > 0) {
-      console.warn("Some images may not be loaded:", unloadedImages.length);
-      // Wait a bit more for mobile
-      if (isMobileExport) {
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-      }
+    if (stillUnloaded.length > 0) {
+      console.warn("Retrying unloaded images:", stillUnloaded.length);
+      await Promise.all(
+        stillUnloaded.map((img) => {
+          return new Promise<void>((resolve) => {
+            const timeout = setTimeout(resolve, 2000);
+            const onLoad = () => {
+              clearTimeout(timeout);
+              img.removeEventListener("load", onLoad);
+              img.removeEventListener("error", onError);
+              resolve();
+            };
+            const onError = () => {
+              clearTimeout(timeout);
+              img.removeEventListener("load", onLoad);
+              img.removeEventListener("error", onError);
+              resolve();
+            };
+            img.addEventListener("load", onLoad);
+            img.addEventListener("error", onError);
+            // Force reload
+            const currentSrc = img.src;
+            img.src = "";
+            img.src = currentSrc;
+          });
+        })
+      );
+      await new Promise((resolve) => setTimeout(resolve, 500));
     }
 
     // Use html-to-image with consistent settings
@@ -693,7 +739,7 @@ export default function GreetingCard({
     const pixelRatio = isMobileExport ? 1.2 : 1.4;
 
     return toPng(node, {
-      cacheBust: true, // Enable cache busting for mobile
+      cacheBust: true,
       backgroundColor: "#ffffff",
       quality: 1,
       pixelRatio,
@@ -1049,6 +1095,8 @@ export default function GreetingCard({
   };
 
   const handleScreenshot = async () => {
+    if (isSaving) return;
+    setIsSaving(true);
     try {
       const dataUrl = await exportCardAsPng();
       await triggerDownload(dataUrl);
@@ -1058,10 +1106,14 @@ export default function GreetingCard({
     } catch (error) {
       console.error("Không thể tạo ảnh thiệp:", error);
       alert("Xin lỗi, không thể tạo ảnh thiệp. Vui lòng thử lại sau!");
+    } finally {
+      setIsSaving(false);
     }
   };
 
   const handleShare = async () => {
+    if (isSharing) return;
+    setIsSharing(true);
     try {
       // Export card to dataURL first
       const dataUrl = await exportCardAsPng();
@@ -1179,6 +1231,8 @@ export default function GreetingCard({
     } catch (error) {
       console.error("Không thể chia sẻ thiệp:", error);
       alert(t.shareErrorGeneral);
+    } finally {
+      setIsSharing(false);
     }
   };
 
@@ -1204,10 +1258,21 @@ export default function GreetingCard({
         {/* Back Button */}
         <div className="mb-4 md:mb-6">
           <button
-            onClick={() => router.push("/voucher")}
-            className="flex items-center gap-2 hover:bg-red-50 border border-red-200 bg-transparent px-4 py-2 rounded-md"
+            onClick={() => {
+              if (isNavigating) return;
+              setIsNavigating(true);
+              router.push("/voucher");
+            }}
+            disabled={isNavigating}
+            className="flex items-center gap-2 hover:bg-red-50 border border-red-200 bg-transparent px-4 py-2 rounded-md disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            ← Tiếp tục mua sắm
+            {isNavigating ? (
+              <>
+                <span className="animate-spin">⏳</span> Đang chuyển...
+              </>
+            ) : (
+              <>← Tiếp tục mua sắm</>
+            )}
           </button>
         </div>
 
@@ -1714,15 +1779,29 @@ export default function GreetingCard({
         <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-8">
           <button
             onClick={handleScreenshot}
-            className="hidden sm:flex items-center justify-center gap-2 bg-gradient-to-r from-orange-300 to-orange-500 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-full shadow-lg w-full sm:w-auto"
+            disabled={isSaving || isSharing}
+            className="hidden sm:flex items-center justify-center gap-2 bg-gradient-to-r from-orange-300 to-orange-500 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-full shadow-lg w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            📱 {t.saveCardButton}
+            {isSaving ? (
+              <>
+                <span className="animate-spin">⏳</span> Đang lưu...
+              </>
+            ) : (
+              <>📱 {t.saveCardButton}</>
+            )}
           </button>
           <button
             onClick={handleShare}
-            className="flex sm:hidden items-center justify-center gap-2 bg-gradient-to-r from-yellow-200 to-yellow-500 hover:from-yellow-400 hover:to-green-700 text-white px-6 py-3 rounded-full shadow-lg w-full sm:w-auto"
+            disabled={isSaving || isSharing}
+            className="flex sm:hidden items-center justify-center gap-2 bg-gradient-to-r from-yellow-200 to-yellow-500 hover:from-yellow-400 hover:to-green-700 text-white px-6 py-3 rounded-full shadow-lg w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isMobile ? t.shareAndSaveButton : ""}
+            {isSharing ? (
+              <>
+                <span className="animate-spin">⏳</span> Đang chia sẻ...
+              </>
+            ) : (
+              <>{isMobile ? t.shareAndSaveButton : ""}</>
+            )}
           </button>
         </div>
 

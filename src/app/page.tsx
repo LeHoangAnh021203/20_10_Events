@@ -31,6 +31,7 @@ function LandingPageContent() {
     variant?: "destructive" | "success";
   } | null>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   useEffect(() => {
     if (!notification) return;
@@ -149,6 +150,9 @@ function LandingPageContent() {
   };
 
   const handleSelectService = () => {
+    if (isSubmitting) return;
+    setIsSubmitting(true);
+    
     // Validate required fields before navigating
     const sanitizedForm: FormData = {
       senderName: formData.senderName.trim(),
@@ -178,6 +182,7 @@ function LandingPageContent() {
         description: t.requiredFieldsDesc,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -188,6 +193,7 @@ function LandingPageContent() {
         description: t.messageTooLongDesc,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -201,6 +207,7 @@ function LandingPageContent() {
         description: t.invalidNameDesc,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -212,6 +219,7 @@ function LandingPageContent() {
         description: t.invalidEmailDesc,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -221,6 +229,7 @@ function LandingPageContent() {
         description: t.invalidEmailDesc,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -235,6 +244,7 @@ function LandingPageContent() {
         description: t.invalidPhoneDesc,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -250,6 +260,7 @@ function LandingPageContent() {
         description: t.duplicateEmail,
         variant: "destructive",
       });
+      setIsSubmitting(false);
       return;
     }
 
@@ -871,23 +882,33 @@ function LandingPageContent() {
                 <button
                   type="button"
                   onClick={handleSelectService}
+                  disabled={isSubmitting}
                   className={`relative mb-12 flex items-center justify-center gap-3 bg-gradient-to-r from-red-500 to-orange-300 hover:from-red-600 hover:to-orange-600 text-white ${
                     isMobile ? "px-6 py-2 text-base" : "px-10 py-3 text-lg"
-                  } font-semibold rounded-full shadow-lg transform transition hover:scale-105`}
+                  } font-semibold rounded-full shadow-lg transform transition hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100`}
                 >
-                  <span>
-                    {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
-                  </span>
-                  <Image
-                    src="/CÁO5@4x-05.png"
-                    alt="Foxie icon"
-                    width={20}
-                    height={20}
-                    className={`${
-                      isMobile ? "h-8 w-8" : "h-12 w-12"
-                    } drop-shadow-xl animate-pulse`}
-                    aria-hidden
-                  />
+                  {isSubmitting ? (
+                    <>
+                      <span className="animate-spin">⏳</span>
+                      <span>Đang xử lý...</span>
+                    </>
+                  ) : (
+                    <>
+                      <span>
+                        {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
+                      </span>
+                      <Image
+                        src="/CÁO5@4x-05.png"
+                        alt="Foxie icon"
+                        width={20}
+                        height={20}
+                        className={`${
+                          isMobile ? "h-8 w-8" : "h-12 w-12"
+                        } drop-shadow-xl animate-pulse`}
+                        aria-hidden
+                      />
+                    </>
+                  )}
                 </button>
               </div>
             </div>
