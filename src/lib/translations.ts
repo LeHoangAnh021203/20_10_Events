@@ -166,7 +166,7 @@ export const translations: Record<Language, Translations> = {
     shareText: "Lời chúc từ",
     shareSuccess: "Đã tải ảnh thiệp và sao chép lời chúc vào clipboard!",
     shareError: "Đã tải ảnh thiệp. Hãy tự sao chép lời chúc từ trang giúp nhé!",
-    shareErrorGeneral: "Không thể chia sẻ thiệp. Vui lòng thử lại hoặc gửi bằng cách khác nhé!",
+    shareErrorGeneral: "Thiệp đang được chuẩn bị! Vui lòng đợi một chút và thử lại nhé 💝",
     
     // Language switcher
     language: "Ngôn ngữ",
@@ -266,7 +266,7 @@ export const translations: Record<Language, Translations> = {
     shareText: "Wishes from",
     shareSuccess: "Card image downloaded and message copied to clipboard!",
     shareError: "Card image downloaded. Please copy the message from the page yourself!",
-    shareErrorGeneral: "Cannot share card. Please try again or use another method!",
+    shareErrorGeneral: "Card is being prepared! Please wait a moment and try again 💝",
     
     // Language switcher
     language: "Language",
