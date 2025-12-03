@@ -87,13 +87,28 @@ export async function POST(req: Request) {
     }
 
     // Verify signature
+    // Convert all values to string to ensure consistent format
+    const transIdStr = String(transId || "");
+    const amountStr = String(amount || "");
+    const resultCodeStr = String(resultCode || "");
+    const responseTimeStr = String(responseTime || "");
+    
     const rawSignature =
       `accessKey=${accessKey}` +
-      `&amount=${amount}&extraData=${extraData}&message=${message}` +
-      `&orderId=${orderId}&orderInfo=${orderInfo}&orderType=${orderType}` +
-      `&partnerCode=${partnerCode}&payType=${payType}&requestId=${requestId}` +
-      `&resultCode=${resultCode}&transId=${transId}` +
-      `&responseTime=${responseTime}`;
+      `&amount=${amountStr}&extraData=${extraData || ""}&message=${message || ""}` +
+      `&orderId=${orderId}&orderInfo=${orderInfo || ""}&orderType=${orderType || ""}` +
+      `&partnerCode=${partnerCode}&payType=${payType || ""}&requestId=${requestId || ""}` +
+      `&resultCode=${resultCodeStr}&transId=${transIdStr}` +
+      `&responseTime=${responseTimeStr}`;
+
+    console.log("🔐 Signature calculation:", {
+      orderId,
+      rawSignatureLength: rawSignature.length,
+      transIdType: typeof transId,
+      transIdStr,
+      amountStr,
+      resultCodeStr,
+    });
 
     const expected = crypto
       .createHmac("sha256", secretKey)
