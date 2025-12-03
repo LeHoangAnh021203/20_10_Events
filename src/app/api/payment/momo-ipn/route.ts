@@ -150,10 +150,10 @@ export async function POST(req: Request) {
       if (skipSignatureCheck) {
         console.warn("⚠️ SKIPPING signature verification (test mode only!)");
       } else {
-        return NextResponse.json(
+      return NextResponse.json(
           { error: "Invalid signature", orderId },
-          { status: 400 }
-        );
+        { status: 400 }
+      );
       }
     }
     

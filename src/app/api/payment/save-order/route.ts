@@ -23,12 +23,12 @@ export async function POST(req: Request) {
 
     // Try to save order locally (may fail on Vercel due to read-only filesystem)
     try {
-      await upsertOrder(body.orderId, {
-        status: "PENDING",
-        amount: body.amount,
-        serviceName: body.serviceName,
-        formData: body.formData,
-      });
+    await upsertOrder(body.orderId, {
+      status: "PENDING",
+      amount: body.amount,
+      serviceName: body.serviceName,
+      formData: body.formData,
+    });
       console.log("✅ Order saved locally:", body.orderId);
     } catch (fileError) {
       // On Vercel, filesystem is read-only - this is expected and OK

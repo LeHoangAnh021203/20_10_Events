@@ -8,6 +8,9 @@ import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter, useSearchParams } from "next/navigation";
 
+// Ngăn Next.js/Vercel cache HTML của route "/" để tránh 304 aggressive trên mobile
+export const dynamic = "force-dynamic";
+
 interface FormData {
   senderName: string;
   senderPhone: string;

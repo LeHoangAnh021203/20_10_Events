@@ -105,7 +105,7 @@ export default function GreetingCard({
           // Try multiple keys for better compatibility
           const lastVoucher = sessionStorage.getItem("lastSelectedVoucher");
           const savedServiceName = sessionStorage.getItem("paidServiceName");
-
+          
           if (lastVoucher) {
             const voucher = JSON.parse(lastVoucher);
             const price =
@@ -123,7 +123,7 @@ export default function GreetingCard({
               return { name: voucher.name, isFree: price === 0 };
             }
           }
-
+          
           if (savedServiceName) {
             console.log(
               "Got service from sessionStorage (paidServiceName):",
@@ -149,7 +149,7 @@ export default function GreetingCard({
     // 2. KHÔNG có service trong sessionStorage HOẶC service trong sessionStorage KHÔNG phải miễn phí
     const fetchPaidService = async () => {
       if (!formData.senderPhone) return;
-
+      
       // Nếu đã có service từ sessionStorage và là voucher miễn phí, KHÔNG gọi API
       if (storageService && storageService.isFree) {
         console.log(
@@ -158,7 +158,7 @@ export default function GreetingCard({
         );
         return;
       }
-
+      
       // Nếu đã có service từ sessionStorage (không phải miễn phí), vẫn giữ nguyên và không override
       if (storageService && !storageService.isFree) {
         console.log(
@@ -167,7 +167,7 @@ export default function GreetingCard({
         );
         // Vẫn có thể gọi API để log, nhưng không override
       }
-
+      
       try {
         const response = await fetch(
           `/api/get-paid-service?senderPhone=${encodeURIComponent(
@@ -177,7 +177,7 @@ export default function GreetingCard({
         if (response.ok) {
           const data = await response.json();
           console.log("Fetched paid service from API:", data); // Debug log
-
+          
           // CHỈ override nếu:
           // 1. API trả về serviceName
           // 2. KHÔNG có service trong sessionStorage HOẶC service trong sessionStorage không phải miễn phí
@@ -192,7 +192,7 @@ export default function GreetingCard({
               );
               return;
             }
-
+            
             // Chỉ dùng API result nếu không có service trong sessionStorage
             setPaidServiceName(data.serviceName);
             console.log(
@@ -368,11 +368,11 @@ export default function GreetingCard({
   const getHighlightPhrase = () => {
     if (paidServiceName) {
       console.log("getHighlightPhrase - paidServiceName:", paidServiceName); // Debug log
-
+      
       // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
       const normalizedName = normalizeText(paidServiceName);
       console.log("getHighlightPhrase - normalizedName:", normalizedName); // Debug log
-
+      
       // Check for specific service names (check more specific ones first)
       if (
         normalizedName.includes("500.000") ||
@@ -420,12 +420,12 @@ export default function GreetingCard({
       .map((line) => `\n${line}`)
       .join("")}`;
     const buildMessage = (prefix: string) => `${prefix} ${trailingText}`;
-
+    
     if (paidServiceName) {
       // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
       const normalizedName = normalizeText(paidServiceName);
       console.log("getDynamicBodyContent - normalizedName:", normalizedName);
-
+      
       // Check for specific service names (check more specific ones first)
       if (
         normalizedName.includes("500.000") ||
@@ -483,7 +483,7 @@ export default function GreetingCard({
       /^(299000|200000|500000|299|200|500)/.test(compact)
     );
   };
-
+  
   // Check if token contains price (like "299.000VNĐ")
   const containsPrice = (token: string) => {
     const normalized = token.toLowerCase();
@@ -496,18 +496,18 @@ export default function GreetingCard({
       normalized.includes("500000")
     );
   };
-
+  
   // Function to check if a text segment contains the full voucher phrase
   const containsVoucherPhrase = (text: string) => {
     const normalizedText = normalizeText(text).replace(
       /[.,!?:;"'""()\[\]{}]/g,
       ""
     );
-
+    
     if (paidServiceName) {
       // Normalize service name for comparison (lowercase, remove extra spaces & diacritics)
       const normalizedName = normalizeText(paidServiceName);
-
+      
       // Check for specific service names (check more specific ones first)
       if (
         normalizedName.includes("500.000") ||
@@ -550,7 +550,7 @@ export default function GreetingCard({
         );
       }
     }
-
+    
     // Default fallback
     return (
       normalizedText.includes("voucher dịch vụ cộng thêm") ||
@@ -703,7 +703,7 @@ export default function GreetingCard({
         if (response.ok) {
           const blob = await response.blob();
           const url = URL.createObjectURL(blob);
-
+          
           // Try native share API first on mobile (giống QR code)
           if (isMobile && typeof navigator !== "undefined" && navigator.share) {
             try {
@@ -721,7 +721,7 @@ export default function GreetingCard({
               console.warn("Không thể chia sẻ trực tiếp:", shareError);
             }
           }
-
+          
           // Download via link
           const link = document.createElement("a");
           link.href = url;
@@ -1016,7 +1016,7 @@ export default function GreetingCard({
     try {
       // Export card to dataURL first
       const dataUrl = await exportCardAsPng();
-
+      
       // Try backend API first (giống QR code logic)
       try {
         const response = await fetch("/api/download-card", {
@@ -1029,7 +1029,7 @@ export default function GreetingCard({
 
         if (response.ok) {
           const blob = await response.blob();
-
+          
           // Try native share API
           if (navigator.share) {
             const file = new File([blob], `foxie-card-${Date.now()}.png`, {
@@ -1048,7 +1048,7 @@ export default function GreetingCard({
               return;
             }
           }
-
+          
           // Fallback to download if share not available
           const url = URL.createObjectURL(blob);
           await triggerDownload(url, { skipBackend: true });
