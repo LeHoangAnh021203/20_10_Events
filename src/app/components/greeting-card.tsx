@@ -613,120 +613,77 @@ export default function GreetingCard({
 
   const exportCardAsPng = async () => {
     const node = getCardNode();
-    const isMobileExport = window.innerWidth < 640;
 
-    // Wait for fonts
+    // Wait for fonts and images
     try {
       const d = document as unknown as { fonts?: { ready?: Promise<void> } };
       await d.fonts?.ready;
     } catch {}
 
-    // Pre-load all images with cache busting to ensure fresh load every time
+    // Wait for images to load - improved for mobile
     const images = node.querySelectorAll("img");
-    const imageLoadPromises: Promise<void>[] = [];
-    const timestamp = Date.now();
-
-    Array.from(images).forEach((img, index) => {
-      const originalSrc = img.getAttribute("src") || img.src;
-      let absoluteSrc = originalSrc;
-
-      // Convert to absolute URL if relative
-      if (originalSrc && originalSrc.startsWith("/")) {
-        absoluteSrc = window.location.origin + originalSrc;
-      }
-
-      // Add cache busting query parameter to force fresh load
-      const url = new URL(absoluteSrc, window.location.href);
-      url.searchParams.set("_export", `${timestamp}_${index}`);
-      const cacheBustedSrc = url.toString();
-
-      // Create a promise that ensures image is loaded
-      const loadPromise = new Promise<void>((resolve) => {
-        // Check if already loaded with correct src
-        if (img.complete && img.naturalWidth > 0 && img.src === cacheBustedSrc) {
-          resolve();
-          return;
+    const imagePromises = Array.from(images).map((img) => {
+      // Ensure image src is absolute URL for html-to-image
+      const currentSrc = img.getAttribute("src") || img.src;
+      if (currentSrc && currentSrc.startsWith("/")) {
+        const absoluteSrc = window.location.origin + currentSrc;
+        // Only update if different to avoid unnecessary reloads
+        if (img.src !== absoluteSrc) {
+          img.src = absoluteSrc;
         }
-
-        // Create new image to preload
-        const preloadImg = document.createElement("img");
-        preloadImg.crossOrigin = "anonymous";
-
+      }
+      
+      if (img.complete && img.naturalWidth > 0) {
+        return Promise.resolve();
+      }
+      
+      return new Promise<void>((resolve) => {
         const timeout = setTimeout(() => {
-          console.warn("Image preload timeout:", cacheBustedSrc);
+          console.warn("Image load timeout:", img.src);
           resolve();
-        }, isMobileExport ? 5000 : 3000);
-
-        preloadImg.onload = () => {
+        }, 3000);
+        
+        const onLoad = () => {
           clearTimeout(timeout);
-          // Update original img src only after preload succeeds
-          if (img.src !== cacheBustedSrc) {
-            img.src = cacheBustedSrc;
-          }
+          img.removeEventListener("load", onLoad);
+          img.removeEventListener("error", onError);
           resolve();
         };
-
-        preloadImg.onerror = () => {
+        
+        const onError = () => {
           clearTimeout(timeout);
-          console.warn("Image preload error:", cacheBustedSrc);
-          // Still try to use original src
-          if (img.src !== absoluteSrc && absoluteSrc !== originalSrc) {
-            img.src = absoluteSrc;
-          }
+          img.removeEventListener("load", onLoad);
+          img.removeEventListener("error", onError);
+          console.warn("Image load error:", img.src);
           resolve();
         };
-
-        preloadImg.src = cacheBustedSrc;
+        
+        img.addEventListener("load", onLoad);
+        img.addEventListener("error", onError);
       });
-
-      imageLoadPromises.push(loadPromise);
     });
+    
+    await Promise.all(imagePromises);
+    
+    // Additional delay for mobile to ensure all rendering is complete
+    const isMobileExport = window.innerWidth < 640;
+    if (isMobileExport) {
+      await new Promise((resolve) => setTimeout(resolve, 500));
+    }
 
-    // Wait for all images to preload
-    await Promise.all(imageLoadPromises);
-
-    // Additional wait to ensure DOM is stable
-    await new Promise((resolve) => setTimeout(resolve, isMobileExport ? 800 : 300));
-
-    // Force reflow multiple times to ensure all styles are computed
+    // Force reflow to ensure all styles are applied
     void node.offsetHeight;
-    await new Promise<void>((resolve) => {
-      requestAnimationFrame(() => resolve());
-    });
-    void node.offsetHeight;
-
-    // Final check - reload any images that still aren't loaded
-    const stillUnloaded = Array.from(images).filter(
+    
+    // Double-check all images are loaded
+    const unloadedImages = Array.from(images).filter(
       (img) => !img.complete || img.naturalWidth === 0
     );
-    if (stillUnloaded.length > 0) {
-      console.warn("Retrying unloaded images:", stillUnloaded.length);
-      await Promise.all(
-        stillUnloaded.map((img) => {
-          return new Promise<void>((resolve) => {
-            const timeout = setTimeout(resolve, 2000);
-            const onLoad = () => {
-              clearTimeout(timeout);
-              img.removeEventListener("load", onLoad);
-              img.removeEventListener("error", onError);
-              resolve();
-            };
-            const onError = () => {
-              clearTimeout(timeout);
-              img.removeEventListener("load", onLoad);
-              img.removeEventListener("error", onError);
-              resolve();
-            };
-            img.addEventListener("load", onLoad);
-            img.addEventListener("error", onError);
-            // Force reload
-            const currentSrc = img.src;
-            img.src = "";
-            img.src = currentSrc;
-          });
-        })
-      );
-      await new Promise((resolve) => setTimeout(resolve, 500));
+    if (unloadedImages.length > 0) {
+      console.warn("Some images may not be loaded:", unloadedImages.length);
+      // Wait a bit more for mobile
+      if (isMobileExport) {
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+      }
     }
 
     // Use html-to-image with consistent settings
@@ -739,7 +696,7 @@ export default function GreetingCard({
     const pixelRatio = isMobileExport ? 1.2 : 1.4;
 
     return toPng(node, {
-      cacheBust: true,
+      cacheBust: true, // Enable cache busting for mobile
       backgroundColor: "#ffffff",
       quality: 1,
       pixelRatio,
