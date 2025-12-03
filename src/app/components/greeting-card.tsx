@@ -56,6 +56,8 @@ export default function GreetingCard({
   const [isSharing, setIsSharing] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [saveCount, setSaveCount] = useState(0);
+  const [showCountdown, setShowCountdown] = useState(false);
+  const [countdown, setCountdown] = useState(10);
 
   const BRAND_KEY = "face wash fox";
   const brandRegex = /(Face Wash Fox)/gi;
@@ -322,6 +324,23 @@ export default function GreetingCard({
     paidServiceName,
     receiverEmailSent,
   ]);
+
+  // Countdown timer for first save on mobile
+  useEffect(() => {
+    if (!showCountdown) return;
+
+    if (countdown <= 0) {
+      setShowCountdown(false);
+      setCountdown(10);
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      setCountdown((prev) => prev - 1);
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [showCountdown, countdown]);
 
   // Responsive character-per-line settings
   const maxCharsMessage = isMobile ? 37 : 70;
@@ -1055,8 +1074,8 @@ export default function GreetingCard({
   const handleScreenshot = async () => {
     if (isSaving) return;
     
-    // On mobile, require refresh from the first save for best quality
-    if (isMobile && saveCount >= 0) {
+    // On mobile, first save shows countdown, subsequent saves require refresh
+    if (isMobile && saveCount >= 1) {
       const shouldRefresh = confirm(
         "Để đảm bảo thiệp đẹp nhất, vui lòng làm mới trang trước khi lưu lại nhé! 💝\n\nBạn có muốn làm mới trang ngay bây giờ không?"
       );
@@ -1064,6 +1083,12 @@ export default function GreetingCard({
         window.location.reload();
       }
       return;
+    }
+    
+    // First save on mobile: show countdown modal
+    if (isMobile && saveCount === 0) {
+      setShowCountdown(true);
+      setCountdown(10);
     }
     
     setIsSaving(true);
@@ -1076,8 +1101,19 @@ export default function GreetingCard({
       
       // Increment save count after successful save
       setSaveCount((prev) => prev + 1);
+      
+      // Close countdown modal after successful save
+      if (showCountdown) {
+        setShowCountdown(false);
+        setCountdown(10);
+      }
     } catch (error) {
       console.error("Không thể tạo ảnh thiệp:", error);
+      // Close countdown modal on error
+      if (showCountdown) {
+        setShowCountdown(false);
+        setCountdown(10);
+      }
       alert("Thiệp đang được chuẩn bị! Vui lòng đợi một chút và thử lại nhé 💝");
     } finally {
       setIsSaving(false);
@@ -1211,6 +1247,43 @@ export default function GreetingCard({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50 py-4 md:py-8 text-black">
+      {/* Countdown Modal for first save on mobile */}
+      {showCountdown && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 mx-4 max-w-sm w-full text-center">
+            <div className="mb-4">
+              <div className="text-6xl mb-4">💝</div>
+              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
+                Thiệp đang được chuẩn bị!
+              </h3>
+              <p className="text-sm sm:text-base text-gray-600 mb-6">
+                Vui lòng đợi một chút để thiệp được tạo với chất lượng đẹp nhất nhé
+              </p>
+            </div>
+            <div className="mb-6">
+              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-white text-3xl font-bold shadow-lg">
+                {countdown}
+              </div>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
+              <div
+                className="bg-gradient-to-r from-orange-400 to-red-500 h-2 rounded-full transition-all duration-1000 ease-linear"
+                style={{ width: `${((10 - countdown) / 10) * 100}%` }}
+              />
+            </div>
+            <button
+              onClick={() => {
+                setShowCountdown(false);
+                setCountdown(10);
+              }}
+              className="text-sm text-gray-500 hover:text-gray-700 underline"
+            >
+              Đóng
+            </button>
+          </div>
+        </div>
+      )}
+      
       {/* <LanguageSwitcher /> */}
       {/* Desktop: Show buttons at top */}
       <div className="hidden sm:flex w-full justify-end gap-2 px-4 sm:px-6 mb-2">
