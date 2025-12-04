@@ -56,7 +56,7 @@ export default function GreetingCard({
   const [isSharing, setIsSharing] = useState(false);
   const [isNavigating, setIsNavigating] = useState(false);
   const [saveCount, setSaveCount] = useState(0);
-  const [showCountdown, setShowCountdown] = useState(false);
+  const [isPreparing, setIsPreparing] = useState(false);
   const [countdown, setCountdown] = useState(10);
 
   const BRAND_KEY = "face wash fox";
@@ -325,22 +325,74 @@ export default function GreetingCard({
     receiverEmailSent,
   ]);
 
-  // Countdown timer for first save on mobile
-  useEffect(() => {
-    if (!showCountdown) return;
+  // Preload all images and wait for them to be ready
+  const preloadAllImages = async (): Promise<boolean> => {
+    const node = getCardNode();
+    const images = node.querySelectorAll("img");
+    const isMobileExport = window.innerWidth < 640;
+    
+    const imagePromises = Array.from(images).map((img) => {
+      return new Promise<boolean>((resolve) => {
+        const originalSrc = img.getAttribute("src") || img.src;
+        let targetSrc = originalSrc;
+        
+        // Convert to absolute URL if relative
+        if (originalSrc && originalSrc.startsWith("/")) {
+          targetSrc = window.location.origin + originalSrc;
+        }
+        
+        // If already loaded with correct src, resolve immediately
+        if (img.src === targetSrc && img.complete && img.naturalWidth > 0) {
+          resolve(true);
+          return;
+        }
+        
+        const timeout = setTimeout(() => {
+          console.warn("Image preload timeout:", targetSrc);
+          resolve(false);
+        }, isMobileExport ? 5000 : 3000);
+        
+        const onLoad = () => {
+          if (img.naturalWidth > 0 && img.naturalHeight > 0) {
+            clearTimeout(timeout);
+            img.removeEventListener("load", onLoad);
+            img.removeEventListener("error", onError);
+            resolve(true);
+          }
+        };
+        
+        const onError = () => {
+          clearTimeout(timeout);
+          img.removeEventListener("load", onLoad);
+          img.removeEventListener("error", onError);
+          console.warn("Image preload error:", targetSrc);
+          resolve(false);
+        };
+        
+        img.addEventListener("load", onLoad);
+        img.addEventListener("error", onError);
+        
+        // Change src if needed
+        if (img.src !== targetSrc) {
+          img.src = targetSrc;
+        } else if (!img.complete) {
+          // Force reload if src is correct but not loaded
+          const currentSrc = img.src;
+          img.src = "";
+          img.src = currentSrc;
+        }
+      });
+    });
+    
+    const results = await Promise.all(imagePromises);
+    const allLoaded = results.every((loaded) => loaded);
+    
+    // Additional wait to ensure DOM is stable
+    await new Promise((resolve) => setTimeout(resolve, isMobileExport ? 500 : 300));
+    
+    return allLoaded;
+  };
 
-    if (countdown <= 0) {
-      setShowCountdown(false);
-      setCountdown(10);
-      return;
-    }
-
-    const timer = setTimeout(() => {
-      setCountdown((prev) => prev - 1);
-    }, 1000);
-
-    return () => clearTimeout(timer);
-  }, [showCountdown, countdown]);
 
   // Responsive character-per-line settings
   const maxCharsMessage = isMobile ? 37 : 70;
@@ -1072,9 +1124,9 @@ export default function GreetingCard({
   };
 
   const handleScreenshot = async () => {
-    if (isSaving) return;
+    if (isSaving || isPreparing) return;
     
-    // On mobile, first save shows countdown, subsequent saves require refresh
+    // On mobile, subsequent saves require refresh
     if (isMobile && saveCount >= 1) {
       const shouldRefresh = confirm(
         "Để đảm bảo thiệp đẹp nhất, vui lòng làm mới trang trước khi lưu lại nhé! 💝\n\nBạn có muốn làm mới trang ngay bây giờ không?"
@@ -1085,10 +1137,39 @@ export default function GreetingCard({
       return;
     }
     
-    // First save on mobile: show countdown modal
+    // First save on mobile: start countdown and preload images
     if (isMobile && saveCount === 0) {
-      setShowCountdown(true);
+      setIsPreparing(true);
       setCountdown(10);
+      
+      // Start countdown and preload images in parallel
+      const countdownPromise = new Promise<void>((resolve) => {
+        let currentCount = 10;
+        const timer = setInterval(() => {
+          currentCount--;
+          setCountdown(currentCount);
+          if (currentCount <= 0) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 1000);
+      });
+      
+      const imagesPromise = preloadAllImages().then((allLoaded) => {
+        if (allLoaded) {
+          console.log("✅ All images preloaded successfully");
+        } else {
+          console.warn("⚠️ Some images may not have loaded");
+        }
+      });
+      
+      // Wait for both countdown and images to be ready
+      await Promise.all([countdownPromise, imagesPromise]);
+      
+      // Small delay to ensure everything is stable
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      
+      setIsPreparing(false);
     }
     
     setIsSaving(true);
@@ -1102,18 +1183,13 @@ export default function GreetingCard({
       // Increment save count after successful save
       setSaveCount((prev) => prev + 1);
       
-      // Close countdown modal after successful save
-      if (showCountdown) {
-        setShowCountdown(false);
-        setCountdown(10);
-      }
+      // Reset preparing state
+      setIsPreparing(false);
+      setCountdown(10);
     } catch (error) {
       console.error("Không thể tạo ảnh thiệp:", error);
-      // Close countdown modal on error
-      if (showCountdown) {
-        setShowCountdown(false);
-        setCountdown(10);
-      }
+      setIsPreparing(false);
+      setCountdown(10);
       alert("Thiệp đang được chuẩn bị! Vui lòng đợi một chút và thử lại nhé 💝");
     } finally {
       setIsSaving(false);
@@ -1121,7 +1197,54 @@ export default function GreetingCard({
   };
 
   const handleShare = async () => {
-    if (isSharing) return;
+    if (isSharing || isPreparing) return;
+    
+    // On mobile, subsequent saves require refresh
+    if (isMobile && saveCount >= 1) {
+      const shouldRefresh = confirm(
+        "Để đảm bảo thiệp đẹp nhất, vui lòng làm mới trang trước khi lưu lại nhé! 💝\n\nBạn có muốn làm mới trang ngay bây giờ không?"
+      );
+      if (shouldRefresh) {
+        window.location.reload();
+      }
+      return;
+    }
+    
+    // First save on mobile: start countdown and preload images
+    if (isMobile && saveCount === 0) {
+      setIsPreparing(true);
+      setCountdown(10);
+      
+      // Start countdown and preload images in parallel
+      const countdownPromise = new Promise<void>((resolve) => {
+        let currentCount = 10;
+        const timer = setInterval(() => {
+          currentCount--;
+          setCountdown(currentCount);
+          if (currentCount <= 0) {
+            clearInterval(timer);
+            resolve();
+          }
+        }, 1000);
+      });
+      
+      const imagesPromise = preloadAllImages().then((allLoaded) => {
+        if (allLoaded) {
+          console.log("✅ All images preloaded successfully");
+        } else {
+          console.warn("⚠️ Some images may not have loaded");
+        }
+      });
+      
+      // Wait for both countdown and images to be ready
+      await Promise.all([countdownPromise, imagesPromise]);
+      
+      // Small delay to ensure everything is stable
+      await new Promise((resolve) => setTimeout(resolve, 300));
+      
+      setIsPreparing(false);
+    }
+    
     setIsSharing(true);
     try {
       // Export card to dataURL first
@@ -1155,6 +1278,10 @@ export default function GreetingCard({
               await navigator.share(shareData);
               // Send email notifications after successful share
               await sendGreetingCardEmails();
+              // Increment save count after successful share
+              setSaveCount((prev) => prev + 1);
+              setIsPreparing(false);
+              setCountdown(10);
               return;
             }
           }
@@ -1165,6 +1292,10 @@ export default function GreetingCard({
           setTimeout(() => URL.revokeObjectURL(url), 1500);
           // Send email notifications after successful download
           await sendGreetingCardEmails();
+          // Increment save count after successful download
+          setSaveCount((prev) => prev + 1);
+          setIsPreparing(false);
+          setCountdown(10);
           return;
         }
       } catch (apiError) {
@@ -1188,6 +1319,10 @@ export default function GreetingCard({
           await navigator.share(shareData);
           // Send email notifications after successful share
           await sendGreetingCardEmails();
+          // Increment save count after successful share
+          setSaveCount((prev) => prev + 1);
+          setIsPreparing(false);
+          setCountdown(10);
           return;
         }
       }
@@ -1204,6 +1339,10 @@ export default function GreetingCard({
           }, 500);
           // Send email notifications after successful download
           await sendGreetingCardEmails();
+          // Increment save count after successful download
+          setSaveCount((prev) => prev + 1);
+          setIsPreparing(false);
+          setCountdown(10);
         } catch (downloadError) {
           console.warn(
             "FileSaver download failed, falling back to generic download:",
@@ -1220,11 +1359,19 @@ export default function GreetingCard({
           setTimeout(() => URL.revokeObjectURL(url), 1500);
           // Send email notifications after successful download
           await sendGreetingCardEmails();
+          // Increment save count after successful download
+          setSaveCount((prev) => prev + 1);
+          setIsPreparing(false);
+          setCountdown(10);
         }
       } else {
         await triggerDownload(dataUrl);
         // Send email notifications after successful download
         await sendGreetingCardEmails();
+        // Increment save count after successful download
+        setSaveCount((prev) => prev + 1);
+        setIsPreparing(false);
+        setCountdown(10);
       }
 
       const fallbackText = `${t.shareText} ${formData.senderName} gửi đến ${formData.receiverName}: ${formData.message}`;
@@ -1233,12 +1380,18 @@ export default function GreetingCard({
         alert(t.shareSuccess);
         // Send email notifications after successful share
         await sendGreetingCardEmails();
+        // Increment save count after successful share
+        setSaveCount((prev) => prev + 1);
+        setIsPreparing(false);
+        setCountdown(10);
       } catch (clipboardError) {
         console.warn("Không thể sao chép vào clipboard:", clipboardError);
         alert(t.shareError);
       }
     } catch (error) {
       console.error("Không thể chia sẻ thiệp:", error);
+      setIsPreparing(false);
+      setCountdown(10);
       alert(t.shareErrorGeneral);
     } finally {
       setIsSharing(false);
@@ -1247,43 +1400,6 @@ export default function GreetingCard({
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50 py-4 md:py-8 text-black">
-      {/* Countdown Modal for first save on mobile */}
-      {showCountdown && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
-          <div className="bg-white rounded-2xl shadow-2xl p-6 sm:p-8 mx-4 max-w-sm w-full text-center">
-            <div className="mb-4">
-              <div className="text-6xl mb-4">💝</div>
-              <h3 className="text-xl sm:text-2xl font-bold text-gray-800 mb-2">
-                Thiệp đang được chuẩn bị!
-              </h3>
-              <p className="text-sm sm:text-base text-gray-600 mb-6">
-                Vui lòng đợi một chút để thiệp được tạo với chất lượng đẹp nhất nhé
-              </p>
-            </div>
-            <div className="mb-6">
-              <div className="inline-flex items-center justify-center w-20 h-20 rounded-full bg-gradient-to-br from-orange-400 to-red-500 text-white text-3xl font-bold shadow-lg">
-                {countdown}
-              </div>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2 mb-4">
-              <div
-                className="bg-gradient-to-r from-orange-400 to-red-500 h-2 rounded-full transition-all duration-1000 ease-linear"
-                style={{ width: `${((10 - countdown) / 10) * 100}%` }}
-              />
-            </div>
-            <button
-              onClick={() => {
-                setShowCountdown(false);
-                setCountdown(10);
-              }}
-              className="text-sm text-gray-500 hover:text-gray-700 underline"
-            >
-              Đóng
-            </button>
-          </div>
-        </div>
-      )}
-      
       {/* <LanguageSwitcher /> */}
       {/* Desktop: Show buttons at top */}
       <div className="hidden sm:flex w-full justify-end gap-2 px-4 sm:px-6 mb-2">
@@ -1838,10 +1954,15 @@ export default function GreetingCard({
           </button>
           <button
             onClick={handleShare}
-            disabled={isSaving || isSharing}
+            disabled={isSaving || isSharing || isPreparing}
             className="flex sm:hidden items-center justify-center gap-2 bg-gradient-to-r from-yellow-200 to-yellow-500 hover:from-yellow-400 hover:to-green-700 text-white px-6 py-3 rounded-full shadow-lg w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
           >
-            {isSharing ? (
+            {isPreparing && saveCount === 0 ? (
+              <>
+                <span className="text-lg font-bold">⏳ {countdown}s</span>
+                <span className="text-sm">Đang chuẩn bị...</span>
+              </>
+            ) : isSharing ? (
               <>
                 <span className="animate-spin">⏳</span> Đang chia sẻ...
               </>
