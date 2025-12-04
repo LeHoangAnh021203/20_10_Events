@@ -188,7 +188,7 @@ export const translations: Record<Language, Translations> = {
       "Mỗi khách hàng được tham gia gửi/nhận quà tặng DVCT tối đa 3 lần trong suốt thời gian diễn ra CTKM;",
       "DVCT sẽ được áp dụng từ sau 1 ngày làm việc kể từ thời điểm phát sinh lời nhắn gửi và có HSD đến 12/1/2026",
       "Áp dụng với tất cả hình thức thanh toán;",
-      "Không áp dụng DVCT được tặng vào ngày 24, 25, 31/12 và thứ 7, Chủ nhật.",
+      "Không áp dụng DVCT được tặng vào ngày 24, 25, 31/12, 1/1 và thứ 7, Chủ nhật.",
       "Quà tặng không có giá trị quy đổi thành tiền mặt;",
       "Số lượng quà tặng có hạn, mọi quyết định cuối cùng thuộc về Face Wash Fox."
     ],
