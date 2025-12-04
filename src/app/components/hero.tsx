@@ -93,10 +93,10 @@ export default function Hero() {
 
     // Save selected voucher to storage for later use (payment + greeting card)
     sessionStorage.setItem("lastSelectedVoucher", JSON.stringify(selectedVoucher));
-    sessionStorage.setItem("paidServiceName", selectedVoucher.name);
+      sessionStorage.setItem("paidServiceName", selectedVoucher.name);
 
     // Với voucher trả phí: chỉ mở popup thanh toán
-    setIsExpanded(true);
+      setIsExpanded(true);
     setIsCtaLoading(false);
   };
 
@@ -105,9 +105,9 @@ export default function Hero() {
     setIsCtaLoading(true);
 
     try {
-      await submitFreeVoucherToSheet();
-      // Redirect đến trang chủ để hiển thị thiệp chúc mừng
-      router.push("/?showGreetingCard=1");
+    await submitFreeVoucherToSheet();
+    // Redirect đến trang chủ để hiển thị thiệp chúc mừng
+    router.push("/?showGreetingCard=1");
     } finally {
       // Cho phép bấm lại nếu có lỗi / user quay lại
       setIsCtaLoading(false);
@@ -978,13 +978,13 @@ export default function Hero() {
                   <div className="pt-6 sm:pt-8 mt-6 sm:mt-8 border-t border-white/20">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-14 h-14 rounded-full border-2 bg-blue flex justify-center items-center">
-                        <Image
-                          src="/logo.png"
-                          alt="Sarah Chen"
-                          width={48}
-                          height={48}
-                          className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
-                        />
+                      <Image
+                        src="/logo.png"
+                        alt="Sarah Chen"
+                        width={48}
+                        height={48}
+                        className="w-10 h-10 sm:w-12 sm:h-12 rounded-full object-cover"
+                      />
                       </div>
                       <div>
                         <p className="text-base sm:text-lg lg:text-xl text-white">
@@ -1073,7 +1073,7 @@ export default function Hero() {
                                   />
                                   <div>
                                     <p className="font-semibold text-base">
-                                      Ví MoMo
+                                     Ví MoMo
                                     </p>
                                     <p className="text-xs opacity-80">
                                       Áp dụng toàn bộ ngân hàng và ví điện tử

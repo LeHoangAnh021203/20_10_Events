@@ -57,6 +57,8 @@ export default function GreetingCard({
   const [isNavigating, setIsNavigating] = useState(false);
   const [saveCount, setSaveCount] = useState(0);
   const [showCountdown, setShowCountdown] = useState(false);
+  const [saveCountdown, setSaveCountdown] = useState(0);
+  const [isSaveDisabled, setIsSaveDisabled] = useState(false);
   const [countdown, setCountdown] = useState(10);
 
   const BRAND_KEY = "face wash fox";
@@ -341,6 +343,21 @@ export default function GreetingCard({
 
     return () => clearTimeout(timer);
   }, [showCountdown, countdown]);
+
+  // Countdown timer for save button (5 seconds)
+  useEffect(() => {
+    if (saveCountdown <= 0) {
+      setIsSaveDisabled(false);
+      return;
+    }
+
+    setIsSaveDisabled(true);
+    const timer = setTimeout(() => {
+      setSaveCountdown((prev) => Math.max(0, prev - 1));
+    }, 1000);
+
+    return () => clearTimeout(timer);
+  }, [saveCountdown]);
 
   // Responsive character-per-line settings
   const maxCharsMessage = isMobile ? 37 : 70;
@@ -1072,7 +1089,7 @@ export default function GreetingCard({
   };
 
   const handleScreenshot = async () => {
-    if (isSaving) return;
+    if (isSaving || isSaveDisabled) return;
     
     // On mobile, first save shows countdown, subsequent saves require refresh
     if (isMobile && saveCount >= 1) {
@@ -1084,6 +1101,16 @@ export default function GreetingCard({
       }
       return;
     }
+    
+    // Start 5 second countdown before allowing save
+    setSaveCountdown(5);
+    setIsSaveDisabled(true);
+    
+    // Wait for countdown to finish (5 seconds)
+    // Countdown is handled by useEffect, we just wait here
+    await new Promise((resolve) => setTimeout(resolve, 5000));
+    setIsSaveDisabled(false);
+    setSaveCountdown(0);
     
     // First save on mobile: show countdown modal
     if (isMobile && saveCount === 0) {
@@ -1114,6 +1141,9 @@ export default function GreetingCard({
         setShowCountdown(false);
         setCountdown(10);
       }
+      // Reset save countdown on error
+      setIsSaveDisabled(false);
+      setSaveCountdown(0);
       alert("Thiệp đang được chuẩn bị! Vui lòng đợi một chút và thử lại nhé 💝");
     } finally {
       setIsSaving(false);
@@ -1239,7 +1269,7 @@ export default function GreetingCard({
       }
     } catch (error) {
       console.error("Không thể chia sẻ thiệp:", error);
-      alert(t.shareErrorGeneral);
+      alert("Thiệp đang được chuẩn bị! Vui lòng đợi một chút và thử lại nhé 💝");
     } finally {
       setIsSharing(false);
     }
@@ -1825,12 +1855,17 @@ export default function GreetingCard({
         <div className="flex flex-col sm:flex-row justify-center gap-3 sm:gap-4 mt-8">
           <button
             onClick={handleScreenshot}
-            disabled={isSaving || isSharing}
+            disabled={isSaving || isSharing || isSaveDisabled}
             className="hidden sm:flex items-center justify-center gap-2 bg-gradient-to-r from-orange-300 to-orange-500 hover:from-orange-600 hover:to-orange-700 text-white px-6 py-3 rounded-full shadow-lg w-full sm:w-auto disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isSaving ? (
               <>
                 <span className="animate-spin">⏳</span> Đang lưu...
+              </>
+            ) : isSaveDisabled && saveCountdown > 0 ? (
+              <>
+                <span className="text-lg font-bold">⏳ {saveCountdown}s</span>
+                <span className="text-sm">Đang chuẩn bị...</span>
               </>
             ) : (
               <>📱 {t.saveCardButton}</>

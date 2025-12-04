@@ -894,19 +894,19 @@ function LandingPageContent() {
                     </>
                   ) : (
                     <>
-                      <span>
-                        {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
-                      </span>
-                      <Image
-                        src="/CÁO5@4x-05.png"
-                        alt="Foxie icon"
-                        width={20}
-                        height={20}
-                        className={`${
-                          isMobile ? "h-8 w-8" : "h-12 w-12"
-                        } drop-shadow-xl animate-pulse`}
-                        aria-hidden
-                      />
+                  <span>
+                    {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
+                  </span>
+                  <Image
+                    src="/CÁO5@4x-05.png"
+                    alt="Foxie icon"
+                    width={20}
+                    height={20}
+                    className={`${
+                      isMobile ? "h-8 w-8" : "h-12 w-12"
+                    } drop-shadow-xl animate-pulse`}
+                    aria-hidden
+                  />
                     </>
                   )}
                 </button>
