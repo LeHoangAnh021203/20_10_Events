@@ -674,7 +674,7 @@ export default function GreetingCard({
         return Promise.resolve();
       }
       
-      return new Promise<void>((resolve) => {
+        return new Promise<void>((resolve) => {
         const timeout = setTimeout(() => {
           console.warn("Image load timeout:", img.src);
           resolve();

@@ -34,12 +34,22 @@ export default function VoucherSelection({
   );
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
   const serviceVideoSrc = "/To_video__202512011638.mp4";
+  const cash200kVideoSrc = "/To_video_ngn_202512051030.mp4";
+  const cash500kVideoSrc = "/To_video_ngn_202512051038.mp4";
   const serviceVideoRef = useRef<HTMLVideoElement | null>(null);
+  const cash200kVideoRef = useRef<HTMLVideoElement | null>(null);
+  const cash500kVideoRef = useRef<HTMLVideoElement | null>(null);
   const SERVICE_VIDEO_PLAYBACK_RATE = 3.1;
 
   useEffect(() => {
     if (serviceVideoRef.current) {
       serviceVideoRef.current.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
+    }
+    if (cash200kVideoRef.current) {
+      cash200kVideoRef.current.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
+    }
+    if (cash500kVideoRef.current) {
+      cash500kVideoRef.current.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
     }
   }, [hoveredCardId]);
 
@@ -76,46 +86,46 @@ export default function VoucherSelection({
       features: ["dịch vụ"],
     },
 
-    // {
-    //   id: "cash-200k",
-    //   name: "Cash Voucher 200.000đ",
-    //   price: 200000,
-    //   type: "cash",
-    //   description: "Voucher tiền mặt trị giá 200.000 VNĐ",
-    //   services: [
-    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-    //     "Áp dụng cho tất cả sản phẩm",
-    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
-    //   ],
-    //   benefits: [
-    //     "Linh hoạt trong việc sử dụng",
-    //     "Không giới hạn thời gian sử dụng",
-    //     "Có thể tặng cho người thân",
-    //     "Áp dụng tại tất cả chi nhánh",
-    //   ],
-    //   features: ["tiền mặt"],
-    // },
-    // {
-    //   id: "cash-500k",
-    //   name: "Cash Voucher 500.000đ",
-    //   price: 500000,
-    //   type: "cash",
-    //   description: "Voucher tiền mặt trị giá 500.000 VNĐ",
-    //   services: [
-    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-    //     "Áp dụng cho tất cả sản phẩm",
-    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
-    //     "Ưu tiên đặt lịch dịch vụ cao cấp",
-    //   ],
-    //   benefits: [
-    //     "Linh hoạt trong việc sử dụng",
-    //     "Không giới hạn thời gian sử dụng",
-    //     "Có thể tặng cho người thân",
-    //     "Áp dụng tại tất cả chi nhánh",
-    //     "Được tư vấn chăm sóc da miễn phí",
-    //   ],
-    //   features: ["tiền mặt"],
-    // },
+    {
+      id: "cash-200k",
+      name: "Cash Voucher 200.000đ",
+      price: 200000,
+      type: "cash",
+      description: "Voucher tiền mặt trị giá 200.000 VNĐ",
+      services: [
+        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+        "Áp dụng cho tất cả sản phẩm",
+        "Có thể kết hợp với các chương trình khuyến mãi khác",
+      ],
+      benefits: [
+        "Linh hoạt trong việc sử dụng",
+        "Không giới hạn thời gian sử dụng",
+        "Có thể tặng cho người thân",
+        "Áp dụng tại tất cả chi nhánh",
+      ],
+      features: ["tiền mặt"],
+    },
+    {
+      id: "cash-500k",
+      name: "Cash Voucher 500.000đ",
+      price: 500000,
+      type: "cash",
+      description: "Voucher tiền mặt trị giá 500.000 VNĐ",
+      services: [
+        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+        "Áp dụng cho tất cả sản phẩm",
+        "Có thể kết hợp với các chương trình khuyến mãi khác",
+        "Ưu tiên đặt lịch dịch vụ cao cấp",
+      ],
+      benefits: [
+        "Linh hoạt trong việc sử dụng",
+        "Không giới hạn thời gian sử dụng",
+        "Có thể tặng cho người thân",
+        "Áp dụng tại tất cả chi nhánh",
+        "Được tư vấn chăm sóc da miễn phí",
+      ],
+      features: ["tiền mặt"],
+    },
   ];
 
   const getVoucherMedia = (voucher: VoucherOption) => {
@@ -127,14 +137,14 @@ export default function VoucherSelection({
         };
       case "cash-200k":
         return {
-          image: "/Custom for web - Voucher DVCT-01.png",
+          image: "/Cashvoucher200.png",
           overlayText: "",
         };
       case "cash-500k":
       case "test-2k":
       default:
         return {
-          image: "/Custom for web - Voucher DVCT-01.png",
+          image: "/Cashvoucher500.png",
           overlayText: "",
         };
     }
@@ -169,14 +179,22 @@ export default function VoucherSelection({
   return (
     <>
       {/* Voucher Cards Grid */}
-      <div className={`flex justify-center items-start gap-6 mt-8`}>
+      <div
+        className={`mt-8 flex items-start justify-center gap-6 ${
+          isMobile
+            ? "flex-col px-4"
+            : "flex-row flex-wrap lg:flex-nowrap px-4 sm:px-0 max-w-6xl mx-auto"
+        }`}
+      >
         {voucherOptions.map((voucher) => (
           <motion.div
             key={voucher.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className="flex justify-center"
+            className={`flex justify-center ${
+              isMobile ? "w-full" : "w-full sm:w-1/2 lg:w-1/3"
+            }`}
           >
             {(() => {
               const isSelected = selectedVoucherId === voucher.id;
@@ -184,9 +202,9 @@ export default function VoucherSelection({
               const media = getVoucherMedia(voucher);
               return (
                 <div
-                  className={`relative w-full max-w-[min(90vh,90vw)] ${
+                  className={`relative w-full max-w-sm sm:max-w-md ${
                     isMobile ? "aspect-[3/4]" : "aspect-[4/5]"
-                  } overflow-hidden rounded-[32px] border border-white/20 shadow-[0_25px_70px_rgba(0,0,0,0.25)] transition-all duration-500 hover:shadow-orange-300 hover:scale-[1.01] cursor-pointer ${
+                  } overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/20 shadow-[0_16px_40px_rgba(0,0,0,0.25)] sm:shadow-[0_25px_70px_rgba(0,0,0,0.25)] transition-all duration-500 hover:shadow-orange-300 hover:scale-[1.01] cursor-pointer ${
                     isSelected ? "ring-4 ring-[#F57C3A]" : ""
                   }`}
                   style={{ backgroundImage: theme.background }}
@@ -210,6 +228,34 @@ export default function VoucherSelection({
                         <video
                           ref={serviceVideoRef}
                           src={serviceVideoSrc}
+                          muted
+                          loop
+                          playsInline
+                          autoPlay
+                          preload="metadata"
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                            isHovered ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                      )}
+                      {voucher.id === "cash-200k" && (
+                        <video
+                          ref={cash200kVideoRef}
+                          src={cash200kVideoSrc}
+                          muted
+                          loop
+                          playsInline
+                          autoPlay
+                          preload="metadata"
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
+                            isHovered ? "opacity-100" : "opacity-0"
+                          }`}
+                        />
+                      )}
+                      {voucher.id === "cash-500k" && (
+                        <video
+                          ref={cash500kVideoRef}
+                          src={cash500kVideoSrc}
                           muted
                           loop
                           playsInline

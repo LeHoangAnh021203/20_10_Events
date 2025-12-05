@@ -3,6 +3,34 @@ import crypto from "crypto";
 import { upsertOrder, getOrder, OrderRecord } from "@/lib/order-store";
 import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
 
+const ipnVerboseLogging = process.env.MOMO_IPN_VERBOSE_LOG !== "false";
+const logIpnVerbose = (...args: unknown[]) => {
+  if (ipnVerboseLogging) {
+    console.log("🧾 [MoMo IPN verbose]", ...args);
+  }
+};
+const warnIpnVerbose = (...args: unknown[]) => {
+  if (ipnVerboseLogging) {
+    console.warn("🧾 [MoMo IPN verbose]", ...args);
+  }
+};
+const errorIpnVerbose = (...args: unknown[]) => {
+  if (ipnVerboseLogging) {
+    console.error("🧾 [MoMo IPN verbose]", ...args);
+  }
+};
+const summarizeOrder = (order?: OrderRecord | null) =>
+  order
+    ? {
+        status: order.status,
+        amount: order.amount,
+        hasFormData: !!order.formData,
+        serviceName: order.serviceName,
+        sheetsSyncedAt: order.sheetsSyncedAt,
+        updatedAt: order.updatedAt,
+      }
+    : null;
+
 export const runtime = "nodejs";
 
 interface MoMoIPNBody {
@@ -22,19 +50,41 @@ interface MoMoIPNBody {
 }
 
 export async function POST(req: Request) {
+  const handlerStartedAt = Date.now();
+  let requestOrderId: string | undefined;
   try {
-    // Log raw body for debugging
-    const rawBody = await req.text();
-    console.log("📥 MoMo IPN received - Raw body:", rawBody);
+    // Log raw body for debugging (use clone so we can still parse JSON)
+    try {
+      const rawBody = await req.clone().text();
+      console.log("📥 MoMo IPN received - Raw body:", rawBody);
+    } catch (rawError) {
+      warnIpnVerbose("Unable to read raw IPN body:", rawError);
+    }
+    try {
+      const headers = Object.fromEntries(req.headers.entries());
+      logIpnVerbose("Request metadata", {
+        method: req.method,
+        url: req.url,
+        headers,
+        contentLength: headers["content-length"],
+        userAgent: headers["user-agent"],
+      });
+    } catch (metadataError) {
+      warnIpnVerbose("Unable to log IPN request metadata:", metadataError);
+    }
     
     let body: MoMoIPNBody;
     try {
-      body = JSON.parse(rawBody);
+      body = (await req.json()) as MoMoIPNBody;
     } catch (parseError) {
       console.error("❌ Failed to parse IPN body:", parseError);
+      errorIpnVerbose("IPN JSON parse error details", parseError);
       return NextResponse.json(
-        { error: "Invalid JSON body", details: parseError instanceof Error ? parseError.message : "Unknown error" },
-        { status: 400 }
+        {
+          message: "IPN received",
+          resultCode: 0,
+        },
+        { status: 200 }
       );
     }
 
@@ -53,6 +103,8 @@ export async function POST(req: Request) {
       signature,
       responseTime,
     } = body;
+    requestOrderId = orderId;
+    logIpnVerbose("Parsed IPN body", body);
 
     console.log("📥 MoMo IPN parsed:", {
       partnerCode,
@@ -69,9 +121,17 @@ export async function POST(req: Request) {
         hasOrderId: !!orderId,
         hasSignature: !!signature,
       });
+      errorIpnVerbose("IPN missing fields detail", {
+        partnerCode,
+        orderId,
+        hasSignature: !!signature,
+      });
       return NextResponse.json(
-        { error: "Thiếu thông tin bắt buộc", details: { partnerCode: !!partnerCode, orderId: !!orderId, signature: !!signature } },
-        { status: 400 }
+        {
+          message: "IPN received",
+          resultCode: 0,
+        },
+        { status: 200 }
       );
     }
 
@@ -151,8 +211,11 @@ export async function POST(req: Request) {
         console.warn("⚠️ SKIPPING signature verification (test mode only!)");
       } else {
       return NextResponse.json(
-          { error: "Invalid signature", orderId },
-        { status: 400 }
+          {
+            message: "IPN received",
+            resultCode: 0,
+          },
+        { status: 200 }
       );
       }
     }
@@ -174,8 +237,10 @@ export async function POST(req: Request) {
       let existingOrder: OrderRecord | null = null;
       try {
         existingOrder = await getOrder(orderId);
+        logIpnVerbose("Existing order snapshot", summarizeOrder(existingOrder));
       } catch (fileError) {
         console.warn("⚠️ Could not read order from file system (expected on Vercel):", fileError);
+        warnIpnVerbose("getOrder failure details", fileError);
       }
       
       // Kiểm tra xem đã sync chưa TRƯỚC KHI update (tránh race condition)
@@ -213,6 +278,7 @@ export async function POST(req: Request) {
           });
         } catch (fileError) {
           console.warn("⚠️ Could not update order (expected on Vercel):", fileError);
+          warnIpnVerbose("upsertOrder failure (no formData branch)", fileError);
         }
         return NextResponse.json({
           message: "IPN received - waiting for client-side sync with formData",
@@ -234,6 +300,7 @@ export async function POST(req: Request) {
         await upsertOrder(orderId, updatedRecord);
       } catch (fileError) {
         console.warn("⚠️ Could not persist order locally (expected on Vercel):", fileError);
+        warnIpnVerbose("upsertOrder failure (main branch)", fileError);
       }
 
       console.log("Updated order record (IPN):", {
@@ -242,6 +309,7 @@ export async function POST(req: Request) {
         hasServiceName: !!updatedRecord.serviceName,
         hasFormData: !!updatedRecord.formData,
       });
+      logIpnVerbose("Updated order full payload", updatedRecord);
 
       // Double-check trước khi sync (tránh race condition với client-side sync)
       // Trên Vercel có thể không check được, nhưng vẫn thử
@@ -254,13 +322,16 @@ export async function POST(req: Request) {
             resultCode: 0,
           });
         }
+        logIpnVerbose("Double-check order snapshot", summarizeOrder(doubleCheckOrder));
       } catch (fileError) {
         console.warn("⚠️ Could not double-check order (expected on Vercel):", fileError);
+        warnIpnVerbose("Double-check failure details", fileError);
       }
 
       // Chỉ sync lên Google Sheets nếu có formData (quan trọng!)
       console.log("🔄 Syncing order to Google Sheets (IPN with formData):", orderId);
         const syncResult = await sendOrderToGoogleSheets(orderId, updatedRecord, amount, transId, message);
+        logIpnVerbose("Google Sheets sync result", syncResult);
         
       // Nếu sync thành công, đánh dấu đã sync ngay lập tức
         if (syncResult.success) {
@@ -271,10 +342,12 @@ export async function POST(req: Request) {
           console.log("✅ Order synced to Google Sheets successfully (IPN):", orderId);
         } catch (fileError) {
           console.warn("⚠️ Could not update sheetsSyncedAt (expected on Vercel):", fileError);
+          warnIpnVerbose("sheetsSyncedAt update failure", fileError);
           // Trên Vercel không thể lưu sheetsSyncedAt, nhưng đã sync lên Sheets rồi nên OK
         }
       } else {
         console.error("❌ Failed to sync order to Google Sheets (IPN):", orderId, syncResult.error);
+        errorIpnVerbose("Sync failure details", syncResult);
       }
 
       // Here you can add additional logic:
@@ -302,11 +375,17 @@ export async function POST(req: Request) {
     });
   } catch (error) {
     console.error("POST /api/payment/momo-ipn thất bại:", error);
+    errorIpnVerbose("Unhandled IPN error details", error);
     // Still return success to prevent MoMo from retrying
     return NextResponse.json(
       { message: "IPN received", resultCode: 0 },
       { status: 200 }
     );
+  } finally {
+    logIpnVerbose("IPN handler completed", {
+      orderId: requestOrderId,
+      durationMs: Date.now() - handlerStartedAt,
+    });
   }
 }
 
