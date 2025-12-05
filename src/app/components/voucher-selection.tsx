@@ -105,27 +105,27 @@ export default function VoucherSelection({
       ],
       features: ["tiền mặt"],
     },
-    {
-      id: "cash-500k",
-      name: "Cash Voucher 500.000đ",
-      price: 500000,
-      type: "cash",
-      description: "Voucher tiền mặt trị giá 500.000 VNĐ",
-      services: [
-        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-        "Áp dụng cho tất cả sản phẩm",
-        "Có thể kết hợp với các chương trình khuyến mãi khác",
-        "Ưu tiên đặt lịch dịch vụ cao cấp",
-      ],
-      benefits: [
-        "Linh hoạt trong việc sử dụng",
-        "Không giới hạn thời gian sử dụng",
-        "Có thể tặng cho người thân",
-        "Áp dụng tại tất cả chi nhánh",
-        "Được tư vấn chăm sóc da miễn phí",
-      ],
-      features: ["tiền mặt"],
-    },
+    // {
+    //   id: "cash-500k",
+    //   name: "Cash Voucher 500.000đ",
+    //   price: 500000,
+    //   type: "cash",
+    //   description: "Voucher tiền mặt trị giá 500.000 VNĐ",
+    //   services: [
+    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+    //     "Áp dụng cho tất cả sản phẩm",
+    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
+    //     "Ưu tiên đặt lịch dịch vụ cao cấp",
+    //   ],
+    //   benefits: [
+    //     "Linh hoạt trong việc sử dụng",
+    //     "Không giới hạn thời gian sử dụng",
+    //     "Có thể tặng cho người thân",
+    //     "Áp dụng tại tất cả chi nhánh",
+    //     "Được tư vấn chăm sóc da miễn phí",
+    //   ],
+    //   features: ["tiền mặt"],
+    // },
   ];
 
   const getVoucherMedia = (voucher: VoucherOption) => {

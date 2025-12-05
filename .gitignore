@@ -7,3 +7,4 @@ dist/
 *.log
 7yyt
 data/
+.vercel
