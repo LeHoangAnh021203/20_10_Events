@@ -180,21 +180,23 @@ export default function VoucherSelection({
     <>
       {/* Voucher Cards Grid */}
       <div
-        className={`mt-8 flex items-start justify-center gap-6 ${
-          isMobile
-            ? "flex-col px-4"
-            : "flex-row flex-wrap lg:flex-nowrap px-4 sm:px-0 max-w-6xl mx-auto"
-        }`}
-      >
+  className={`
+    mt-8 grid gap-6 px-4 max-w-6xl mx-auto
+    ${
+      isMobile
+        ? "grid-cols-1"
+        : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
+    }
+  `}
+>
         {voucherOptions.map((voucher) => (
           <motion.div
             key={voucher.id}
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
-            className={`flex justify-center ${
-              isMobile ? "w-full" : "w-full sm:w-1/2 lg:w-1/3"
-            }`}
+            className="flex justify-center w-full"
+
           >
             {(() => {
               const isSelected = selectedVoucherId === voucher.id;
