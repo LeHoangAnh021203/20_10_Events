@@ -163,7 +163,7 @@ export async function POST(req: Request) {
     const responseTimeStr = String(responseTime ?? "");
     
     // Build signature string - MoMo IPN signature uses alphabetical order
-    // Format: accessKey=...&amount=...&extraData=...&message=...&orderId=...&orderInfo=...&orderType=...&partnerCode=...&payType=...&requestId=...&resultCode=...&transId=...&responseTime=...
+    // Format: accessKey=...&amount=...&extraData=...&message=...&orderId=...&orderInfo=...&orderType=...&partnerCode=...&payType=...&requestId=...&responseTime=...&resultCode=...&transId=...
     const rawSignature =
       `accessKey=${accessKey}` +
       `&amount=${amountStr}` +
@@ -175,9 +175,9 @@ export async function POST(req: Request) {
       `&partnerCode=${partnerCode}` +
       `&payType=${payType || ""}` +
       `&requestId=${requestId || ""}` +
+      `&responseTime=${responseTimeStr}` +
       `&resultCode=${resultCodeStr}` +
-      `&transId=${transIdStr}` +
-      `&responseTime=${responseTimeStr}`;
+      `&transId=${transIdStr}`;
 
     console.log("🔐 Signature calculation:", {
       orderId,
@@ -388,4 +388,3 @@ export async function POST(req: Request) {
     });
   }
 }
-
