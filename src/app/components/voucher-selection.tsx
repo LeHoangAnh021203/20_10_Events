@@ -63,6 +63,9 @@ export default function VoucherSelection({
     buttonFg: "#ffffff",
   };
 
+  const cardSizeClass = isMobile ? "min-h-[520px]" : "aspect-[4/5]";
+  const mediaHeightClass = isMobile ? "h-48" : "h-1/2";
+
   const voucherOptions: VoucherOption[] = [
     {
       id: "service-basic",
@@ -86,46 +89,46 @@ export default function VoucherSelection({
       features: ["dịch vụ"],
     },
 
-    // {
-    //   id: "cash-200k",
-    //   name: "Cash Voucher 200.000đ",
-    //   price: 200000,
-    //   type: "cash",
-    //   description: "Voucher tiền mặt trị giá 200.000 VNĐ",
-    //   services: [
-    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-    //     "Áp dụng cho tất cả sản phẩm",
-    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
-    //   ],
-    //   benefits: [
-    //     "Linh hoạt trong việc sử dụng",
-    //     "Không giới hạn thời gian sử dụng",
-    //     "Có thể tặng cho người thân",
-    //     "Áp dụng tại tất cả chi nhánh",
-    //   ],
-    //   features: ["tiền mặt"],
-    // },
-    // {
-    //   id: "cash-500k",
-    //   name: "Cash Voucher 500.000đ",
-    //   price: 500000,
-    //   type: "cash",
-    //   description: "Voucher tiền mặt trị giá 500.000 VNĐ",
-    //   services: [
-    //     "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
-    //     "Áp dụng cho tất cả sản phẩm",
-    //     "Có thể kết hợp với các chương trình khuyến mãi khác",
-    //     "Ưu tiên đặt lịch dịch vụ cao cấp",
-    //   ],
-    //   benefits: [
-    //     "Linh hoạt trong việc sử dụng",
-    //     "Không giới hạn thời gian sử dụng",
-    //     "Có thể tặng cho người thân",
-    //     "Áp dụng tại tất cả chi nhánh",
-    //     "Được tư vấn chăm sóc da miễn phí",
-    //   ],
-    //   features: ["tiền mặt"],
-    // },
+    {
+      id: "cash-200k",
+      name: "Cash Voucher 200.000đ",
+      price: 200000,
+      type: "cash",
+      description: "Voucher tiền mặt trị giá 200.000 VNĐ",
+      services: [
+        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+        "Áp dụng cho tất cả sản phẩm",
+        "Có thể kết hợp với các chương trình khuyến mãi khác",
+      ],
+      benefits: [
+        "Linh hoạt trong việc sử dụng",
+        "Không giới hạn thời gian sử dụng",
+        "Có thể tặng cho người thân",
+        "Áp dụng tại tất cả chi nhánh",
+      ],
+      features: ["tiền mặt"],
+    },
+    {
+      id: "cash-500k",
+      name: "Cash Voucher 500.000đ",
+      price: 500000,
+      type: "cash",
+      description: "Voucher tiền mặt trị giá 500.000 VNĐ",
+      services: [
+        "Sử dụng cho mọi dịch vụ tại Face Wash Fox",
+        "Áp dụng cho tất cả sản phẩm",
+        "Có thể kết hợp với các chương trình khuyến mãi khác",
+        "Ưu tiên đặt lịch dịch vụ cao cấp",
+      ],
+      benefits: [
+        "Linh hoạt trong việc sử dụng",
+        "Không giới hạn thời gian sử dụng",
+        "Có thể tặng cho người thân",
+        "Áp dụng tại tất cả chi nhánh",
+        "Được tư vấn chăm sóc da miễn phí",
+      ],
+      features: ["tiền mặt"],
+    },
   ];
 
   const getVoucherMedia = (voucher: VoucherOption) => {
@@ -204,19 +207,19 @@ export default function VoucherSelection({
               const media = getVoucherMedia(voucher);
               return (
                 <div
-                  className={`relative w-full max-w-sm sm:max-w-md ${
-                    isMobile ? "aspect-[3/4]" : "aspect-[4/5]"
-                  } overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/20 shadow-[0_16px_40px_rgba(0,0,0,0.25)] sm:shadow-[0_25px_70px_rgba(0,0,0,0.25)] transition-all duration-500 hover:shadow-orange-300 hover:scale-[1.01] cursor-pointer ${
+                  className={`relative flex w-full max-w-sm sm:max-w-md ${cardSizeClass} overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/20 shadow-[0_16px_40px_rgba(0,0,0,0.25)] sm:shadow-[0_25px_70px_rgba(0,0,0,0.25)] transition-all duration-500 hover:shadow-orange-300 ${
                     isSelected ? "ring-4 ring-[#F57C3A]" : ""
-                  }`}
+                  } hover:scale-[1.01] cursor-pointer`}
                   style={{ backgroundImage: theme.background }}
                   onClick={() => handleCardClick(voucher)}
                   onMouseEnter={() => setHoveredCardId(voucher.id)}
                   onMouseLeave={() => setHoveredCardId(null)}
                 >
-                  <div className="flex h-full flex-col w-90">
+                  <div className="flex h-full flex-col w-full">
                     {/* Media area */}
-                    <div className="relative h-1/2 w-full overflow-hidden rounded-[24px] bg-black">
+                    <div
+                      className={`relative w-full ${mediaHeightClass} overflow-hidden rounded-[24px] bg-black`}
+                    >
                       <Image
                         src={media.image}
                         alt={voucher.name}
@@ -281,31 +284,31 @@ export default function VoucherSelection({
                     </div>
 
                     {/* Content area */}
-                    <div className="flex-1 flex flex-col justify-end gap-4 p-6">
+                    <div className="flex-1 flex flex-col justify-between gap-4 p-5 sm:p-6">
                       <div className="space-y-1">
-                        <h3 className="text-2xl font-semibold text-white tracking-tight drop-shadow">
+                        <h3 className="text-xl sm:text-2xl font-semibold text-white tracking-tight drop-shadow leading-snug">
                           {voucher.name}
                         </h3>
                       </div>
 
-                      <div className="flex items-center justify-between gap-4">
+                      <div className="flex items-start sm:items-center justify-between gap-4 flex-wrap">
                         <div className="flex items-baseline gap-2">
-                          <span className="text-2xl font-bold text-white">
+                          <span className="text-xl sm:text-2xl font-bold text-white">
                             {formatPrice(voucher.price)}
                           </span>
                           {voucher.price > 0 && (
-                            <span className="text-xs text-white/50 line-through">
+                            <span className="text-xs sm:text-sm text-white/50 line-through">
                               {formatPrice(voucher.price + 50000)}
                             </span>
                           )}
                         </div>
-                        <div className="flex gap-2 flex-wrap justify-end max-w-[45%]">
+                        <div className="flex gap-2 flex-wrap justify-start sm:justify-end max-w-full sm:max-w-[45%]">
                           {(voucher.features ?? voucher.services)
                             .slice(0, 2)
                             .map((feature) => (
                               <span
                                 key={feature}
-                                className="px-2 py-1 text-xs font-medium text-white rounded-md"
+                                className="px-2 py-1 text-[11px] sm:text-xs font-medium text-white rounded-md"
                                 style={{
                                   backgroundColor: "rgba(0,0,0,0.12)",
                                   border: `1px solid ${theme.chipBorder}`,
@@ -319,7 +322,7 @@ export default function VoucherSelection({
 
                       <div className="flex gap-3 flex-col sm:flex-row">
                         <button
-                          className="flex-1 font-semibold rounded-full py-2 px-4 transition-all shadow-lg shadow-black/20"
+                          className="flex-1 font-semibold rounded-full py-3 px-4 transition-all shadow-lg shadow-black/20 text-base sm:text-lg"
                           style={{
                             backgroundColor: theme.buttonBg,
                             color: theme.buttonFg,
@@ -332,7 +335,7 @@ export default function VoucherSelection({
                           {isSelected ? "Đã chọn" : "Chọn "}
                         </button>
                         <button
-                          className="flex-1 border border-white/40 hover:bg-white/15 bg-transparent rounded-full py-2 px-4 text-white transition-colors"
+                          className="flex-1 border border-white/40 hover:bg-white/15 bg-transparent rounded-full py-3 px-4 text-white transition-colors text-base sm:text-lg"
                           onClick={(event: MouseEvent<HTMLButtonElement>) => {
                             event.stopPropagation();
                             handleViewDetail(voucher);
