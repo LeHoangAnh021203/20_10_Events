@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useRef, useEffect, type MouseEvent } from "react";
-import { X, Check, Gift, Sparkles } from "lucide-react";
+import { X } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 
@@ -179,19 +179,28 @@ export default function VoucherSelection({
     setDetailVoucher(null);
   };
 
+  const getTermsImage = (voucher: VoucherOption) => {
+    switch (voucher.id) {
+      case "service-basic":
+        return "/Screenshot 2025-12-02 at 10.29.03.png";
+      case "cash-200k":
+        return "/Điều khoản áp dụng-06.png";
+      case "cash-500k":
+        return "/Điều khoản áp dụng-05.png";
+      default:
+        return "/Screenshot 2025-12-02 at 10.29.03.png";
+    }
+  };
+
   return (
     <>
       {/* Voucher Cards Grid */}
       <div
-  className={`
+        className={`
     mt-8 grid gap-6 px-4 max-w-6xl mx-auto
-    ${
-      isMobile
-        ? "grid-cols-1"
-        : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"
-    }
+    ${isMobile ? "grid-cols-1" : "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3"}
   `}
->
+      >
         {voucherOptions.map((voucher) => (
           <motion.div
             key={voucher.id}
@@ -199,7 +208,6 @@ export default function VoucherSelection({
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.3 }}
             className="flex justify-center w-full"
-
           >
             {(() => {
               const isSelected = selectedVoucherId === voucher.id;
@@ -371,127 +379,25 @@ export default function VoucherSelection({
               className="fixed inset-0 z-50 flex items-center justify-center p-4"
               onClick={(e) => e.stopPropagation()}
             >
-              {detailVoucher.price === 0 ? (
-                // Free voucher: Show image
-                <div className="relative max-w-4xl w-full max-h-[95vh] flex items-center justify-center">
-                  <button
-                    onClick={handleCloseDetail}
-                    className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-white rounded-full transition-colors z-10 shadow-lg"
-                  >
-                    <X className="w-5 h-5 text-gray-800" />
-                  </button>
-                  <div className="relative w-full h-full">
-                    <Image
-                      src="/Screenshot 2025-12-02 at 10.29.03.png"
-                      alt="Điều khoản áp dụng - Face Wash Fox"
-                      width={1200}
-                      height={1600}
-                      className="w-full h-auto rounded-lg shadow-2xl"
-                      priority
-                    />
-                  </div>
-                </div>
-              ) : (
-                // Paid vouchers: Show detailed content
-                <div
-                  className={`bg-white rounded-lg shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto relative ${
-                    isMobile ? "p-4" : "p-8"
-                  }`}
+              <div className="relative max-w-4xl w-full max-h-[95vh] flex items-center justify-center">
+                {/* Close Button */}
+                <button
+                  onClick={handleCloseDetail}
+                  className="absolute top-4 right-4 p-2 bg-white/90 hover:bg-white rounded-full transition-colors z-10 shadow-lg"
                 >
-                  {/* Close Button */}
-                  <button
-                    onClick={handleCloseDetail}
-                    className="absolute top-4 right-4 p-2 hover:bg-gray-100 rounded-full transition-colors z-10"
-                  >
-                    <X className="w-5 h-5 text-gray-600" />
-                  </button>
-
-                  {/* Header */}
-                  <div className="text-center mb-6">
-                    <div className="flex items-center justify-center mb-4">
-                      {detailVoucher.type === "cash" ? (
-                        <Gift className="w-16 h-16 text-orange-500" />
-                      ) : (
-                        <Sparkles className="w-16 h-16 text-orange-500" />
-                      )}
-                    </div>
-                    <h2
-                      className={`${
-                        isMobile ? "text-2xl" : "text-3xl"
-                      } font-bold text-gray-800 mb-2`}
-                    >
-                      {detailVoucher.name}
-                    </h2>
-                    <p className="text-gray-600 mb-4">
-                      {detailVoucher.description}
-                    </p>
-                    <div className="text-center">
-                      <span
-                        className={`${
-                          isMobile ? "text-3xl" : "text-4xl"
-                        } font-bold text-[#eb3526]`}
-                      >
-                        {formatPrice(detailVoucher.price)}
-                      </span>
-                    </div>
-                  </div>
-
-                  {/* Services Included */}
-                  <div className="mb-6">
-                    <h3
-                      className={`${
-                        isMobile ? "text-lg" : "text-xl"
-                      } font-semibold text-gray-800 mb-4 flex items-center gap-2`}
-                    >
-                      <Check className="w-5 h-5 text-green-500" />
-                      Dịch vụ đi kèm
-                    </h3>
-                    <ul className="space-y-2">
-                      {detailVoucher.services.map((service, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-2 text-gray-700"
-                        >
-                          <Check className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                          <span>{service}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Benefits */}
-                  <div className="mb-6">
-                    <h3
-                      className={`${
-                        isMobile ? "text-lg" : "text-xl"
-                      } font-semibold text-gray-800 mb-4 flex items-center gap-2`}
-                    >
-                      <Gift className="w-5 h-5 text-orange-500" />
-                      Những gì bạn sẽ nhận được
-                    </h3>
-                    <ul className="space-y-2">
-                      {detailVoucher.benefits.map((benefit, index) => (
-                        <li
-                          key={index}
-                          className="flex items-start gap-2 text-gray-700"
-                        >
-                          <div className="w-2 h-2 rounded-full bg-orange-500 flex-shrink-0 mt-2" />
-                          <span>{benefit}</span>
-                        </li>
-                      ))}
-                    </ul>
-                  </div>
-
-                  {/* Payment Button */}
-                  <div className="">
-                    <div className="text-center ">
-                      <p className="text-sm text-gray-600 mb-2">
-                        Thanh toán để nhận voucher
-                      </p>
-                    </div>
-                  </div>
+                  <X className="w-5 h-5 text-gray-800" />
+                </button>
+                <div className="relative w-full h-full">
+                  <Image
+                    src={getTermsImage(detailVoucher)}
+                    alt="Điều khoản áp dụng - Face Wash Fox"
+                    width={1200}
+                    height={1600}
+                    className="w-full h-auto rounded-lg shadow-2xl"
+                    priority
+                  />
                 </div>
-              )}
+              </div>
             </motion.div>
           </>
         )}
