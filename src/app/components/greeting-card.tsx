@@ -46,6 +46,7 @@ export default function GreetingCard({
   const router = useRouter();
   const cardRef = useRef<HTMLDivElement>(null);
   const [isMobile, setIsMobile] = useState(false);
+  const [isExtraSmall, setIsExtraSmall] = useState(false);
   const [paidServiceName, setPaidServiceName] = useState<string | null>(
     serviceName ?? null
   );
@@ -98,10 +99,16 @@ export default function GreetingCard({
       .trim();
 
   useEffect(() => {
-    const update = () => setIsMobile(window.innerWidth < 640);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
+    const updateResponsiveFlags = () => {
+      if (typeof window === "undefined") return;
+      const width = window.innerWidth;
+      setIsMobile(width < 640);
+      setIsExtraSmall(width < 360);
+    };
+
+    updateResponsiveFlags();
+    window.addEventListener("resize", updateResponsiveFlags);
+    return () => window.removeEventListener("resize", updateResponsiveFlags);
   }, []);
 
   // Fetch paid service information
@@ -360,9 +367,9 @@ export default function GreetingCard({
   }, [saveCountdown]);
 
   // Responsive character-per-line settings
-  const maxCharsMessage = isMobile ? 37 : 70;
-  const maxCharsBody = isMobile ? 33 : 65;
-  const maxCharsSenderName = isMobile ? 14 : 24;
+  const maxCharsMessage = isExtraSmall ? 20 : isMobile ? 32 : 70;
+  const maxCharsBody = isExtraSmall ? 20 : isMobile ? 32 : 65;
+  const maxCharsSenderName = isExtraSmall ? 15 : isMobile ?18 : 24;
 
   // Function to wrap text into lines based on character limit
   const wrapTextIntoLines = (text: string, maxCharsPerLine: number = 50) => {
