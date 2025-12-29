@@ -985,14 +985,33 @@ function LandingPageContent() {
                 href="http://online.gov.vn/Home/WebDetails/138657?AspxAutoDetectCookieSupport=1"
                 target="_blank"
                 rel="nofollow noopener"
-                className="absolute bottom-4 left-30 "
+                className={`absolute ${
+                  isMobile ? "bottom-2 right-2" : "bottom-4 right-3"
+                }`}
               >
-                <Image
-                  src="https://dangkywebvoibocongthuong.com/wp-content/uploads/2021/11/logo-da-thong-bao-bo-cong-thuong.png"
-                  alt="Đã thông báo Bộ Công Thương"
-                  width={150}
-                  height={60}
-                />
+                {isMobile ? (
+                  <div className="relative h-7 w-20">
+                    <Image
+                      src="https://dangkywebvoibocongthuong.com/wp-content/uploads/2021/11/logo-da-thong-bao-bo-cong-thuong.png"
+                      alt="Đã thông báo Bộ Công Thương"
+                      fill
+                      sizes="80px"
+                      className="object-contain"
+                    />
+                  </div>
+                ) : (
+                  <div className="relative h-18 w-46">
+                    <Image
+                      src="https://dangkywebvoibocongthuong.com/wp-content/uploads/2021/11/logo-da-thong-bao-bo-cong-thuong.png"
+                      alt="Đã thông báo Bộ Công Thương"
+                      
+                      sizes="144px"
+                      className="object-contain"
+                      width={200}
+                      height={50}
+                    />
+                  </div>
+                )}
               </a>
             </div>
           </footer>
