@@ -82,33 +82,41 @@ function LandingPageContent() {
     if (typeof window === "undefined") return;
 
     const orderId = searchParams.get("orderId");
-    
+
     // Nếu có orderId, load từ API (trường hợp từ email link)
     const loadFromOrderId = async () => {
       if (orderId) {
         try {
           console.log("🔄 Loading formData from orderId:", orderId);
-          const response = await fetch(`/api/payment/get-order?orderId=${orderId}`);
+          const response = await fetch(
+            `/api/payment/get-order?orderId=${orderId}`
+          );
           if (response.ok) {
             const orderData = await response.json();
             if (orderData.formData) {
               setSubmittedData(orderData.formData);
               setShowGreetingCard(true);
-              
+
               if (orderData.serviceName) {
                 setSelectedServiceName(orderData.serviceName);
               }
-              
+
               // Lưu vào storage để backup
               try {
-                sessionStorage.setItem("formData", JSON.stringify(orderData.formData));
+                sessionStorage.setItem(
+                  "formData",
+                  JSON.stringify(orderData.formData)
+                );
                 if (orderData.serviceName) {
-                  sessionStorage.setItem("paidServiceName", orderData.serviceName);
+                  sessionStorage.setItem(
+                    "paidServiceName",
+                    orderData.serviceName
+                  );
                 }
               } catch (storageError) {
                 console.warn("Could not save to storage:", storageError);
               }
-              
+
               console.log("✅ Loaded formData from API for greeting card");
               return true;
             }
@@ -126,21 +134,21 @@ function LandingPageContent() {
     loadFromOrderId().then((loaded) => {
       // Nếu không load được từ orderId, thử load từ storage
       if (!loaded) {
-    const stored = sessionStorage.getItem("formData");
-    if (stored) {
-      try {
-        const data: FormData = JSON.parse(stored);
-        setSubmittedData(data);
-        setShowGreetingCard(true);
+        const stored = sessionStorage.getItem("formData");
+        if (stored) {
+          try {
+            const data: FormData = JSON.parse(stored);
+            setSubmittedData(data);
+            setShowGreetingCard(true);
 
-        const storedService = sessionStorage.getItem("paidServiceName");
-        if (storedService) {
-          setSelectedServiceName(storedService);
+            const storedService = sessionStorage.getItem("paidServiceName");
+            if (storedService) {
+              setSelectedServiceName(storedService);
+            }
+          } catch (error) {
+            console.error("Không thể khôi phục dữ liệu thiệp:", error);
+          }
         }
-      } catch (error) {
-        console.error("Không thể khôi phục dữ liệu thiệp:", error);
-      }
-    }
       }
     });
   }, [searchParams, showGreetingCard]);
@@ -152,7 +160,7 @@ function LandingPageContent() {
   const handleSelectService = () => {
     if (isSubmitting) return;
     setIsSubmitting(true);
-    
+
     // Validate required fields before navigating
     const sanitizedForm: FormData = {
       senderName: formData.senderName.trim(),
@@ -213,7 +221,10 @@ function LandingPageContent() {
 
     // Email validation (optional - only validate if provided)
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (sanitizedForm.senderEmail && !emailRegex.test(sanitizedForm.senderEmail)) {
+    if (
+      sanitizedForm.senderEmail &&
+      !emailRegex.test(sanitizedForm.senderEmail)
+    ) {
       setNotification({
         title: t.invalidEmail,
         description: t.invalidEmailDesc,
@@ -223,7 +234,10 @@ function LandingPageContent() {
       return;
     }
 
-    if (sanitizedForm.receiverEmail && !emailRegex.test(sanitizedForm.receiverEmail)) {
+    if (
+      sanitizedForm.receiverEmail &&
+      !emailRegex.test(sanitizedForm.receiverEmail)
+    ) {
       setNotification({
         title: t.invalidEmail,
         description: t.invalidEmailDesc,
@@ -621,7 +635,7 @@ function LandingPageContent() {
               height={600}
               priority
               className="w-full h-auto object-contain rounded-t-lg"
-              style={{ objectPosition: 'top center' }}
+              style={{ objectPosition: "top center" }}
             />
           </header>
 
@@ -894,19 +908,19 @@ function LandingPageContent() {
                     </>
                   ) : (
                     <>
-                  <span>
-                    {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
-                  </span>
-                  <Image
-                    src="/CÁO5@4x-05.png"
-                    alt="Foxie icon"
-                    width={20}
-                    height={20}
-                    className={`${
-                      isMobile ? "h-8 w-8" : "h-12 w-12"
-                    } drop-shadow-xl animate-pulse`}
-                    aria-hidden
-                  />
+                      <span>
+                        {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
+                      </span>
+                      <Image
+                        src="/CÁO5@4x-05.png"
+                        alt="Foxie icon"
+                        width={20}
+                        height={20}
+                        className={`${
+                          isMobile ? "h-8 w-8" : "h-12 w-12"
+                        } drop-shadow-xl animate-pulse`}
+                        aria-hidden
+                      />
                     </>
                   )}
                 </button>
@@ -959,13 +973,28 @@ function LandingPageContent() {
                 ))}
               </div>
             </div>
-            <Image
-              src="/Send a wish A2-03.png"
-              alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
-              width={1920}
-              height={400}
-              className="w-full h-auto object-cover"
-            />
+            <div className="relative w-full">
+              <Image
+                src="/Send a wish A2-03.png"
+                alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
+                width={1920}
+                height={400}
+                className="w-full h-auto object-cover"
+              />
+              <a
+                href="http://online.gov.vn/Home/WebDetails/138657?AspxAutoDetectCookieSupport=1"
+                target="_blank"
+                rel="nofollow noopener"
+                className="absolute bottom-4 left-30 "
+              >
+                <Image
+                  src="https://dangkywebvoibocongthuong.com/wp-content/uploads/2021/11/logo-da-thong-bao-bo-cong-thuong.png"
+                  alt="Đã thông báo Bộ Công Thương"
+                  width={150}
+                  height={60}
+                />
+              </a>
+            </div>
           </footer>
         </div>
       </main>
