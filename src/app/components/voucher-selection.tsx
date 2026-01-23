@@ -92,7 +92,7 @@ export default function VoucherSelection({
     // {
     //   id: "cash-200k",
     //   name: "Cash Voucher 200.000đ",
-    //   price: 200000,
+    //   price: 2000,
     //   type: "cash",
     //   description: "Voucher tiền mặt trị giá 200.000 VNĐ",
     //   services: [
