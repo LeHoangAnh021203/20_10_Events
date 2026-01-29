@@ -1,11 +1,21 @@
 import { NextResponse } from "next/server";
 import crypto from "crypto";
+import { OrderFormData } from "@/lib/order-store";
+import { serializeFormDataForMoMo } from "@/lib/momo-extra-data";
 
 export const runtime = "nodejs";
 
+interface CreatePaymentBody {
+  orderId: string;
+  amount: number;
+  serviceName?: string;
+  formData?: OrderFormData;
+}
+
 export async function POST(req: Request) {
   try {
-    const { orderId, amount, serviceName } = await req.json();
+    const { orderId, amount, serviceName, formData } =
+      (await req.json()) as CreatePaymentBody;
 
     // Validate input
     if (!orderId || !amount) {
@@ -42,10 +52,19 @@ export async function POST(req: Request) {
     const ipnUrl = `${baseUrl}/api/payment/momo-ipn`;
     const requestId = orderId;
     // Tạo orderInfo với tên dịch vụ nếu có
-    const orderInfo = serviceName 
-      ? `Thanh toan don hang ${serviceName}` 
+    const orderInfo = serviceName
+      ? `Thanh toan don hang ${serviceName}`
       : `Thanh toan don hang ${orderId}`;
-    const extraData = "";
+
+    if (!formData) {
+      console.error("Thiếu formData khi tạo payment:", orderId);
+      return NextResponse.json(
+        { error: "Thiếu thông tin khách hàng" },
+        { status: 400 }
+      );
+    }
+
+    const extraData = serializeFormDataForMoMo(formData, serviceName || null);
 
     // Create signature
     const rawSignature =
@@ -113,4 +132,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

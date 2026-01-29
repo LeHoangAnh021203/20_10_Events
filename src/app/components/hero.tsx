@@ -373,6 +373,10 @@ export default function Hero() {
         paymentMethod === "momo-wallet" &&
         isPaymentReady
       ) {
+        if (!formData) {
+          console.warn("Form data chưa sẵn sàng khi tạo payment MoMo");
+          return;
+        }
         try {
           const orderId = `ORDER_${Date.now()}_${Math.random()
             .toString(36)
@@ -385,6 +389,7 @@ export default function Hero() {
               orderId,
               amount: selectedVoucher.price,
               serviceName: selectedVoucher.name,
+              formData,
             }),
           });
 

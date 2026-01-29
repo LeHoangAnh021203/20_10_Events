@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import crypto from "crypto";
 import { upsertOrder, getOrder, OrderRecord } from "@/lib/order-store";
 import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
+import { deserializeMoMoExtraData } from "@/lib/momo-extra-data";
 
 const ipnVerboseLogging = process.env.MOMO_IPN_VERBOSE_LOG !== "false";
 const logIpnVerbose = (...args: unknown[]) => {
@@ -105,6 +106,10 @@ export async function POST(req: Request) {
     } = body;
     requestOrderId = orderId;
     logIpnVerbose("Parsed IPN body", body);
+
+    const parsedExtraData = deserializeMoMoExtraData(extraData);
+    const fallbackFormData = parsedExtraData?.formData ?? null;
+    const fallbackServiceName = parsedExtraData?.serviceName ?? undefined;
 
     console.log("📥 MoMo IPN parsed:", {
       partnerCode,
@@ -267,7 +272,11 @@ export async function POST(req: Request) {
       
       // QUAN TRỌNG: Trên Vercel, IPN có thể được gọi trước khi client-side sync
       // Nếu không có formData, KHÔNG sync (để client-side sync làm việc đó với đầy đủ thông tin)
-      if (!existingOrder?.formData) {
+      const mergedFormData = existingOrder?.formData ?? fallbackFormData ?? null;
+      const mergedServiceName =
+        existingOrder?.serviceName ?? fallbackServiceName ?? undefined;
+
+      if (!mergedFormData) {
         console.log("⚠️ IPN: No formData found, skipping sync. Client-side sync will handle it:", orderId);
         // Vẫn update status để đánh dấu đã thanh toán
         try {
@@ -275,6 +284,8 @@ export async function POST(req: Request) {
             status: "PAID",
             amount,
             transId,
+            formData: mergedFormData,
+            serviceName: mergedServiceName,
           });
         } catch (fileError) {
           console.warn("⚠️ Could not update order (expected on Vercel):", fileError);
@@ -291,8 +302,8 @@ export async function POST(req: Request) {
         amount,
         transId,
         // Giữ lại serviceName và formData từ order cũ
-        serviceName: existingOrder?.serviceName,
-        formData: existingOrder?.formData,
+        serviceName: mergedServiceName,
+        formData: mergedFormData,
         updatedAt: new Date().toISOString(),
       };
 

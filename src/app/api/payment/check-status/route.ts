@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { readOrders, upsertOrder, getOrder, OrderRecord } from "@/lib/order-store";
 import { sendOrderToGoogleSheets } from "@/lib/google-sheets";
+import { deserializeMoMoExtraData } from "@/lib/momo-extra-data";
 import crypto from "crypto";
 
 export const runtime = "nodejs";
@@ -117,6 +118,9 @@ export async function GET(req: Request) {
         transId: momoData.transId,
         amount: momoData.amount,
       });
+      const parsedExtraData = deserializeMoMoExtraData(momoData.extraData);
+      const fallbackFormData = parsedExtraData?.formData ?? null;
+      const fallbackServiceName = parsedExtraData?.serviceName ?? undefined;
       // Map MoMo resultCode to our status
       let status: "PENDING" | "PAID" | "FAILED" = "PENDING";
       if (momoData.resultCode === 0) {
@@ -135,17 +139,17 @@ export async function GET(req: Request) {
         }
         
         try {
-          const updatedRecord = await upsertOrder(orderId, {
-            status,
-            transId: momoData.transId?.toString(),
-            amount: momoData.amount,
-            // Giữ lại serviceName và formData từ order cũ
-            serviceName: existingOrder?.serviceName,
-            formData: existingOrder?.formData,
-            updatedAt: momoData.responseTime
-              ? new Date(momoData.responseTime).toISOString()
-              : new Date().toISOString(),
-          });
+        const updatedRecord = await upsertOrder(orderId, {
+          status,
+          transId: momoData.transId?.toString(),
+          amount: momoData.amount,
+          // Giữ lại serviceName và formData từ order cũ
+          serviceName: existingOrder?.serviceName ?? fallbackServiceName,
+          formData: existingOrder?.formData ?? fallbackFormData,
+          updatedAt: momoData.responseTime
+            ? new Date(momoData.responseTime).toISOString()
+            : new Date().toISOString(),
+        });
 
           // Nếu thanh toán thành công, sync lên Google Sheets (chỉ nếu chưa sync và có formData)
           if (status === "PAID" && !updatedRecord.sheetsSyncedAt) {
@@ -207,14 +211,16 @@ export async function GET(req: Request) {
           console.warn("⚠️ Could not save to local file system (expected on Vercel):", fileError);
           
           // Vẫn sync lên Google Sheets nếu thanh toán thành công VÀ có formData
-          if (status === "PAID" && existingOrder?.formData) {
+          const fallbackForm = existingOrder?.formData ?? fallbackFormData;
+          const fallbackName = existingOrder?.serviceName ?? fallbackServiceName;
+          if (status === "PAID" && fallbackForm) {
             try {
               const recordForSheets: OrderRecord = {
                 status,
                 transId: momoData.transId?.toString(),
                 amount: momoData.amount,
-                serviceName: existingOrder?.serviceName,
-                formData: existingOrder?.formData,
+                serviceName: fallbackName,
+                formData: fallbackForm,
                 updatedAt: momoData.responseTime
                   ? new Date(momoData.responseTime).toISOString()
                   : new Date().toISOString(),
@@ -236,7 +242,7 @@ export async function GET(req: Request) {
             } catch (sheetsError) {
               console.error("❌ Failed to sync to Google Sheets:", sheetsError);
             }
-          } else if (status === "PAID" && !existingOrder?.formData) {
+          } else if (status === "PAID" && !fallbackForm) {
             console.log("⚠️ check-status: No formData available, skipping sync. Client-side sync will handle it:", orderId);
           }
         }
@@ -309,4 +315,3 @@ export async function GET(req: Request) {
     );
   }
 }
-
