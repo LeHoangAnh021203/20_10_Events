@@ -31,6 +31,7 @@ async function sendOrderToGoogleSheets(
       serviceName: record?.serviceName || "",
       senderName: record?.formData?.senderName || "",
       senderPhone: record?.formData?.senderPhone || "",
+      deviceId: record?.formData?.deviceId || "",
       senderEmail: record?.formData?.senderEmail || "",
       receiverName: record?.formData?.receiverName || "",
       receiverPhone: record?.formData?.receiverPhone || "",
@@ -141,4 +142,3 @@ export async function POST(req: Request) {
     );
   }
 }
-

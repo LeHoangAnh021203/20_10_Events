@@ -182,13 +182,13 @@ export const translations: Record<Language, Translations> = {
 
     // Terms page
     termsTitle: "Điều khoản sử dụng",
-    termsSubtitle: "Foxie Club - Birthday Special",
+    termsSubtitle: "Foxie Club - Queen Day",
     termsBackButton: "Quay lại",
     termsContent: [
       "Mỗi khách hàng được tham gia gửi/nhận quà tặng DVCT tối đa 3 lần trong suốt thời gian diễn ra CTKM;",
-      "DVCT sẽ được áp dụng từ sau 1 ngày làm việc kể từ thời điểm phát sinh lời nhắn gửi và có HSD đến 12/1/2026",
+      "DVCT sẽ được áp dụng từ sau 1 ngày làm việc kể từ thời điểm phát sinh lời nhắn gửi và có HSD đến 03/04/2026",
       "Áp dụng với tất cả hình thức thanh toán;",
-      "Không áp dụng DVCT được tặng vào ngày 24, 25, 31/12, 1/1 và thứ 7, Chủ nhật.",
+      "Không áp dụng DVCT được tặng vào ngày 08/03 và thứ 7, Chủ nhật.",
       "Quà tặng không có giá trị quy đổi thành tiền mặt;",
       "Số lượng quà tặng có hạn, mọi quyết định cuối cùng thuộc về Face Wash Fox."
     ],
@@ -282,13 +282,13 @@ export const translations: Record<Language, Translations> = {
 
     // Terms page
     termsTitle: "Terms of Use",
-    termsSubtitle: "Foxie Club - 20.10 Special",
+    termsSubtitle: "Foxie Club - Queen Day",
     termsBackButton: "Back",
     termsContent: [
       "Each customer can participate in sending/receiving additional service gifts up to 3 times during the promotion period;",
-      "Additional services will be applied from 1 working day after the message is sent and valid until 9/11/2025",
+      "Additional services will be applied from 1 working day after the message is sent and valid until 03/04/2026",
       "Applicable to all payment methods;",
-      "Additional services cannot be used on 20/10 and weekends (Saturday, Sunday).",
+      "Additional services cannot be used on 08/03 and weekends (Saturday, Sunday).",
       "Gifts have no cash value;",
 
     ],

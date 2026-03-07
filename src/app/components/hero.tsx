@@ -20,6 +20,11 @@ interface FormData {
   message: string;
 }
 
+interface VoucherSubmitError extends Error {
+  code?: string;
+  status?: number;
+}
+
 const HERO_COLORS = {
   primary: "#FF6B2C",
   primaryDark: "#E0561E",
@@ -54,6 +59,31 @@ export default function Hero() {
   const hasAttemptedMoMoRef = useRef(false);
   const [isPaymentReady, setIsPaymentReady] = useState(false);
   const [isCtaLoading, setIsCtaLoading] = useState(false);
+  const [showLimitExceededModal, setShowLimitExceededModal] = useState(false);
+
+  const LIMIT_EXCEEDED_POPUP_MESSAGE =
+    "Hệ thống đã ghi nhận bạn đang vượt quá số lần sử dụng voucher Dịch vụ Cộng thêm là 3 lần. Vui lòng liên hệ Hotline để biết thêm chi tiết hoặc có sự nhầm lẫn ạ!!!";
+
+  const getOrCreateDeviceId = useCallback(() => {
+    if (typeof window === "undefined") return "";
+    const key = "fwf_device_id";
+    try {
+      let deviceId = localStorage.getItem(key) || "";
+      if (!deviceId) {
+        deviceId =
+          typeof window.crypto?.randomUUID === "function"
+            ? window.crypto.randomUUID()
+            : `fwf_${Date.now()}_${Math.random().toString(36).slice(2, 10)}`;
+        localStorage.setItem(key, deviceId);
+      }
+      document.cookie = `${key}=${encodeURIComponent(
+        deviceId
+      )}; Max-Age=31536000; Path=/; SameSite=Lax`;
+      return deviceId;
+    } catch {
+      return "";
+    }
+  }, []);
 
   const submitFreeVoucherToSheet = useCallback(async () => {
     if (!formData || !selectedVoucher || selectedVoucher.price > 0) {
@@ -64,6 +94,7 @@ export default function Hero() {
       const orderId = `FREE_${Date.now()}_${Math.random()
         .toString(36)
         .substr(2, 9)}`;
+      const deviceId = getOrCreateDeviceId();
       setCurrentOrderId(orderId);
 
       if (typeof window !== "undefined") {
@@ -72,19 +103,35 @@ export default function Hero() {
         sessionStorage.setItem("currentOrderId", orderId);
       }
 
-      await fetch("/api/payment/save-free-order", {
+      const response = await fetch("/api/payment/save-free-order", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           orderId,
           serviceName: selectedVoucher.name,
+          deviceId,
           formData,
         }),
       });
+
+      if (!response.ok) {
+        let errorMessage = "Không thể lưu thông tin voucher miễn phí";
+        let errorCode: string | undefined;
+        try {
+          const data = await response.json();
+          errorMessage = data.error || data.message || errorMessage;
+          errorCode = data.code;
+        } catch {}
+        const requestError = new Error(errorMessage) as VoucherSubmitError;
+        requestError.code = errorCode;
+        requestError.status = response.status;
+        throw requestError;
+      }
     } catch (error) {
       console.error("Không thể gửi dữ liệu miễn phí lên Google Sheets:", error);
+      throw error;
     }
-  }, [formData, selectedVoucher]);
+  }, [formData, selectedVoucher, getOrCreateDeviceId]);
 
   const handleExpand = () => {
     if (!selectedVoucher || isCtaLoading) return;
@@ -105,9 +152,27 @@ export default function Hero() {
     setIsCtaLoading(true);
 
     try {
-    await submitFreeVoucherToSheet();
-    // Redirect đến trang chủ để hiển thị thiệp chúc mừng
-    router.push("/?showGreetingCard=1");
+      await submitFreeVoucherToSheet();
+      // Redirect đến trang chủ để hiển thị thiệp chúc mừng
+      router.push("/?showGreetingCard=1");
+    } catch (error) {
+      const submitError = error as VoucherSubmitError;
+      const shouldShowLimitModal =
+        submitError?.code === "SERVICE_BASIC_LIMIT_EXCEEDED" ||
+        submitError?.status === 429 ||
+        (submitError?.message || "")
+          .toLowerCase()
+          .includes("vượt quá số lần sử dụng dịch vụ cộng thêm");
+
+      if (shouldShowLimitModal) {
+        setShowLimitExceededModal(true);
+      } else {
+        alert(
+          error instanceof Error
+            ? error.message
+            : "Không thể tiếp tục với voucher miễn phí"
+        );
+      }
     } finally {
       // Cho phép bấm lại nếu có lỗi / user quay lại
       setIsCtaLoading(false);
@@ -309,23 +374,7 @@ export default function Hero() {
             "Được tư vấn chăm sóc da miễn phí",
           ],
         },
-        {
-          id: "test-2k",
-          name: "Voucher test thanh toán 2.000đ",
-          price: 2000,
-          type: "cash" as const,
-          description: "Voucher dùng để kiểm thử luồng thanh toán chỉ 2.000đ",
-          services: [
-            "Dùng để test quy trình thanh toán MoMo",
-            "Không tạo quyền lợi thực tế",
-            "Có thể chọn nhiều lần để kiểm thử",
-          ],
-          benefits: [
-            "Thanh toán nhanh gọn với giá trị nhỏ",
-            "Giúp kiểm tra email/ghi nhận đơn",
-            "Không áp dụng ưu đãi thực tế",
-          ],
-        },
+        
       ];
 
       const foundVoucher = voucherOptions.find((v) => v.id === voucherId);
@@ -791,6 +840,61 @@ export default function Hero() {
           </div>
         </div>
       )}
+
+      <AnimatePresence>
+        {showLimitExceededModal && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[70] flex items-center justify-center bg-black/70 px-4"
+          >
+            <motion.div
+              initial={{ scale: 0.92, opacity: 0, y: 12 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.96, opacity: 0, y: 8 }}
+              className="relative w-full max-w-lg overflow-hidden rounded-3xl border border-orange-200 bg-white shadow-[0_30px_80px_rgba(0,0,0,0.35)]"
+            >
+              <div className="absolute -right-10 -top-10 h-32 w-32 rounded-full bg-orange-200/50 blur-2xl" />
+              <div className="absolute -left-10 -bottom-10 h-28 w-28 rounded-full bg-amber-200/40 blur-2xl" />
+              <div className="relative z-10 p-6 sm:p-7">
+                <div className="mb-4 flex justify-center">
+                  <Image
+                    src="/Element%20Promotion8.3/Asset%2031@4x.png"
+                    alt="Thông báo vượt quá số lần sử dụng"
+                    width={140}
+                    height={140}
+                    className="h-24 w-auto sm:h-28"
+                    priority
+                    unoptimized
+                  />
+                </div>
+                <h3 className="text-lg font-bold text-[#1f2937]">
+                  Thông báo giới hạn sử dụng
+                </h3>
+                <p className="mt-3 text-[15px] leading-7 text-gray-700">
+                  {LIMIT_EXCEEDED_POPUP_MESSAGE}
+                </p>
+                <div className="mt-6 flex justify-end gap-3">
+                  <a
+                    href="tel:0889866666"
+                    className="rounded-full border border-orange-300 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-50"
+                  >
+                    Gọi hotline
+                  </a>
+                  <button
+                    type="button"
+                    onClick={() => setShowLimitExceededModal(false)}
+                    className="rounded-full bg-gradient-to-r from-[#FF6B2C] to-[#FF9248] px-5 py-2 text-sm font-semibold text-white shadow-md"
+                  >
+                    Đã hiểu
+                  </button>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <AnimatePresence initial={false}>
         {isExpanded && (

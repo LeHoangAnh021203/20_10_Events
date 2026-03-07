@@ -4,6 +4,7 @@ import { join } from "path";
 export interface OrderFormData {
   senderName: string;
   senderPhone: string;
+  deviceId?: string;
   senderEmail?: string;
   receiverName?: string;
   receiverPhone?: string;
@@ -64,4 +65,3 @@ export async function upsertOrder(
   await writeOrders(orders);
   return updated;
 }
-

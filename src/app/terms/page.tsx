@@ -36,7 +36,7 @@ export default function TermsPage() {
             {/* Header */}
             <header className="w-full">
               <Image
-                src="/Holiday/Header-02.png"
+                src="/For web/Letter Header.png"
                 alt="Foxie Club 20.10 Special"
                 width={1920}
                 height={600}
@@ -71,7 +71,7 @@ export default function TermsPage() {
                 } animate-float-y z-100`}
               >
                 <Image
-                  src="/Giáng sinh/Asset 7@4x.png"
+                  src="/Element Promotion8.3/Asset 31@4x.png"
                   alt="decorative fox"
                   width={256}
                   height={256}
@@ -87,7 +87,7 @@ export default function TermsPage() {
                 } animate-float-x z-100`}
               >
                 <Image
-                  src="/Giáng sinh/Asset 12@4x.png"
+                  src="/Element Promotion8.3/Asset 1@4x.png"
                   alt="decorative fox"
                   width={256}
                   height={256}
@@ -103,7 +103,7 @@ export default function TermsPage() {
                 } animate-swing-60 z-100`}
               >
                 <Image
-                  src="/Giáng sinh/Asset 13@4x.png"
+                  src="/Element Promotion8.3/Asset 11@4x.png"
                   alt="decorative sun"
                   width={256}
                   height={256}
@@ -147,7 +147,7 @@ export default function TermsPage() {
             {/* Footer */}
             <footer className="w-full mt-8">
               <Image
-                src="/Holiday/Footer-03.png"
+                src="/For web/Letter Footer.png"
                 alt="Foxie Club Footer"
                 width={1920}
                 height={400}

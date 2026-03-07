@@ -1377,7 +1377,7 @@ export default function GreetingCard({
               {/* Left side falling elements */}
               <div className="absolute -top-20 left-10 w-16 h-16 animate-fall-down-left opacity-30 ">
                 <Image
-                  src={encodeAssetSrc("/Holiday/DVCT 1@4x.png")}
+                  src={encodeAssetSrc("/Element Promotion8.3/Asset 1@4x.png")}
                   alt="falling decoration"
                   width={64}
                   height={64}
@@ -1388,7 +1388,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 left-12 w-24 h-24 animate-fall-down-left-delayed-1 opacity-25 ">
                 <Image
-                  src={encodeAssetSrc("/Giáng sinh/Asset 6@4x.png")}
+                  src={encodeAssetSrc("/Element Promotion8.3/Asset 6@4x.png")}
                   alt="falling decoration"
                   width={48}
                   height={48}
@@ -1399,7 +1399,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 left-12 w-12 h-12 animate-fall-down-left-delayed-2 opacity-20 ">
                 <Image
-                  src={encodeAssetSrc("/Holiday/DVCT 3@4x.png")}
+                  src={encodeAssetSrc("/Element Promotion8.3/Asset 3@4x.png")}
                   alt="falling decoration"
                   width={48}
                   height={48}
@@ -1411,7 +1411,7 @@ export default function GreetingCard({
               {/* Right side falling elements */}
               <div className="absolute -top-20 right-10 w-32 h-32 animate-fall-down-right opacity-35 ">
                 <Image
-                  src={encodeAssetSrc("/Holiday/Nơ@4x.png")}
+                  src={encodeAssetSrc("/Element Promotion8.3/Asset 7@4x.png")}
                   alt="falling decoration"
                   width={56}
                   height={56}
@@ -1422,7 +1422,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-24 h-24 animate-fall-down-right-delayed-1 opacity-35 ">
                 <Image
-                  src={encodeAssetSrc("/Holiday/Tag sinh nhật Cáo@4x.png")}
+                  src={encodeAssetSrc("/Element Promotion8.3/Asset 5 1@4x.png")}
                   alt="falling decoration"
                   width={40}
                   height={40}
@@ -1433,7 +1433,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-14 h-14 animate-fall-down-right-delayed-2 opacity-35 ">
                 <Image
-                  src={encodeAssetSrc("/Tết/Asset 10@4x.png")}
+                  src={encodeAssetSrc("/Element Promotion8.3/Asset 11@4x.png")}
                   alt="falling decoration"
                   width={24}
                   height={24}
@@ -1444,7 +1444,7 @@ export default function GreetingCard({
 
               <div className="absolute -top-20 right-12 w-20 h-20 animate-fall-down-right opacity-20">
                 <Image
-                  src={encodeAssetSrc("/Giáng sinh/Asset 3@4x.png")}
+                  src={encodeAssetSrc("/Element Promotion8.3/Asset 3@4x.png")}
                   alt="falling decoration"
                   width={32}
                   height={32}
@@ -1456,7 +1456,7 @@ export default function GreetingCard({
 
             <div className="absolute -top-20 left-1/2 w-18 h-18 animate-fall-down-left opacity-15 ">
               <Image
-                src={encodeAssetSrc("/Holiday/DVCT 1@4x.png")}
+                src={encodeAssetSrc("/Element Promotion8.3/Asset 1@4x.png")}
                 alt="falling decoration"
                 width={32}
                 height={32}
@@ -1467,7 +1467,7 @@ export default function GreetingCard({
 
             <div className="absolute -top-20 left-1/2 w-20 h-20 animate-fall-down-right-delayed-1 opacity-20 ">
               <Image
-                src={encodeAssetSrc("/Holiday/Trái tim@4x.png")}
+                src={encodeAssetSrc("/Element Promotion8.3/Asset 4@4x.png")}
                 alt="falling decoration"
                 width={40}
                 height={40}
@@ -1477,7 +1477,7 @@ export default function GreetingCard({
             </div>
             <header className="w-full">
               <Image
-                src={encodeAssetSrc("/Holiday/Header-02.png")}
+                src={encodeAssetSrc("/For web/Letter Header.png")}
                 alt="Foxie Club 20.10 Special - Món quà dành tặng cho bạn"
                 width={1920}
                 height={600}
@@ -1508,12 +1508,12 @@ export default function GreetingCard({
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "top-40 left-2 w-16 opacity-70"
-                      : "top-73 left-[-1] w-24 sm:w-28 md:w-32 opacity-80"
+                      ? "top-50 left-8 w-16 opacity-70"
+                      : "top-73 left-3 w-24 sm:w-28 md:w-32 opacity-80"
                   } animate-float-y z-100`}
                 >
                   <Image
-                    src={encodeAssetSrc("/Holiday/Cáo và voucher@4x.png")}
+                    src={encodeAssetSrc("/Element Promotion8.3/Asset 5@4x.png")}
                     alt="decorative fox"
                     width={256}
                     height={256}
@@ -1525,12 +1525,12 @@ export default function GreetingCard({
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "bottom-80 left-2 w-16 opacity-70"
+                      ? "bottom-80 left-10 w-16 opacity-70"
                       : "bottom-100 left-2 w-20 sm:w-24 md:w-28 opacity-80"
                   } animate-float-x z-100`}
                 >
                   <Image
-                    src={encodeAssetSrc("/Tết/Asset 3@4x.png")}
+                    src={encodeAssetSrc("/Element Promotion8.3/Asset 3@4x.png")}
                     alt="decorative fox"
                     width={256}
                     height={256}
@@ -1542,12 +1542,12 @@ export default function GreetingCard({
                 <div
                   className={`absolute ${
                     isMobile
-                      ? "bottom-68 right-1 w-16 opacity-80"
+                      ? "bottom-68 right-5 w-16 opacity-80"
                       : "bottom-[350] right-8 w-20 sm:w-20 md:w20 opacity-100"
                   } animate-swing-60 z-100`}
                 >
                   <Image
-                    src={encodeAssetSrc("/Giáng sinh/Asset 10@4x.png")}
+                    src={encodeAssetSrc("/Element Promotion8.3/Asset 2 1@4x.png")}
                     alt="decorative sun"
                     width={256}
                     height={256}
@@ -1832,7 +1832,7 @@ export default function GreetingCard({
             {/* Letter Footer */}
             <footer className="w-full mt-4 relative">
               <Image
-                src={encodeAssetSrc("/Holiday/Footer-03.png")}
+                src={encodeAssetSrc("/For web/Letter Footer.png")}
                 alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
                 width={1920}
                 height={400}
