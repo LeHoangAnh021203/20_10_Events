@@ -152,13 +152,13 @@ export const translations: Record<Language, Translations> = {
     
     // Greeting card content
     dear: "Dear,",
-    greeting: "Chúc mừng ngày 20/10!",
+    greeting: "Chúc mừng ngày Quốc tế Phụ nữ!",
     body: "Luôn rạng rỡ, yêu bản thân và tận hưởng từng phút giây được nâng niu bởi Nhà Cáo. Gửi tặng bạn ngàn lời yêu thương thông qua voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VND để làn da luôn được chăm sóc đúng cách dẫu ngày thường hay ngày lễ!",
     signature: "Với tình yêu thương,",
     withLove: "Với tình yêu thương,",
     
     // Greeting card specific
-    faceWashGreeting: "Mùa lễ hội nhộn nhịp nhất năm đã đến rồi, Face Wash Fox gửi đến",
+    faceWashGreeting: "Ngày đặc biệt của phái đẹp đã đến rồi, Face Wash Fox gửi đến",
     signatureText: "Thân mến gửi trao ❤️!",
     
     // Share text
@@ -252,13 +252,13 @@ export const translations: Record<Language, Translations> = {
     
     // Greeting card content
     dear: "Dear,",
-    greeting: "Happy 20/10!",
+    greeting: "Happy International Women's Day!",
     body: "Always shine, love yourself and enjoy every moment pampered by Foxie House. Sending you thousands of loving words through additional service voucher worth up to 299,000VND so your skin is always properly cared for whether it's a regular day or a holiday!",
     signature: "With love,",
     withLove: "With love,",
     
     // Greeting card specific
-    faceWashGreeting: "The most festive season of the year has arrived, Face Wash Fox sends to",
+    faceWashGreeting: "Women's special day has come, Face Wash Fox sends to",
     signatureText: "With warm regards ❤️!",
     
     // Share text

@@ -354,7 +354,7 @@ export default function ExportCardPage({ searchParams }: { searchParams: ExportS
 
               {/* Fixed content lines - Face Wash Fox message with wrapping */}
               {wrapTextIntoLines(
-                "Nhân ngày 20/10, Face Wash Fox chúc hehe,\nLuôn rạng rỡ, yêu bản thân và tận hưởng từng phút giây được nâng niu\nbởi Nhà Cáo. Gửi tặng bạn ngàn lời yêu thương thông qua voucher Dịch\nvụ Cộng thêm trị giá lên đến 299.000VND để làn da luôn được chăm sóc\nđúng cách dẫu ngày thường hay ngày lễ!",
+                "Chúc mừng ngày Quốc tế Phụ nữ, Face Wash Fox chúc bạn\nluôn rạng rỡ, yêu bản thân và tận hưởng từng phút giây được nâng niu\nbởi Nhà Cáo. Gửi tặng bạn ngàn lời yêu thương thông qua voucher Dịch\nvụ Cộng thêm trị giá lên đến 299.000VND để làn da luôn được chăm sóc\nđúng cách dẫu ngày thường hay ngày lễ!",
                 maxCharsBody
               ).map((line, idx) => (
                 <div key={idx} className="letter-line">
@@ -384,4 +384,3 @@ export default function ExportCardPage({ searchParams }: { searchParams: ExportS
     </html>
   );
 }
-

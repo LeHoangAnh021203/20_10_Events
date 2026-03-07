@@ -455,7 +455,7 @@ export default function GreetingCard({
 
   // Generate dynamic body content based on paid service
   const getDynamicBodyContent = () => {
-    const holidayPhrase = "Merry Christmas & Happy New Year !";
+    const holidayPhrase = "Chúc mừng ngày Quốc tế Phụ nữ!";
     const closingLines = [
       "ngọt ngào nhất cho làn da.",
       "\nChúc bạn luôn là phiên bản rực rỡ nhất của chính mình và nhớ tự thưởng 45 phút chăm da cho bản thân và người thương trong dịp này nhé.",
@@ -510,17 +510,18 @@ export default function GreetingCard({
   const dynamicBodyContent = getDynamicBodyContent();
   const combinedBodyText = `${t.faceWashGreeting} ${formData.receiverName} ${dynamicBodyContent}`;
 
-  const highlightWords = new Set(
-    highlightPhrase.toLowerCase().split(/\s+/).filter(Boolean)
-  );
-  const holidayWords = new Set(
-    "merry christmas & happy new year 2026!"
-      .toLowerCase()
-      .split(/\s+/)
-      .filter(Boolean)
-  );
   const normalizeToken = (token: string) =>
     token.toLowerCase().replace(/[.,!?:;"'""()\[\]{}]/g, "");
+  const toNormalizedWordSet = (text: string) =>
+    new Set(
+      text
+        .toLowerCase()
+        .split(/\s+/)
+        .map((w) => normalizeToken(w))
+        .filter(Boolean)
+    );
+  const highlightWords = toNormalizedWordSet(highlightPhrase);
+  const holidayWords = toNormalizedWordSet("chúc mừng ngày quốc tế phụ nữ!");
   const isPriceToken = (token: string) => {
     const compact = token.toLowerCase().replace(/[^a-z0-9]/g, "");
     // Check for VNĐ, vnd, or price patterns like 299000, 200000, 500000
