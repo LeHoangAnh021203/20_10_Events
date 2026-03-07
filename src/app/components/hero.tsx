@@ -338,7 +338,7 @@ export default function Hero() {
         },
         {
           id: "cash-200k",
-          name: "Cash Voucher 200.000đ",
+          name: "Cash Voucher 200đ",
           price: 200000,
           type: "cash" as const,
           description: "Voucher tiền mặt trị giá 200.000 VNĐ",

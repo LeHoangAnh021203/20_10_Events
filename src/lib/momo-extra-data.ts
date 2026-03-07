@@ -14,6 +14,7 @@ const FIELD_LIMITS: Record<keyof OrderFormData | "serviceName", number> = {
   serviceName: 60,
   senderName: 40,
   senderPhone: 20,
+  deviceId: 80,
   senderEmail: 60,
   receiverName: 40,
   receiverPhone: 20,
