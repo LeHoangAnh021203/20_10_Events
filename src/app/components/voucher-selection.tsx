@@ -33,7 +33,7 @@ export default function VoucherSelection({
     null
   );
   const [hoveredCardId, setHoveredCardId] = useState<string | null>(null);
-  const serviceVideoSrc = "/To_video__202512011638.mp4";
+  const serviceVideoSrc = "/Voucher/Flow_delpmaspu_.mp4";
   const cash200kVideoSrc = "/To_video_ngn_202512051030.mp4";
   const cash500kVideoSrc = "/To_video_ngn_202512051038.mp4";
   const serviceVideoRef = useRef<HTMLVideoElement | null>(null);
@@ -135,7 +135,7 @@ export default function VoucherSelection({
     switch (voucher.id) {
       case "service-basic":
         return {
-          image: "/Custom for web - Voucher DVCT-01.png",
+          image: "/Voucher/GOOGLE_SHEETS_SETUP.png",
           overlayText: "",
         };
       case "cash-200k":
@@ -215,9 +215,8 @@ export default function VoucherSelection({
               const media = getVoucherMedia(voucher);
               return (
                 <div
-                  className={`relative flex w-full max-w-sm sm:max-w-md ${cardSizeClass} overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/20 shadow-[0_16px_40px_rgba(0,0,0,0.25)] sm:shadow-[0_25px_70px_rgba(0,0,0,0.25)] transition-all duration-500 hover:shadow-orange-300 ${
-                    isSelected ? "ring-4 ring-[#F57C3A]" : ""
-                  } hover:scale-[1.01] cursor-pointer`}
+                  className={`relative flex w-full max-w-sm sm:max-w-md ${cardSizeClass} overflow-hidden rounded-[24px] sm:rounded-[32px] border border-white/20 shadow-[0_16px_40px_rgba(0,0,0,0.25)] sm:shadow-[0_25px_70px_rgba(0,0,0,0.25)] transition-all duration-500 hover:shadow-orange-300 ${isSelected ? "ring-4 ring-[#F57C3A]" : ""
+                    } hover:scale-[1.01] cursor-pointer`}
                   style={{ backgroundImage: theme.background }}
                   onClick={() => handleCardClick(voucher)}
                   onMouseEnter={() => setHoveredCardId(voucher.id)}
@@ -232,9 +231,8 @@ export default function VoucherSelection({
                         src={media.image}
                         alt={voucher.name}
                         fill
-                        className={`object-cover object-center transition-transform duration-[1200ms] ease-out ${
-                          isHovered ? "scale-110" : "scale-100"
-                        }`}
+                        className={`object-cover object-center transition-transform duration-[1200ms] ease-out ${isHovered ? "scale-110" : "scale-100"
+                          }`}
                         priority={voucher.price === 0}
                       />
                       {voucher.id === "service-basic" && (
@@ -246,9 +244,8 @@ export default function VoucherSelection({
                           playsInline
                           autoPlay
                           preload="metadata"
-                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-                            isHovered ? "opacity-100" : "opacity-0"
-                          }`}
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isHovered ? "opacity-100" : "opacity-0"
+                            }`}
                         />
                       )}
                       {voucher.id === "cash-200k" && (
@@ -260,9 +257,8 @@ export default function VoucherSelection({
                           playsInline
                           autoPlay
                           preload="metadata"
-                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-                            isHovered ? "opacity-100" : "opacity-0"
-                          }`}
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isHovered ? "opacity-100" : "opacity-0"
+                            }`}
                         />
                       )}
                       {voucher.id === "cash-500k" && (
@@ -274,16 +270,14 @@ export default function VoucherSelection({
                           playsInline
                           autoPlay
                           preload="metadata"
-                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${
-                            isHovered ? "opacity-100" : "opacity-0"
-                          }`}
+                          className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isHovered ? "opacity-100" : "opacity-0"
+                            }`}
                         />
                       )}
                       <div className="absolute inset-0 bg-gradient-to-b from-black/80 via-black/30 to-transparent" />
                       <div
-                        className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-500 ${
-                          isHovered ? "opacity-100" : "opacity-0"
-                        }`}
+                        className={`absolute inset-0 bg-gradient-to-t from-black/70 via-transparent to-transparent transition-opacity duration-500 ${isHovered ? "opacity-100" : "opacity-0"
+                          }`}
                       >
                         <div className="absolute bottom-4 left-4 right-4 text-white/90 text-xs sm:text-sm font-medium tracking-wide">
                           {media.overlayText}
