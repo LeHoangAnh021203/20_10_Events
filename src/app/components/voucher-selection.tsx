@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect, type MouseEvent } from "react";
+import { useState, useRef, type MouseEvent } from "react";
 import { X } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -41,17 +41,28 @@ export default function VoucherSelection({
   const cash500kVideoRef = useRef<HTMLVideoElement | null>(null);
   const SERVICE_VIDEO_PLAYBACK_RATE = 3.1;
 
-  useEffect(() => {
-    if (serviceVideoRef.current) {
-      serviceVideoRef.current.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
-    }
-    if (cash200kVideoRef.current) {
-      cash200kVideoRef.current.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
-    }
-    if (cash500kVideoRef.current) {
-      cash500kVideoRef.current.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
-    }
-  }, [hoveredCardId]);
+  const getVideoRef = (voucherId: string) => {
+    if (voucherId === "service-basic") return serviceVideoRef;
+    if (voucherId === "cash-200k") return cash200kVideoRef;
+    if (voucherId === "cash-500k") return cash500kVideoRef;
+    return null;
+  };
+
+  const playCardVideo = (voucherId: string) => {
+    if (isMobile) return;
+    const ref = getVideoRef(voucherId);
+    const el = ref?.current;
+    if (!el) return;
+    el.playbackRate = SERVICE_VIDEO_PLAYBACK_RATE;
+    void el.play().catch(() => {});
+  };
+
+  const pauseCardVideo = (voucherId: string) => {
+    const ref = getVideoRef(voucherId);
+    const el = ref?.current;
+    if (!el) return;
+    el.pause();
+  };
 
   const theme = {
     background:
@@ -219,8 +230,14 @@ export default function VoucherSelection({
                     } hover:scale-[1.01] cursor-pointer`}
                   style={{ backgroundImage: theme.background }}
                   onClick={() => handleCardClick(voucher)}
-                  onMouseEnter={() => setHoveredCardId(voucher.id)}
-                  onMouseLeave={() => setHoveredCardId(null)}
+                  onMouseEnter={() => {
+                    setHoveredCardId(voucher.id);
+                    playCardVideo(voucher.id);
+                  }}
+                  onMouseLeave={() => {
+                    setHoveredCardId(null);
+                    pauseCardVideo(voucher.id);
+                  }}
                 >
                   <div className="flex h-full flex-col w-full">
                     {/* Media area */}
@@ -235,41 +252,38 @@ export default function VoucherSelection({
                           }`}
                         priority={voucher.price === 0}
                       />
-                      {voucher.id === "service-basic" && (
+                      {!isMobile && voucher.id === "service-basic" && (
                         <video
                           ref={serviceVideoRef}
                           src={serviceVideoSrc}
                           muted
                           loop
                           playsInline
-                          autoPlay
-                          preload="metadata"
+                          preload="none"
                           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isHovered ? "opacity-100" : "opacity-0"
                             }`}
                         />
                       )}
-                      {voucher.id === "cash-200k" && (
+                      {!isMobile && voucher.id === "cash-200k" && (
                         <video
                           ref={cash200kVideoRef}
                           src={cash200kVideoSrc}
                           muted
                           loop
                           playsInline
-                          autoPlay
-                          preload="metadata"
+                          preload="none"
                           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isHovered ? "opacity-100" : "opacity-0"
                             }`}
                         />
                       )}
-                      {voucher.id === "cash-500k" && (
+                      {!isMobile && voucher.id === "cash-500k" && (
                         <video
                           ref={cash500kVideoRef}
                           src={cash500kVideoSrc}
                           muted
                           loop
                           playsInline
-                          autoPlay
-                          preload="metadata"
+                          preload="none"
                           className={`absolute inset-0 w-full h-full object-cover transition-opacity duration-700 ${isHovered ? "opacity-100" : "opacity-0"
                             }`}
                         />
