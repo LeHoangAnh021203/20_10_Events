@@ -152,7 +152,7 @@ export const translations: Record<Language, Translations> = {
     
     // Greeting card content
     dear: "Dear,",
-    greeting: "Chúc mừng ngày Quốc tế Phụ nữ!",
+    greeting: "Chúc mừng ngày 20/10 nhé",
     body: "Luôn rạng rỡ, yêu bản thân và tận hưởng từng phút giây được nâng niu bởi Nhà Cáo. Gửi tặng bạn ngàn lời yêu thương thông qua voucher Dịch vụ Cộng thêm trị giá lên đến 299.000VND để làn da luôn được chăm sóc đúng cách dẫu ngày thường hay ngày lễ!",
     signature: "Với tình yêu thương,",
     withLove: "Với tình yêu thương,",
@@ -252,7 +252,7 @@ export const translations: Record<Language, Translations> = {
     
     // Greeting card content
     dear: "Dear,",
-    greeting: "Happy International Women's Day!",
+    greeting: "Happy Vietnamese Women's Day 20/10!",
     body: "Always shine, love yourself and enjoy every moment pampered by Foxie House. Sending you thousands of loving words through additional service voucher worth up to 299,000VND so your skin is always properly cared for whether it's a regular day or a holiday!",
     signature: "With love,",
     withLove: "With love,",

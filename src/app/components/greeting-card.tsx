@@ -455,11 +455,10 @@ export default function GreetingCard({
 
   // Generate dynamic body content based on paid service
   const getDynamicBodyContent = () => {
-    const holidayPhrase = "Chúc mừng ngày Quốc tế Phụ nữ!";
+    const holidayPhrase = "Chúc mừng ngày 20/10 nhé";
     const closingLines = [
       "ngọt ngào nhất cho làn da.",
-      "\nChúc bạn luôn là phiên bản rực rỡ nhất của chính mình và nhớ tự thưởng 45 phút chăm da cho bản thân và người thương trong dịp này nhé.",
-      "Cảm ơn bạn đã cho nhà Cáo cơ hội đồng hành cùng hành trình xinh đẹp ấy.",
+      "\nChúc bạn luôn là phiên bản rực rỡ nhất của chính mình và nhớ tự thưởng 45 phút chăm da cho bản thân và người thương trong dịp này nhé. Cảm ơn bạn đã cho nhà Cáo cơ hội đồng hành cùng hành trình xinh đẹp ấy.",
       holidayPhrase,
     ];
     const trailingText = `${closingLines[0]}${closingLines
@@ -521,7 +520,32 @@ export default function GreetingCard({
         .filter(Boolean)
     );
   const highlightWords = toNormalizedWordSet(highlightPhrase);
-  const holidayWords = toNormalizedWordSet("chúc mừng ngày quốc tế phụ nữ!");
+  const HOLIDAY_PHRASE = "Chúc mừng ngày 20/10 nhé";
+  const holidayPhraseRegex = /(chúc mừng ngày 20\/10 nhé)/gi;
+  const containsHolidayPhrase = (text: string) =>
+    normalizeText(text).includes(normalizeText(HOLIDAY_PHRASE));
+  const highlightHolidayText = (text: string) => {
+    const parts = text.split(holidayPhraseRegex);
+    return parts.map((part, idx) => {
+      if (part.toLowerCase() === HOLIDAY_PHRASE.toLowerCase()) {
+        return (
+          <span key={`holiday-${idx}`} className="text-[#eb3526] font-bold">
+            {part}
+          </span>
+        );
+      }
+      if (containsBrandText(part)) {
+        return (
+          <span key={`holiday-brand-${idx}`}>{highlightBrandText(part)}</span>
+        );
+      }
+      return (
+        <span key={`holiday-text-${idx}`} className="inline">
+          {part}
+        </span>
+      );
+    });
+  };
   const isPriceToken = (token: string) => {
     const compact = token.toLowerCase().replace(/[^a-z0-9]/g, "");
     // Check for VNĐ, vnd, or price patterns like 299000, 200000, 500000
@@ -608,41 +632,95 @@ export default function GreetingCard({
     );
   };
 
-  // Wrap text but keep original indices so we can style substrings across lines
+  // Pull words up from short last lines so endings like "này nhé." don't sit alone.
+  const rebalanceOrphanLines = (
+    paragraphLines: Array<{ text: string; start: number; end: number }>,
+    minLastLineChars = 20
+  ) => {
+    if (paragraphLines.length < 2) return paragraphLines;
+    const result = paragraphLines.map((line) => ({ ...line }));
+
+    while (result.length >= 2) {
+      const lastIdx = result.length - 1;
+      const lastText = result[lastIdx].text.trim();
+      if (lastText.length >= minLastLineChars) break;
+
+      const prevIdx = lastIdx - 1;
+      const prevWords = result[prevIdx].text.trim().split(/\s+/);
+      if (prevWords.length < 2) break;
+
+      const moved = prevWords.pop()!;
+      const newPrev = prevWords.join(" ");
+      if (newPrev.length < 12) break;
+
+      result[prevIdx] = {
+        ...result[prevIdx],
+        text: newPrev,
+        end: result[prevIdx].start + newPrev.length,
+      };
+      const newLast = `${moved} ${lastText}`;
+      result[lastIdx] = {
+        ...result[lastIdx],
+        text: newLast,
+        start: result[prevIdx].end + 1,
+        end: result[prevIdx].end + 1 + newLast.length,
+      };
+    }
+
+    return result;
+  };
+
+  // Wrap text but keep original indices so we can style substrings across lines.
+  // Explicit newlines always force a break so closing lines stay separate.
   const wrapTextWithIndices = (
     text: string,
     maxCharsPerLine: number
   ): Array<{ text: string; start: number; end: number }> => {
     if (!text) return [];
-    const tokens = Array.from(text.matchAll(/\S+\s*/g)).map((m) => ({
-      text: m[0],
-      start: m.index ?? 0,
-    }));
     const lines: Array<{ text: string; start: number; end: number }> = [];
-    let current = "";
-    let lineStart = tokens.length ? tokens[0].start : 0;
-    tokens.forEach((t, idx) => {
-      const nextLen = current.length + t.text.length;
-      if (current && nextLen > maxCharsPerLine) {
-        lines.push({
-          text: current.trimEnd(),
-          start: lineStart,
-          end: lineStart + current.length,
-        });
-        current = t.text;
-        lineStart = t.start;
-      } else {
-        current += t.text;
+    let offset = 0;
+
+    text.split("\n").forEach((paragraph, paragraphIndex) => {
+      if (paragraphIndex > 0) offset += 1; // account for the '\n'
+      if (!paragraph) {
+        return;
       }
-      // last token
-      if (idx === tokens.length - 1 && current) {
-        lines.push({
-          text: current.trimEnd(),
-          start: lineStart,
-          end: lineStart + current.length,
-        });
-      }
+
+      const tokens = Array.from(paragraph.matchAll(/\S+\s*/g)).map((m) => ({
+        text: m[0],
+        start: offset + (m.index ?? 0),
+      }));
+
+      const paragraphLines: Array<{ text: string; start: number; end: number }> =
+        [];
+      let current = "";
+      let lineStart = tokens.length ? tokens[0].start : offset;
+      tokens.forEach((t, idx) => {
+        const nextLen = current.length + t.text.length;
+        if (current && nextLen > maxCharsPerLine) {
+          paragraphLines.push({
+            text: current.trimEnd(),
+            start: lineStart,
+            end: lineStart + current.length,
+          });
+          current = t.text;
+          lineStart = t.start;
+        } else {
+          current += t.text;
+        }
+        if (idx === tokens.length - 1 && current) {
+          paragraphLines.push({
+            text: current.trimEnd(),
+            start: lineStart,
+            end: lineStart + current.length,
+          });
+        }
+      });
+
+      lines.push(...rebalanceOrphanLines(paragraphLines));
+      offset += paragraph.length;
     });
+
     return lines;
   };
 
@@ -1732,11 +1810,13 @@ export default function GreetingCard({
                                   lineIndex === 0 ? "1rem" : undefined,
                               }}
                             >
-                              {/* Check if this line contains the voucher phrase */}
+                              {/* Check if this line contains the voucher / holiday phrase */}
                               {containsVoucherPhrase(seg.text) ? (
                                 <span className="text-[#eb3526] font-bold">
                                   {seg.text}
                                 </span>
+                              ) : containsHolidayPhrase(seg.text) ? (
+                                <>{highlightHolidayText(seg.text)}</>
                               ) : containsBrandText(seg.text) ? (
                                 <>{highlightBrandText(seg.text)}</>
                               ) : (
@@ -1746,7 +1826,6 @@ export default function GreetingCard({
                                   const norm = normalizeToken(tk);
                                   if (
                                     highlightWords.has(norm) ||
-                                    holidayWords.has(norm) ||
                                     isPriceToken(tk) ||
                                     containsPrice(tk)
                                   ) {

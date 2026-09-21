@@ -8,3 +8,4 @@ dist/
 7yyt
 data/
 .vercel
+.env*.local
