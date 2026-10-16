@@ -6,6 +6,8 @@ import { createPaymentSuccessEmail, createGreetingCardReceiverEmail } from "@/li
 export const runtime = "nodejs";
 
 const FREE_SERVICE_LIMIT = 3;
+// Tạm tắt giới hạn 3 lần/DVCT cho chương trình 20/10. Bật lại bằng cách đặt = true.
+const ENFORCE_SERVICE_BASIC_LIMIT = false;
 
 const normalizePhone = (phone: string) => phone.replace(/[^\d+]/g, "");
 
@@ -145,7 +147,7 @@ export async function POST(req: Request) {
       deviceId: normalizedDeviceId,
     };
 
-    if (isServiceBasic(serviceName)) {
+    if (ENFORCE_SERVICE_BASIC_LIMIT && isServiceBasic(serviceName)) {
       const quotaResult = await consumeServiceBasicQuota(
         enrichedFormData.senderPhone,
         orderId
