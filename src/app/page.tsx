@@ -7,6 +7,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { useLanguage } from "@/contexts/LanguageContext";
 import { useRouter, useSearchParams } from "next/navigation";
+import { GIFT_ASSETS, GIFT_THEME } from "@/lib/gift-assets";
 
 // Ngăn Next.js/Vercel cache HTML của route "/" để tránh 304 aggressive trên mobile
 export const dynamic = "force-dynamic";
@@ -303,7 +304,7 @@ function LandingPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-yellow-50">
+    <div className={`min-h-screen bg-gradient-to-b ${GIFT_THEME.pageBg}`}>
       {/* <LanguageSwitcher /> */}
       <div className="relative z-20 w-full flex justify-center sm:justify-end gap-2 px-4 sm:px-6 pt-4">
         <Link
@@ -320,317 +321,39 @@ function LandingPageContent() {
         </a>
       </div>
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        {/* Left side falling elements */}
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-12 w-16 h-16" : "left-24 w-24 h-24"
-          } animate-fall-down-left opacity-30`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 2@4x.png"
-            alt="falling decoration"
-            width={64}
-            height={64}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-16 w-20 h-20" : "left-18 w-32 h-32"
-          } animate-fall-down-left-delayed-1 opacity-25`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 3@4x.png"
-            alt="falling decoration"
-            width={48}
-            height={48}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-12 w-20 h-20" : "left-24 w-32 h-32"
-          } animate-fall-down-left-delayed-2 opacity-20`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 5@4x.png"
-            alt="falling decoration"
-            width={32}
-            height={32}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* Right side falling elements */}
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-12 w-10 h-10" : "right-24 w-14 h-14"
-          } animate-fall-down-right opacity-35`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 1@4x.png"
-            alt="falling decoration"
-            width={56}
-            height={56}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-16 w-12 h-12" : "right-18 w-18 h-18"
-          } animate-fall-down-right-delayed-1 opacity-30`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 4@4x.png"
-            alt="falling decoration"
-            width={40}
-            height={40}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-20 w-20 h-20" : "right-21 w-36 h-36"
-          } animate-fall-down-right-delayed-2`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 5@4x.png"
-            alt="falling decoration"
-            width={24}
-            height={24}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-8 w-12 h-12" : "right-12 w-18 h-18"
-          } animate-fall-down-right opacity-20`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 1@4x.png"
-            alt="falling decoration"
-            width={32}
-            height={32}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* Additional left side elements */}
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-4 w-12 h-12" : "left-8 w-16 h-16"
-          } animate-fall-down-left opacity-25`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 1@4x.png"
-            alt="falling decoration"
-            width={64}
-            height={64}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-14 w-16 h-16" : "left-18 w-22 h-22"
-          } animate-fall-down-left-delayed-1 opacity-20`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 2 1@4x.png"
-            alt="falling decoration"
-            width={48}
-            height={48}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-10 w-18 h-18" : "left-16 w-24 h-24"
-          } animate-fall-down-left-delayed-2 opacity-30`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 2@4x.png"
-            alt="falling decoration"
-            width={56}
-            height={56}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-16 w-20 h-20" : "left-20 w-30 h-30"
-          } animate-fall-down-left opacity-15`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 3@4x.png"
-            alt="falling decoration"
-            width={40}
-            height={40}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* Additional right side elements */}
-        <div
-          className={`absolute -top-10 ${
-            isMobile ? "right-12 w-14 h-14" : "right-24 w-20 h-20"
-          } animate-fall-down-right opacity-30`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 4@4x.png"
-            alt="falling decoration"
-            width={80}
-            height={80}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-14 w-18 h-18" : "right-18 w-26 h-26"
-          } animate-fall-down-right-delayed-1 opacity-25`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 5 1@4x.png"
-            alt="falling decoration"
-            width={64}
-            height={64}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-20 w-10 h-10" : "right-26 w-12 h-12"
-          } animate-fall-down-right-delayed-2 opacity-20`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 5@4x.png"
-            alt="falling decoration"
-            width={48}
-            height={48}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-16 w-16 h-16" : "right-20 w-24 h-24"
-          } animate-fall-down-right opacity-35`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 6@4x.png"
-            alt="falling decoration"
-            width={56}
-            height={56}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* Center elements for variety */}
-        <div
-          className={`absolute -top-20 left-1/2 ${
-            isMobile ? "w-12 h-12" : "w-18 h-18"
-          } animate-fall-down-left opacity-15 z-100`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 7@4x.png"
-            alt="falling decoration"
-            width={32}
-            height={32}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 left-1/2 ${
-            isMobile ? "w-14 h-14" : "w-20 h-20"
-          } animate-fall-down-right-delayed-1 opacity-20 z-100`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 8@4x.png"
-            alt="falling decoration"
-            width={40}
-            height={40}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        {/* More scattered elements */}
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-3 w-12 h-12" : "left-6 w-18 h-18"
-          } animate-fall-down-left-delayed-1 opacity-25 z-100`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 9@4x.png"
-            alt="falling decoration"
-            width={72}
-            height={72}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "left-6 w-10 h-10" : "left-10 w-14 h-14"
-          } animate-fall-down-left opacity-20 z-100`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 11@4x.png"
-            alt="falling decoration"
-            width={56}
-            height={56}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-12 w-12 h-12" : "right-16 w-16 h-16"
-          } animate-fall-down-right-delayed-2 opacity-30 z-100`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 31@4x.png"
-            alt="falling decoration"
-            width={64}
-            height={64}
-            className="w-full h-full object-contain"
-          />
-        </div>
-
-        <div
-          className={`absolute -top-20 ${
-            isMobile ? "right-6 w-6 h-6" : "right-10 w-8 h-8"
-          } animate-fall-down-right opacity-25 z-100`}
-        >
-          <Image
-            src="/Element Promotion8.3/Asset 2@4x.png"
-            alt="falling decoration"
-            width={32}
-            height={32}
-            className="w-full h-full object-contain"
-          />
-        </div>
+        {[
+          { src: GIFT_ASSETS.elements[0], side: "left", pos: isMobile ? "left-12 w-16 h-16" : "left-24 w-24 h-24", anim: "animate-fall-down-left", opacity: "opacity-30", size: 64 },
+          { src: GIFT_ASSETS.elements[1], side: "left", pos: isMobile ? "left-16 w-20 h-20" : "left-18 w-28 h-28", anim: "animate-fall-down-left-delayed-1", opacity: "opacity-25", size: 48 },
+          { src: GIFT_ASSETS.elements[2], side: "left", pos: isMobile ? "left-6 w-14 h-14" : "left-10 w-20 h-20", anim: "animate-fall-down-left-delayed-2", opacity: "opacity-20", size: 40 },
+          { src: GIFT_ASSETS.elements[3], side: "right", pos: isMobile ? "right-12 w-16 h-16" : "right-24 w-24 h-24", anim: "animate-fall-down-right", opacity: "opacity-30", size: 56 },
+          { src: GIFT_ASSETS.elements[4], side: "right", pos: isMobile ? "right-16 w-14 h-14" : "right-16 w-20 h-20", anim: "animate-fall-down-right-delayed-1", opacity: "opacity-25", size: 48 },
+          { src: GIFT_ASSETS.elements[5], side: "right", pos: isMobile ? "right-8 w-12 h-12" : "right-10 w-16 h-16", anim: "animate-fall-down-right-delayed-2", opacity: "opacity-20", size: 40 },
+        ].map((item, idx) => (
+          <div
+            key={`fall-${idx}`}
+            className={`absolute -top-20 ${item.pos} ${item.anim} ${item.opacity}`}
+          >
+            <Image
+              src={item.src}
+              alt="falling decoration"
+              width={item.size}
+              height={item.size}
+              className="w-full h-full object-contain"
+            />
+          </div>
+        ))}
       </div>
       {/* Main Content */}
       <main
         className="container mx-auto px-4 py-8 max-w-4xl text-black"
         style={{ fontFamily: "var(--font-poppins)" }}
       >
-        <div className="shadow-lg border-0 backdrop-blur-sm rounded-lg bg-gradient-to-b from-[#feeedd] via-[#fef5f0] to-white overflow-hidden">
+        <div className="shadow-lg border-0 backdrop-blur-sm rounded-lg bg-gradient-to-b from-[#f5efe6] via-[#f8f3ec] to-white overflow-hidden">
           {/* Header */}
           <header className="w-full mb-10 relative">
             <Image
-              src="/For web/Header.png"
-              alt="Foxie Club 20.10 Special - Món quà dành tặng cho bạn"
+              src={GIFT_ASSETS.infoHeader}
+              alt="Gift a wish - Bloom together"
               width={1920}
               height={600}
               priority
@@ -652,7 +375,7 @@ function LandingPageContent() {
                 >
                   <div className="animate-zoom-in-out">
                     <Image
-                      src="/Asset 7@4x (1).png"
+                      src={GIFT_ASSETS.gift}
                       alt="decorative fox"
                       width={256}
                       height={256}
@@ -912,7 +635,7 @@ function LandingPageContent() {
                         {t.giftServiceSection || "Chọn dịch vụ và quà tặng"}
                       </span>
                       <Image
-                        src="/CÁO5@4x-05.png"
+                        src={GIFT_ASSETS.elements[0]}
                         alt="Foxie icon"
                         width={20}
                         height={20}
@@ -975,8 +698,8 @@ function LandingPageContent() {
             </div>
             <div className="relative w-full">
               <Image
-                src="/For web/Footer.png"
-                alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
+                src={GIFT_ASSETS.infoFooter}
+                alt="Gift a wish - hướng dẫn chương trình"
                 width={1920}
                 height={400}
                 className="w-full h-auto object-cover"
@@ -1065,7 +788,7 @@ export default function LandingPage() {
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-b from-red-50 via-orange-50 to-yellow-50" />
+        <div className={`min-h-screen bg-gradient-to-b ${GIFT_THEME.pageBg}`} />
       }
     >
       <LandingPageContent />

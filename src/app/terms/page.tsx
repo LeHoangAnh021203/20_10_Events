@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { GIFT_ASSETS, GIFT_THEME } from "@/lib/gift-assets";
 // import LanguageSwitcher from "../components/language-switcher";
 
 export default function TermsPage() {
@@ -17,7 +18,7 @@ export default function TermsPage() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50 py-4 md:py-8 text-black">
+    <div className={`min-h-screen bg-gradient-to-b ${GIFT_THEME.pageBg} py-4 md:py-8 text-black`}>
       {/* <LanguageSwitcher /> */}
       <div className="container mx-auto px-4 sm:px-6 max-w-4xl">
         {/* Back Button */}
@@ -32,12 +33,15 @@ export default function TermsPage() {
 
         {/* Terms Content Card */}
         <div className="flex justify-center px-1 sm:px-0">
-          <div className="relative bg-[#feeedd] rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full">
+          <div
+            className="relative rounded-3xl shadow-2xl overflow-hidden max-w-4xl w-full"
+            style={{ backgroundColor: GIFT_THEME.cardBg }}
+          >
             {/* Header */}
             <header className="w-full">
               <Image
-                src="/For web/Letter Header.png"
-                alt="Foxie Club 20.10 Special"
+                src={GIFT_ASSETS.letterHeader}
+                alt="Gift a wish - Dear love"
                 width={1920}
                 height={600}
                 priority
@@ -71,8 +75,8 @@ export default function TermsPage() {
                 } animate-float-y z-100`}
               >
                 <Image
-                  src="/Element Promotion8.3/Asset 31@4x.png"
-                  alt="decorative fox"
+                  src={GIFT_ASSETS.elements[0]}
+                  alt="decorative element"
                   width={256}
                   height={256}
                   className="w-full h-auto drop-shadow-md rotate-[-8deg]"
@@ -87,8 +91,8 @@ export default function TermsPage() {
                 } animate-float-x z-100`}
               >
                 <Image
-                  src="/Element Promotion8.3/Asset 1@4x.png"
-                  alt="decorative fox"
+                  src={GIFT_ASSETS.elements[2]}
+                  alt="decorative element"
                   width={256}
                   height={256}
                   className="w-full h-auto drop-shadow-md"
@@ -103,8 +107,8 @@ export default function TermsPage() {
                 } animate-swing-60 z-100`}
               >
                 <Image
-                  src="/Element Promotion8.3/Asset 11@4x.png"
-                  alt="decorative sun"
+                  src={GIFT_ASSETS.elements[4]}
+                  alt="decorative element"
                   width={256}
                   height={256}
                   className="w-full h-auto drop-shadow-md"
@@ -147,8 +151,8 @@ export default function TermsPage() {
             {/* Footer */}
             <footer className="w-full mt-8">
               <Image
-                src="/For web/Letter Footer.png"
-                alt="Foxie Club Footer"
+                src={GIFT_ASSETS.letterFooter}
+                alt="Gift a wish footer"
                 width={1920}
                 height={400}
                 className="w-full h-auto object-cover"

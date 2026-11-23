@@ -66,11 +66,11 @@ export default function VoucherSelection({
 
   const theme = {
     background:
-      "linear-gradient(180deg, #FFECD9 0%, #FFC9A1 45%, #F8985E 100%)",
-    badgeBg: "rgba(248, 152, 94, 0.25)",
-    badgeBorder: "rgba(248, 152, 94, 0.45)",
-    chipBorder: "rgba(248, 152, 94, 0.6)",
-    buttonBg: "#F57C3A",
+      "linear-gradient(180deg, #F5EFE6 0%, #E8D9C8 45%, #1B4D3E 100%)",
+    badgeBg: "rgba(27, 77, 62, 0.25)",
+    badgeBorder: "rgba(196, 92, 106, 0.45)",
+    chipBorder: "rgba(232, 160, 168, 0.6)",
+    buttonBg: "#C45C6A",
     buttonFg: "#ffffff",
   };
 
@@ -146,7 +146,7 @@ export default function VoucherSelection({
     switch (voucher.id) {
       case "service-basic":
         return {
-          image: "/Voucher/GOOGLE_SHEETS_SETUP.png",
+          image: "/Gift a wish/Quà.png",
           overlayText: "",
         };
       case "cash-200k":

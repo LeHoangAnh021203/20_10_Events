@@ -470,7 +470,7 @@ function PaymentResult() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-orange-50 to-yellow-50">
       <div className="container mx-auto px-4 py-8 max-w-4xl">
-        <div className="shadow-lg backdrop-blur-sm rounded-lg bg-[#feeedd] p-8 text-center">
+        <div className="shadow-lg backdrop-blur-sm rounded-lg bg-[#f5efe6] p-8 text-center">
           {status === "success" ? (
             <>
               <div className="mb-6">

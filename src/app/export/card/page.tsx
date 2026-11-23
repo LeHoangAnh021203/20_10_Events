@@ -90,7 +90,7 @@ export default function ExportCardPage({ searchParams }: { searchParams: ExportS
           .canvas {
             width: var(--w);
             height: var(--h);
-            background: #feeedd;
+            background: #f5efe6;
             display: flex;
             flex-direction: column;
             justify-content: flex-start;

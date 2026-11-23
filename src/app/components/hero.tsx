@@ -26,13 +26,13 @@ interface VoucherSubmitError extends Error {
 }
 
 const HERO_COLORS = {
-  primary: "#FF6B2C",
-  primaryDark: "#E0561E",
-  secondary: "#FF9248",
-  accent: "#FFD8BC",
-  gradientLight: "#FFF8F1",
-  gradientMid: "#FFE7D2",
-  gradientDark: "#FFD2B2",
+  primary: "#1B4D3E",
+  primaryDark: "#143C31",
+  secondary: "#C45C6A",
+  accent: "#E8A0A8",
+  gradientLight: "#F5EFE6",
+  gradientMid: "#EFE8DC",
+  gradientDark: "#E5EFE8",
 };
 
 export default function Hero() {
@@ -860,7 +860,7 @@ export default function Hero() {
               <div className="relative z-10 p-6 sm:p-7">
                 <div className="mb-4 flex justify-center">
                   <Image
-                    src="/Element%20Promotion8.3/Asset%2031@4x.png"
+                    src="/Gift%20a%20wish/Element-01.png"
                     alt="Thông báo vượt quá số lần sử dụng"
                     width={140}
                     height={140}

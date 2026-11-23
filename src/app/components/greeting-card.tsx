@@ -11,6 +11,7 @@ import {
   createGreetingCardSentEmail,
   createGreetingCardReceiverEmail,
 } from "@/lib/email-templates";
+import { GIFT_ASSETS, GIFT_THEME } from "@/lib/gift-assets";
 
 interface FormData {
   senderName: string;
@@ -1443,8 +1444,9 @@ export default function GreetingCard({
           <div
             ref={cardRef}
             data-export-root
-            className="relative bg-[#feeedd] rounded-3xl shadow-2xl overflow-hidden max-w-2xl w-full"
+            className="relative rounded-3xl shadow-2xl overflow-hidden max-w-2xl w-full"
             style={{
+              backgroundColor: GIFT_THEME.cardBg,
               backgroundSize: "contain",
               backgroundPosition: "center",
               backgroundRepeat: "no-repeat",
@@ -1452,111 +1454,30 @@ export default function GreetingCard({
           >
             {/* Falling background elements from sides */}
             <div className="absolute inset-0 pointer-events-none overflow-hidden">
-              {/* Left side falling elements */}
-              <div className="absolute -top-20 left-10 w-16 h-16 animate-fall-down-left opacity-30 ">
-                <Image
-                  src={encodeAssetSrc("/Element Promotion8.3/Asset 1@4x.png")}
-                  alt="falling decoration"
-                  width={64}
-                  height={64}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-
-              <div className="absolute -top-20 left-12 w-24 h-24 animate-fall-down-left-delayed-1 opacity-25 ">
-                <Image
-                  src={encodeAssetSrc("/Element Promotion8.3/Asset 6@4x.png")}
-                  alt="falling decoration"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-
-              <div className="absolute -top-20 left-12 w-12 h-12 animate-fall-down-left-delayed-2 opacity-20 ">
-                <Image
-                  src={encodeAssetSrc("/Element Promotion8.3/Asset 3@4x.png")}
-                  alt="falling decoration"
-                  width={48}
-                  height={48}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-
-              {/* Right side falling elements */}
-              <div className="absolute -top-20 right-10 w-32 h-32 animate-fall-down-right opacity-35 ">
-                <Image
-                  src={encodeAssetSrc("/Element Promotion8.3/Asset 7@4x.png")}
-                  alt="falling decoration"
-                  width={56}
-                  height={56}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-
-              <div className="absolute -top-20 right-12 w-24 h-24 animate-fall-down-right-delayed-1 opacity-35 ">
-                <Image
-                  src={encodeAssetSrc("/Element Promotion8.3/Asset 5 1@4x.png")}
-                  alt="falling decoration"
-                  width={40}
-                  height={40}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-
-              <div className="absolute -top-20 right-12 w-14 h-14 animate-fall-down-right-delayed-2 opacity-35 ">
-                <Image
-                  src={encodeAssetSrc("/Element Promotion8.3/Asset 11@4x.png")}
-                  alt="falling decoration"
-                  width={24}
-                  height={24}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-
-              <div className="absolute -top-20 right-12 w-20 h-20 animate-fall-down-right opacity-20">
-                <Image
-                  src={encodeAssetSrc("/Element Promotion8.3/Asset 3@4x.png")}
-                  alt="falling decoration"
-                  width={32}
-                  height={32}
-                  className="w-full h-full object-contain"
-                  unoptimized
-                />
-              </div>
-            </div>
-
-            <div className="absolute -top-20 left-1/2 w-18 h-18 animate-fall-down-left opacity-15 ">
-              <Image
-                src={encodeAssetSrc("/Element Promotion8.3/Asset 1@4x.png")}
-                alt="falling decoration"
-                width={32}
-                height={32}
-                className="w-full h-full object-contain"
-                unoptimized
-              />
-            </div>
-
-            <div className="absolute -top-20 left-1/2 w-20 h-20 animate-fall-down-right-delayed-1 opacity-20 ">
-              <Image
-                src={encodeAssetSrc("/Element Promotion8.3/Asset 4@4x.png")}
-                alt="falling decoration"
-                width={40}
-                height={40}
-                className="w-full h-full object-contain"
-                unoptimized
-              />
+              {[
+                { src: GIFT_ASSETS.elements[0], cls: "left-10 w-16 h-16 animate-fall-down-left opacity-30", size: 64 },
+                { src: GIFT_ASSETS.elements[1], cls: "left-12 w-20 h-20 animate-fall-down-left-delayed-1 opacity-25", size: 48 },
+                { src: GIFT_ASSETS.elements[2], cls: "left-8 w-12 h-12 animate-fall-down-left-delayed-2 opacity-20", size: 40 },
+                { src: GIFT_ASSETS.elements[3], cls: "right-10 w-20 h-20 animate-fall-down-right opacity-30", size: 56 },
+                { src: GIFT_ASSETS.elements[4], cls: "right-12 w-16 h-16 animate-fall-down-right-delayed-1 opacity-25", size: 40 },
+                { src: GIFT_ASSETS.elements[5], cls: "right-8 w-14 h-14 animate-fall-down-right-delayed-2 opacity-20", size: 32 },
+              ].map((item, idx) => (
+                <div key={`card-fall-${idx}`} className={`absolute -top-20 ${item.cls}`}>
+                  <Image
+                    src={encodeAssetSrc(item.src)}
+                    alt="falling decoration"
+                    width={item.size}
+                    height={item.size}
+                    className="w-full h-full object-contain"
+                    unoptimized
+                  />
+                </div>
+              ))}
             </div>
             <header className="w-full">
               <Image
-                src={encodeAssetSrc("/For web/Letter Header.png")}
-                alt="Foxie Club 20.10 Special - Món quà dành tặng cho bạn"
+                src={encodeAssetSrc(GIFT_ASSETS.letterHeader)}
+                alt="Gift a wish - Dear love"
                 width={1920}
                 height={600}
                 priority
@@ -1566,22 +1487,15 @@ export default function GreetingCard({
             </header>
             {/* Decorative Elements */}
             <div className="pointer-events-none absolute inset-0">
-              {/* Top right corner decoration */}
-              <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-br from-orange-300 to-red-400 rounded-full opacity-60"></div>
-              <div className="absolute top-8 right-8 w-8 h-8 bg-yellow-300 rounded-full opacity-70"></div>
-              <div className="absolute top-12 right-2 w-6 h-6 bg-orange-200 rounded-full opacity-50"></div>
+              {/* Soft accent dots matching Gift a wish palette */}
+              <div className="absolute top-4 right-4 w-16 h-16 bg-gradient-to-br from-[#E8A0A8] to-[#1B4D3E] rounded-full opacity-40"></div>
+              <div className="absolute top-8 right-8 w-8 h-8 bg-[#C45C6A] rounded-full opacity-40"></div>
+              <div className="absolute top-12 right-2 w-6 h-6 bg-[#E8A0A8] rounded-full opacity-35"></div>
+              <div className="absolute top-20 right-12 w-4 h-4 bg-[#1B4D3E] rounded-full opacity-30"></div>
+              <div className="absolute bottom-20 left-4 w-12 h-12 bg-gradient-to-br from-[#E8A0A8] to-[#1B4D3E] rounded-full opacity-35"></div>
+              <div className="absolute bottom-16 left-8 w-6 h-6 bg-[#C45C6A] rounded-full opacity-40"></div>
 
-              {/* Scattered decorative shapes */}
-              <div className="absolute top-20 right-12 w-4 h-4 bg-red-300 rounded-full opacity-60"></div>
-              <div className="absolute top-24 right-6 w-3 h-3 bg-yellow-400 rounded-full opacity-70"></div>
-              <div className="absolute top-16 right-20 w-5 h-5 bg-orange-300 rounded-full opacity-50"></div>
-
-              {/* Bottom decorations */}
-              <div className="absolute bottom-20 left-4 w-12 h-12 bg-gradient-to-br from-yellow-200 to-orange-300 rounded-full opacity-60"></div>
-              <div className="absolute bottom-16 left-8 w-6 h-6 bg-red-200 rounded-full opacity-70"></div>
-              <div className="absolute bottom-12 left-12 w-4 h-4 bg-orange-200 rounded-full opacity-50"></div>
-
-              {/* Summer Fox decorative images with subtle animations */}
+              {/* Gift a wish decorative elements */}
               <>
                 <div
                   className={`absolute ${
@@ -1591,8 +1505,8 @@ export default function GreetingCard({
                   } animate-float-y z-100`}
                 >
                   <Image
-                    src={encodeAssetSrc("/Element Promotion8.3/Asset 5@4x.png")}
-                    alt="decorative fox"
+                    src={encodeAssetSrc(GIFT_ASSETS.elements[0])}
+                    alt="decorative element"
                     width={256}
                     height={256}
                     className="w-full h-auto drop-shadow-md rotate-[-8deg]"
@@ -1608,8 +1522,8 @@ export default function GreetingCard({
                   } animate-float-x z-100`}
                 >
                   <Image
-                    src={encodeAssetSrc("/Element Promotion8.3/Asset 3@4x.png")}
-                    alt="decorative fox"
+                    src={encodeAssetSrc(GIFT_ASSETS.elements[2])}
+                    alt="decorative element"
                     width={256}
                     height={256}
                     className="w-full h-auto drop-shadow-md"
@@ -1625,8 +1539,8 @@ export default function GreetingCard({
                   } animate-swing-60 z-100`}
                 >
                   <Image
-                    src={encodeAssetSrc("/Element Promotion8.3/Asset 2 1@4x.png")}
-                    alt="decorative sun"
+                    src={encodeAssetSrc(GIFT_ASSETS.elements[4])}
+                    alt="decorative element"
                     width={256}
                     height={256}
                     className="w-full h-auto drop-shadow-md"
@@ -1652,7 +1566,7 @@ export default function GreetingCard({
                 }`}
               >
                 <Image
-                  src={encodeAssetSrc("/Asset 17@4x.png")}
+                  src={encodeAssetSrc(GIFT_ASSETS.elements[1])}
                   alt="decorative fox"
                   width={256}
                   height={256}
@@ -1911,8 +1825,8 @@ export default function GreetingCard({
             {/* Letter Footer */}
             <footer className="w-full mt-4 relative">
               <Image
-                src={encodeAssetSrc("/For web/Letter Footer.png")}
-                alt="Foxie Club Calendar - Flourishing pen-hearted traodinary"
+                src={encodeAssetSrc(GIFT_ASSETS.letterFooter)}
+                alt="Gift a wish footer"
                 width={1920}
                 height={400}
                 className="w-full h-auto object-cover"
