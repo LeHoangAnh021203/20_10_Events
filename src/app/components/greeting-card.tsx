@@ -456,7 +456,7 @@ export default function GreetingCard({
 
   // Generate dynamic body content based on paid service
   const getDynamicBodyContent = () => {
-    const holidayPhrase = "Chúc mừng ngày 20/10 nhé";
+    const holidayPhrase = "Nhân dịp Giáng Sinh và Năm mới!!!";
     const closingLines = [
       "ngọt ngào nhất cho làn da.",
       "\nChúc bạn luôn là phiên bản rực rỡ nhất của chính mình và nhớ tự thưởng 45 phút chăm da cho bản thân và người thương trong dịp này nhé. Cảm ơn bạn đã cho nhà Cáo cơ hội đồng hành cùng hành trình xinh đẹp ấy.",
@@ -521,8 +521,8 @@ export default function GreetingCard({
         .filter(Boolean)
     );
   const highlightWords = toNormalizedWordSet(highlightPhrase);
-  const HOLIDAY_PHRASE = "Chúc mừng ngày 20/10 nhé";
-  const holidayPhraseRegex = /(chúc mừng ngày 20\/10 nhé)/gi;
+  const HOLIDAY_PHRASE = "Nhân dịp Giáng Sinh và Năm mới!!!";
+  const holidayPhraseRegex = /(nhân dịp giáng sinh và năm mới!!!)/gi;
   const containsHolidayPhrase = (text: string) =>
     normalizeText(text).includes(normalizeText(HOLIDAY_PHRASE));
   const highlightHolidayText = (text: string) => {
